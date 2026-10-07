@@ -75,6 +75,7 @@ func TestMatchCommand(t *testing.T) {
 	cases := []struct {
 		name   string
 		want   string
+		bot    string // own username; "" defaults to tiennm99bot, "-" means unknown
 		update *models.Update
 		expect bool
 	}{
@@ -89,13 +90,13 @@ func TestMatchCommand(t *testing.T) {
 			// the entity. The upstream library's MatchTypeCommand misses this.
 			name:   "group slash-help-at-botname",
 			want:   "help",
-			update: mkUpdate("/help@tiennm99bot", cmd(0, 15)),
+			update: mkUpdate("/help@tiennm99bot", cmd(0, 17)),
 			expect: true,
 		},
 		{
 			name:   "group slash-help-at-botname with trailing arg",
 			want:   "help",
-			update: mkUpdate("/help@tiennm99bot arg", cmd(0, 15)),
+			update: mkUpdate("/help@tiennm99bot arg", cmd(0, 17)),
 			expect: true,
 		},
 		{
@@ -107,7 +108,7 @@ func TestMatchCommand(t *testing.T) {
 		{
 			name:   "different command with botname no match",
 			want:   "help",
-			update: mkUpdate("/info@tiennm99bot", cmd(0, 15)),
+			update: mkUpdate("/info@tiennm99bot", cmd(0, 17)),
 			expect: false,
 		},
 		{
@@ -137,7 +138,7 @@ func TestMatchCommand(t *testing.T) {
 		{
 			name:   "uppercase command with botname matches",
 			want:   "help",
-			update: mkUpdate("/HELP@tiennm99bot", cmd(0, 15)),
+			update: mkUpdate("/HELP@tiennm99bot", cmd(0, 17)),
 			expect: true,
 		},
 		{
@@ -145,6 +146,25 @@ func TestMatchCommand(t *testing.T) {
 			want:   "help",
 			update: mkUpdate("/INFO", cmd(0, 5)),
 			expect: false,
+		},
+		{
+			name:   "command addressed to another bot ignored",
+			want:   "help",
+			update: mkUpdate("/help@otherbot", cmd(0, 14)),
+			expect: false,
+		},
+		{
+			name:   "botname suffix is case-insensitive",
+			want:   "help",
+			update: mkUpdate("/help@TienNM99Bot", cmd(0, 17)),
+			expect: true,
+		},
+		{
+			name:   "unknown own username accepts any suffix",
+			want:   "help",
+			bot:    "-",
+			update: mkUpdate("/help@otherbot", cmd(0, 14)),
+			expect: true,
 		},
 		{
 			name:   "nil update",
@@ -179,7 +199,14 @@ func TestMatchCommand(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := matchCommand(tc.want, tc.update)
+			botUsername := tc.bot
+			switch botUsername {
+			case "":
+				botUsername = "tiennm99bot"
+			case "-":
+				botUsername = ""
+			}
+			got := matchCommand(tc.want, botUsername, tc.update)
 			if got != tc.expect {
 				t.Errorf("matchCommand(%q, ...) = %v, want %v", tc.want, got, tc.expect)
 			}

@@ -41,6 +41,7 @@ type Registry struct {
 	commandHooks []func(ctx context.Context, name string, update *models.Update)
 	fallback     *CommandFallback // at most one; owner tracked in Build
 	inline       *InlineQuery     // at most one; owner tracked in Build
+	botUsername  string           // without "@"; empty when startup could not learn it
 }
 
 // Fallback returns the single command fallback, or nil when no module declares
@@ -196,6 +197,7 @@ func Build(enabled []string, factories map[string]Factory, provider storage.Prov
 		crons:       map[string]Cron{},
 		cronDeps:    map[string]Deps{},
 		callbacks:   map[string]Callback{},
+		botUsername: opts.BotUsername,
 	}
 
 	owners := map[string]string{} // command name → module that registered it
