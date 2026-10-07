@@ -3,8 +3,8 @@ package random
 import (
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 func TestNew_RegistersRandomGroup(t *testing.T) {

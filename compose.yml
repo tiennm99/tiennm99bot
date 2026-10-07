@@ -3,13 +3,13 @@ services:
     build:
       context: .
     # Or pin a prebuilt image instead of building:
-    #   image: ghcr.io/tiennm99/miti99bot:latest
+    #   image: ghcr.io/tiennm99/tiennm99bot:latest
     restart: unless-stopped
     environment:
       # --- Required ---
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}      # from @BotFather — SECRET
       MONGO_URL: ${MONGO_URL}                        # Atlas SRV string incl. credentials — SECRET
-      MONGO_DATABASE: ${MONGO_DATABASE}              # e.g. miti99bot
+      MONGO_DATABASE: ${MONGO_DATABASE}              # e.g. tiennm99bot
 
       # --- Optional (commented out; the code falls back to each default) ---
       # Coolify injects every dashboard variable into each service through its
@@ -24,7 +24,7 @@ services:
       # LOL_PANDASCORE_TOKEN: ${LOL_PANDASCORE_TOKEN:-}  # PandaScore token — SECRET; empty = /lol* fetches fail
       # GOLD_VNAPP_API_KEY: ${GOLD_VNAPP_API_KEY:-}    # VNAppMob key — SECRET; empty = fetched and cached in Mongo
       # BOT_USERNAME: ${BOT_USERNAME:-}                # bot username without "@"; empty = getMe at startup
-      # STICKER_PACK_NAME: ${STICKER_PACK_NAME:-}      # /addsticker set; empty = miti99_by_<bot username>
+      # STICKER_PACK_NAME: ${STICKER_PACK_NAME:-}      # /addsticker set; empty = stickers_by_<bot username>
       # LOG_LEVEL: ${LOG_LEVEL:-info}                  # debug|info|warn|error
 
       # --- Fixed by this stack (not Coolify settings) ---
@@ -50,7 +50,7 @@ services:
     expose:
       - "8080"
     # Coolify's UI health check does not apply to Docker Compose apps; it reads
-    # this block instead. GET / returns text/plain "miti99bot ok". It proves the
+    # this block instead. GET / returns text/plain "tiennm99bot ok". It proves the
     # process is serving, not that Mongo is reachable — see
     # docs/deploy-coolify-selfhosted.md. busybox wget ships in the Alpine image.
     healthcheck:

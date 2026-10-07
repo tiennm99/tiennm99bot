@@ -14,7 +14,7 @@ import (
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp" // read-only WEBP decoder
 
-	"github.com/tiennm99/miti99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/log"
 )
 
 const (

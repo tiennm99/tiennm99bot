@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // buildReg builds a registry with a single module exposing one cron whose

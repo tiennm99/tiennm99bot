@@ -9,8 +9,8 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/modules/util/chathelper"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
 
 const stickerIDUsage = "Reply to a sticker message with /stickerid to get its file_id.\n" +

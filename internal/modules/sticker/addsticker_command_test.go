@@ -7,10 +7,10 @@ import (
 
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/modules/sticker"
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/sticker"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 // installSticker builds a registry holding only the sticker module. /addsticker
@@ -105,7 +105,7 @@ func TestAddSticker_DefaultPackFollowsBotUsername(t *testing.T) {
 	if !ok {
 		t.Fatalf("no addStickerToSet call; got %+v", rb.Sent())
 	}
-	if got := call.Form["name"]; got != "miti99_by_otherbot" {
+	if got := call.Form["name"]; got != "stickers_by_otherbot" {
 		t.Errorf("name = %q, want the default pack for @otherbot", got)
 	}
 }
@@ -133,7 +133,7 @@ func TestAddSticker_SeededUsernameSkipsGetMe(t *testing.T) {
 	if !ok {
 		t.Fatalf("no addStickerToSet call; got %+v", rb.Sent())
 	}
-	if got := call.Form["name"]; got != "miti99_by_seededbot" {
+	if got := call.Form["name"]; got != "stickers_by_seededbot" {
 		t.Errorf("name = %q, want the default pack for @seededbot", got)
 	}
 }

@@ -1,6 +1,6 @@
 # Deploy: Self-host (Coolify + MongoDB Atlas)
 
-Run `miti99bot` as a long-lived container on [Coolify](https://coolify.io) with
+Run `tiennm99bot` as a long-lived container on [Coolify](https://coolify.io) with
 [MongoDB Atlas](https://www.mongodb.com/atlas) (free M0) for storage.
 
 ## Architecture
@@ -30,12 +30,12 @@ Copy [`.env.example`](../.env.example) → `.env` (gitignored) and fill in.
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | ✅ | from @BotFather; startup fails without it |
 | `MONGO_URL` | ✅ | Atlas SRV string **incl. credentials** — secret, never logged |
-| `MONGO_DATABASE` | ✅ | e.g. `miti99bot` |
+| `MONGO_DATABASE` | ✅ | e.g. `tiennm99bot` |
 | `MODULES` | optional | CSV; empty = all modules, including any added later |
 | `OWNER_ID` | optional | Telegram user id for owner-only commands, the deploy DM, and the `/addsticker` pack owner. Unset = owner-only commands are denied and `/addsticker` refuses |
 | `ADMIN_IDS` | optional | CSV of Telegram user ids for admin-only commands |
 | `BOT_USERNAME` | optional | the bot's Telegram username, without `@`; unset = asked from Telegram (`getMe`) once at startup. Used for the default sticker pack name and the lol User-Agent |
-| `STICKER_PACK_NAME` | optional | set `/addsticker` writes to; default `miti99_by_<bot username>`. See [sticker packs](sticker-packs.md) |
+| `STICKER_PACK_NAME` | optional | set `/addsticker` writes to; default `stickers_by_<bot username>`. See [sticker packs](sticker-packs.md) |
 | `LOL_PANDASCORE_TOKEN` | optional | PandaScore API token for the lol module (free tier) — secret, never logged; without it every `/lol*` fetch fails (stale cache may still serve briefly) |
 | `RENDERER_URL` | leave unset | base URL of the animation renderer; fixed by `compose.yml` to the bundled renderer (`http://renderer:3000`), so a Coolify value is ignored |
 | `LOG_LEVEL` | optional | `debug`, `info` (default), `warn`, or `error`; logs are JSON on stdout |
@@ -115,7 +115,7 @@ MP4, with the same text fallback.
 
 1. Create a free **M0** cluster (512 MB — ample for the tiny paper-trading KV).
 2. **Database user (least privilege):** create a user with role
-   **`readWrite` on the single app database only** (e.g. `miti99bot`) — never
+   **`readWrite` on the single app database only** (e.g. `tiennm99bot`) — never
    Atlas admin or cluster-wide. Use a **strong unique password**.
 3. **Network access:** add `0.0.0.0/0`.
 
@@ -181,7 +181,7 @@ MP4, with the same text fallback.
 6. **Health check:** Coolify's UI health-check settings do not apply to
    Docker Compose apps; Coolify reads each service's `healthcheck:` in
    `compose.yml` instead. The `bot` service checks `GET /` (returns
-   `text/plain` `miti99bot ok`) with the image's busybox `wget`, and the
+   `text/plain` `tiennm99bot ok`) with the image's busybox `wget`, and the
    `renderer` service checks `/api/healthz`. Note: `/` reports healthy even if
    Mongo is unreachable (the driver auto-reconnects on the next op); a DB
    outage will not mark the container unhealthy — accepted trade-off.
@@ -246,5 +246,5 @@ endpoint from inside the container:
 docker compose exec bot wget -qO- http://127.0.0.1:8080/
 ```
 
-It returns `miti99bot ok`. The bot's webhook must be unset (the container
+It returns `tiennm99bot ok`. The bot's webhook must be unset (the container
 clears it on startup) or `getUpdates` 409s.

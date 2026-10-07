@@ -7,7 +7,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // Store is the typed view of the module collection that holds portfolios.

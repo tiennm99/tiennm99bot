@@ -4,7 +4,7 @@
 package gold
 
 import (
-	"github.com/tiennm99/miti99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
 )
 
 // New is the gold paper-trading module factory. It keeps its portfolio state

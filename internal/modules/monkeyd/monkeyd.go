@@ -15,10 +15,10 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/modules/monkeyd/export"
+	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd/export"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/modules/util/chathelper"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
 
 // commandName is the PDF export command; tagsCommandName is the other one.

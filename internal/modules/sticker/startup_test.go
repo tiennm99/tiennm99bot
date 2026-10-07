@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/systemstate"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/systemstate"
 )
 
 // legacyShape stands in for the retired records: a pack keyed by owner ID, a

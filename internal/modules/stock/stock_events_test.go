@@ -8,7 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 type stockEventProviderFunc func(context.Context, string, time.Time, time.Time) ([]SSIStockEvent, error)

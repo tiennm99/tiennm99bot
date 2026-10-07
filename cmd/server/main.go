@@ -1,4 +1,4 @@
-// Command server runs miti99bot: it loads configuration from the environment,
+// Command server runs tiennm99bot: it loads configuration from the environment,
 // opens the storage backend, builds the module registry, and then serves
 // Telegram updates by long polling while an in-process scheduler fires module
 // crons. A small HTTP server answers the container health check.
@@ -19,31 +19,31 @@ import (
 
 	"github.com/go-telegram/bot"
 
-	"github.com/tiennm99/miti99bot/internal/cron"
-	"github.com/tiennm99/miti99bot/internal/deploynotify"
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/metrics"
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/modules/alias"
-	"github.com/tiennm99/miti99bot/internal/modules/amlich"
-	"github.com/tiennm99/miti99bot/internal/modules/blacklist"
-	"github.com/tiennm99/miti99bot/internal/modules/coin"
-	"github.com/tiennm99/miti99bot/internal/modules/gold"
-	"github.com/tiennm99/miti99bot/internal/modules/lol"
-	"github.com/tiennm99/miti99bot/internal/modules/loldle"
-	"github.com/tiennm99/miti99bot/internal/modules/misc"
-	"github.com/tiennm99/miti99bot/internal/modules/monkeyd"
-	"github.com/tiennm99/miti99bot/internal/modules/random"
-	"github.com/tiennm99/miti99bot/internal/modules/stats"
-	"github.com/tiennm99/miti99bot/internal/modules/sticker"
-	"github.com/tiennm99/miti99bot/internal/modules/stock"
-	"github.com/tiennm99/miti99bot/internal/modules/util"
-	"github.com/tiennm99/miti99bot/internal/modules/weather"
-	"github.com/tiennm99/miti99bot/internal/modules/wordle"
-	"github.com/tiennm99/miti99bot/internal/server"
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/systemstate"
-	"github.com/tiennm99/miti99bot/internal/telegram"
+	"github.com/tiennm99/tiennm99bot/internal/cron"
+	"github.com/tiennm99/tiennm99bot/internal/deploynotify"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/metrics"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/alias"
+	"github.com/tiennm99/tiennm99bot/internal/modules/amlich"
+	"github.com/tiennm99/tiennm99bot/internal/modules/blacklist"
+	"github.com/tiennm99/tiennm99bot/internal/modules/coin"
+	"github.com/tiennm99/tiennm99bot/internal/modules/gold"
+	"github.com/tiennm99/tiennm99bot/internal/modules/lol"
+	"github.com/tiennm99/tiennm99bot/internal/modules/loldle"
+	"github.com/tiennm99/tiennm99bot/internal/modules/misc"
+	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random"
+	"github.com/tiennm99/tiennm99bot/internal/modules/stats"
+	"github.com/tiennm99/tiennm99bot/internal/modules/sticker"
+	"github.com/tiennm99/tiennm99bot/internal/modules/stock"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util"
+	"github.com/tiennm99/tiennm99bot/internal/modules/weather"
+	"github.com/tiennm99/tiennm99bot/internal/modules/wordle"
+	"github.com/tiennm99/tiennm99bot/internal/server"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/systemstate"
+	"github.com/tiennm99/tiennm99bot/internal/telegram"
 )
 
 // gitSHA is the local-build fallback read from the VCS metadata that go build

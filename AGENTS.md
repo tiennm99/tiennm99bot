@@ -2,7 +2,7 @@
 
 ## Project Context
 
-`miti99bot` is a Go Telegram bot with pluggable modules under
+`tiennm99bot` is a Go Telegram bot with pluggable modules under
 `internal/modules`. Runtime storage is MongoDB when `MONGO_URL` is set and
 in-memory otherwise, which is what tests and local no-database runs use. Read
 `README.md` before implementation work.

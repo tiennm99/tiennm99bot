@@ -10,10 +10,10 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
 )
 
-const repoURL = "https://github.com/tiennm99/miti99bot"
+const repoURL = "https://github.com/tiennm99/tiennm99bot"
 
 var supportFooter = fmt.Sprintf(
 	`Enjoying the bot? Support me by starring the repo: <a href="%s">%s</a>`,

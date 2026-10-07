@@ -1,8 +1,8 @@
 package loldle
 
 import (
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // New is the loldle module Factory. Loads champions.json once at construction

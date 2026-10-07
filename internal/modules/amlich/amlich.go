@@ -5,7 +5,7 @@
 package amlich
 
 import (
-	"github.com/tiennm99/miti99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
 )
 
 // New is the module Factory. The module is stateless — pure calendar math with

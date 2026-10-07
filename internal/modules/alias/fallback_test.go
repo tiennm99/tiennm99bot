@@ -7,10 +7,10 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/modules/alias"
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/alias"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 // The headline of the fallback: a saved name becomes its own command.
@@ -40,9 +40,9 @@ func TestFallback_ToleratesAtBotnameSuffix(t *testing.T) {
 
 	rb.Reset()
 	// The fixture builder stops the entity at '@', but real Telegram includes
-	// the whole "/cheer@miti99bot" in it — which is the case the stripping
+	// the whole "/cheer@tiennm99bot" in it — which is the case the stripping
 	// exists for, so the entity is widened here to match the wire format.
-	upd := testutil.NewPrivateMessage(7, "/cheer@miti99bot")
+	upd := testutil.NewPrivateMessage(7, "/cheer@tiennm99bot")
 	upd.Message.Entities[0].Length = len(upd.Message.Text)
 	rb.Bot.ProcessUpdate(context.Background(), upd)
 

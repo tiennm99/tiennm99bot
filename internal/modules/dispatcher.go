@@ -9,8 +9,8 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/metrics"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/metrics"
 )
 
 // Auth gates Protected/Private commands by sender Telegram user ID. Public

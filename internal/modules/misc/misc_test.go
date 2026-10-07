@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // Store behaviour is tested directly here; Telegram command dispatch is covered

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 func newTestVNAppMobClient(srv *httptest.Server, coll storage.Collection) *VNAppMobClient {

@@ -15,8 +15,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 const (
@@ -124,7 +124,7 @@ func (c *VNAppMobClient) fetchSJC(ctx context.Context, key string) (buy, sell fl
 	if err != nil {
 		return 0, 0, fmt.Errorf("vnappmob: build request: %w", err)
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (miti99bot)")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (tiennm99bot)")
 	req.Header.Set("Authorization", "Bearer "+key)
 
 	resp, err := c.httpClient().Do(req)
@@ -230,7 +230,7 @@ func (c *VNAppMobClient) refreshKeyLocked(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("vnappmob: build refresh request: %w", err)
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (miti99bot)")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (tiennm99bot)")
 
 	resp, err := c.httpClient().Do(req)
 	if err != nil {

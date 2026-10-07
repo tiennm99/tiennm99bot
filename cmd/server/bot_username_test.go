@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 func TestResolveBotUsername(t *testing.T) {

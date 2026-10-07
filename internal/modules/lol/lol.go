@@ -1,9 +1,9 @@
 package lol
 
 import (
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/modules/util/subscription"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/subscription"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // CollectionName is the MongoDB collection/module key used by the registry.

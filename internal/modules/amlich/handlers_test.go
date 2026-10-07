@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 // installAmlich wires the amlich module to a recording bot. The module is

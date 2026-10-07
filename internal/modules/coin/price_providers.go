@@ -258,7 +258,7 @@ func getJSON(ctx context.Context, client *http.Client, endpoint string) (*http.R
 	if err != nil {
 		return nil, fmt.Errorf("build request: %w", err)
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (miti99bot)")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (tiennm99bot)")
 	if client == nil {
 		client = &http.Client{Timeout: coinHTTPTimeout}
 	}

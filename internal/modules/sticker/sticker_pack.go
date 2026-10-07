@@ -12,8 +12,8 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/modules/util/chathelper"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 	// defaultStickerPackSlug names the shared pack used when the env is unset.
 	// The full name is this slug plus "_by_<bot_username>", so the default
 	// follows whichever bot runs the code.
-	defaultStickerPackSlug = "miti99"
+	defaultStickerPackSlug = "stickers"
 
 	// stickerPackOwnerEnv reuses the bot-wide owner setting rather than
 	// introducing a second variable: AddStickerToSet needs the *set owner's*
@@ -76,7 +76,7 @@ const (
 
 // stickerPack is the resolved target of /addsticker.
 type stickerPack struct {
-	Name    string // Telegram set name, e.g. "miti99_by_examplebot"; empty until defaulted
+	Name    string // Telegram set name, e.g. "stickers_by_examplebot"; empty until defaulted
 	OwnerID int64  // the account the set belongs to; AddStickerToSet demands it
 }
 

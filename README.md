@@ -1,4 +1,4 @@
-# miti99bot
+# tiennm99bot
 
 Plug-n-play Telegram bot framework in Go. Self-hosted on Coolify + MongoDB
 Atlas via long polling and an in-process cron scheduler.
@@ -286,13 +286,13 @@ variable, and [`.env.example`](.env.example) for a template.
 Persistent MongoDB locally (auto-selected when `MONGO_URL` is set):
 
 ```sh
-docker run -d --rm --name miti99bot-mongo -p 27017:27017 mongo:8
+docker run -d --rm --name tiennm99bot-mongo -p 27017:27017 mongo:8
 ```
 
 Then set `MONGO_URL=mongodb://127.0.0.1:27017` and
-`MONGO_DATABASE=miti99bot_dev` using the shell syntax above before running
+`MONGO_DATABASE=tiennm99bot_dev` using the shell syntax above before running
 `go run ./cmd/server`. Stop the local database with
-`docker stop miti99bot-mongo`.
+`docker stop tiennm99bot-mongo`.
 
 MongoDB integration tests use Testcontainers to start MongoDB 8 automatically.
 Keep Docker Desktop or another compatible Docker daemon running, then use the

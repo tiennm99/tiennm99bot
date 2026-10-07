@@ -10,8 +10,8 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/keylock"
-	"github.com/tiennm99/miti99bot/internal/modules/util/chathelper"
+	"github.com/tiennm99/tiennm99bot/internal/keylock"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
 
 const newRoundHint = "🆕 Send <code>/loldle</code> or <code>/loldle &lt;champion&gt;</code> to start a new round."

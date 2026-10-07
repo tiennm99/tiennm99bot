@@ -10,7 +10,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 func newStockInfoTestState(t *testing.T, ssiHandler http.HandlerFunc) (*state, *int, *int) {

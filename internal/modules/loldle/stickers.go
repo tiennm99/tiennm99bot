@@ -2,7 +2,8 @@ package loldle
 
 import "math/rand"
 
-// Sticker file_ids are bot-scoped to @miti99bot. Adding/replacing requires
+// Sticker file_ids are bot-scoped to @tiennm99bot. The ids below still come
+// from the previous bot account and must be recaptured. Adding/replacing requires
 // resending the sticker to the bot and capturing the file_id via util's
 // /stickerid private command. Empty pools are safe — pickSticker returns ""
 // and handlers skip the SendSticker call.

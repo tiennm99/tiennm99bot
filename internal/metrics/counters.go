@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/log"
 )
 
 // DefaultFlushInterval is how often Run flushes counters to the log. 60s

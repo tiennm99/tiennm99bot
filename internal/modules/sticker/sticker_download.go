@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-telegram/bot"
 
-	"github.com/tiennm99/miti99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/log"
 )
 
 const (

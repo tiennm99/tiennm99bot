@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/systemstate"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/systemstate"
 )
 
 const legacyPackCleanupMarkerKey = "migration:sticker-drop-legacy-packs-v1"

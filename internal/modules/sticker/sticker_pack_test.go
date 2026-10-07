@@ -19,9 +19,9 @@ func TestPackTitle(t *testing.T) {
 	}{
 		{
 			name:      "slug half becomes the title",
-			packName:  "miti99_by_miti99bot",
-			username:  "miti99bot",
-			wantTitle: "miti99",
+			packName:  "stickers_by_tiennm99bot",
+			username:  "tiennm99bot",
+			wantTitle: "stickers",
 		},
 		{
 			// Telegram documents <bot_username> as case insensitive, and

@@ -62,7 +62,7 @@ jobs:
         run: go build ./...
 
       - name: docker build
-        run: docker build -t miti99bot .
+        run: docker build -t tiennm99bot .
 
   renderer:
     runs-on: ubuntu-latest
@@ -99,4 +99,4 @@ jobs:
       - run: npm run api:smoke
 
       - name: docker build
-        run: docker build -t miti99bot-renderer .
+        run: docker build -t tiennm99bot-renderer .

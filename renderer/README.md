@@ -1,6 +1,6 @@
 # renderer
 
-Part of miti99bot: the service behind `/wheelofnames`, `/gacha`, and
+Part of tiennm99bot: the service behind `/wheelofnames`, `/gacha`, and
 `/genshin`, deployed by the root `compose.yml` as the `renderer` service.
 Self-hosted API that renders wheel-of-names GIF animations and Genshin-style
 meteor wish MP4 animations with Remotion, and card-pack gacha wish MP4
@@ -177,8 +177,8 @@ Use a container runtime first. Static-only platforms cannot satisfy
 dependencies, and FFmpeg/compositor support.
 
 ```sh
-docker build -t miti99bot-renderer .
-docker run --rm -p 3000:3000 miti99bot-renderer
+docker build -t tiennm99bot-renderer .
+docker run --rm -p 3000:3000 tiennm99bot-renderer
 ```
 
 Recommended starting resources: 1-2 vCPU and 1-2 GB RAM, with

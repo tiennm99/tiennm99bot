@@ -278,7 +278,7 @@ const renderBack = () => {
   const print = el('div', 'recap-card-print');
   const seal = el('span', 'recap-print-seal wish-moon-seal');
   seal.append(el('span', '', moon));
-  print.append(el('span', 'recap-print-channel'), seal, el('span', 'recap-print-edition', 'miti99bot'));
+  print.append(el('span', 'recap-print-channel'), seal, el('span', 'recap-print-edition', 'tiennm99bot'));
   return print;
 };
 

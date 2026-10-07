@@ -5,7 +5,7 @@
 // fall back to a text reply without it.
 package random
 
-import "github.com/tiennm99/miti99bot/internal/modules"
+import "github.com/tiennm99/tiennm99bot/internal/modules"
 
 // New is the module Factory. The commands keep no state, so deps is unused.
 func New(_ modules.Deps) modules.Module {

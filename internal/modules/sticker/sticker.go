@@ -8,7 +8,7 @@
 package sticker
 
 import (
-	"github.com/tiennm99/miti99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
 )
 
 // CollectionName is this module's registry key. Exported so main can hand the

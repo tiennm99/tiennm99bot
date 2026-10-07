@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/modules/monkeyd/crawler"
-	"github.com/tiennm99/miti99bot/internal/modules/monkeyd/pdf"
+	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd/crawler"
+	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd/pdf"
 )
 
 // Defaults the bot advertises to users or reuses in other crawls.

@@ -63,8 +63,8 @@ func TestPriceClient_FetchSSIQuoteOneRequest(t *testing.T) {
 				t.Errorf("%s = %q, want %q", header, got, want)
 			}
 		}
-		if got := r.Header.Get("User-Agent"); !strings.Contains(got, "miti99bot") {
-			t.Errorf("User-Agent = %q, want miti99bot", got)
+		if got := r.Header.Get("User-Agent"); !strings.Contains(got, "tiennm99bot") {
+			t.Errorf("User-Agent = %q, want tiennm99bot", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"data":{

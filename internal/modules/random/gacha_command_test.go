@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 var mp4Bytes = []byte("\x00\x00\x00\x18ftypisom-remote")

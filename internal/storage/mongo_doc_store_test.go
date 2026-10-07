@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
-	"github.com/tiennm99/miti99bot/internal/testutil/mongotest"
+	"github.com/tiennm99/tiennm99bot/internal/testutil/mongotest"
 )
 
 var mongoTests mongotest.Manager
@@ -35,7 +35,7 @@ func mongoLocalSetup(t *testing.T) (*mongo.Database, func()) {
 	if err != nil {
 		t.Fatalf("NewMongoClient: %v", err)
 	}
-	dbName := fmt.Sprintf("miti99bot_test_%d", time.Now().UnixNano())
+	dbName := fmt.Sprintf("tiennm99bot_test_%d", time.Now().UnixNano())
 	if len(dbName) > 63 {
 		dbName = dbName[:63]
 	}

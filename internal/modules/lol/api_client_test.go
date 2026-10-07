@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // setTestToken puts a dummy PandaScore token in the environment so client
@@ -424,10 +424,10 @@ func TestTruncate(t *testing.T) {
 }
 
 func TestClientUserAgent(t *testing.T) {
-	if got := (&Client{}).userAgent(); got != "miti99bot/0.1" {
+	if got := (&Client{}).userAgent(); got != "tiennm99bot/0.1" {
 		t.Errorf("no username: got %q", got)
 	}
-	if got := (&Client{BotUsername: "examplebot"}).userAgent(); got != "miti99bot/0.1 (https://t.me/examplebot)" {
+	if got := (&Client{BotUsername: "examplebot"}).userAgent(); got != "tiennm99bot/0.1 (https://t.me/examplebot)" {
 		t.Errorf("with username: got %q", got)
 	}
 }

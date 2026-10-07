@@ -12,8 +12,8 @@
 package stock
 
 import (
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // New is the stock module Factory. It registers nine public commands plus the

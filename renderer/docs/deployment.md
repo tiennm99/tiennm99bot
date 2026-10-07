@@ -1,6 +1,6 @@
 # Deployment
 
-## miti99bot compose
+## tiennm99bot compose
 
 The root `compose.yml` builds this folder as the `renderer` service and points
 the bot at it over the compose network. The API has no authentication: it is

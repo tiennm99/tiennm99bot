@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 func TestHandleStats_UsesSSIBatchPrices(t *testing.T) {

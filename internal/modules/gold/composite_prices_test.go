@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // stubVNAppMobClient implements just enough of the VNAppMob client contract

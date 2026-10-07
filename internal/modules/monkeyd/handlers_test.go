@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/modules/monkeyd/export"
-	"github.com/tiennm99/miti99bot/internal/modules/monkeyd/pdf"
+	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd/export"
+	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd/pdf"
 
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 const testNovelURL = "https://monkeydd.com/tro-lai-nam-thang-cu.html"

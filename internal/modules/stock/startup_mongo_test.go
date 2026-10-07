@@ -9,9 +9,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/systemstate"
-	"github.com/tiennm99/miti99bot/internal/testutil/mongotest"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/systemstate"
+	"github.com/tiennm99/tiennm99bot/internal/testutil/mongotest"
 )
 
 var stockMongoTests mongotest.Manager
@@ -76,7 +76,7 @@ func setupMongoStockMigrationTest(t *testing.T) (context.Context, storage.Collec
 	if err != nil {
 		t.Fatal(err)
 	}
-	db := client.Database(fmt.Sprintf("miti99bot_stock_migration_test_%d", time.Now().UnixNano()))
+	db := client.Database(fmt.Sprintf("tiennm99bot_stock_migration_test_%d", time.Now().UnixNano()))
 	t.Cleanup(func() {
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cleanupCancel()

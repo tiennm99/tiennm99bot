@@ -9,9 +9,9 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/modules"
-	"github.com/tiennm99/miti99bot/internal/modules/util/chathelper"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
 
 // telegramMaxLen leaves margin below Telegram's 4096-character message limit.
@@ -79,7 +79,7 @@ func renderStats(ctx context.Context, c *counter, args string) string {
 
 // parseSubargs returns the message text after the /stats command token,
 // stripped of the @botname suffix and leading whitespace. Mirrors the
-// entity-stripping logic in dispatcher.matchCommand so /stats@miti99bot users
+// entity-stripping logic in dispatcher.matchCommand so /stats@tiennm99bot users
 // behaves like /stats users in groups.
 func parseSubargs(update *models.Update) string {
 	msg := update.Message

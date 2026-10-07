@@ -86,7 +86,7 @@ func TestRenderMessage_ContainsSHA(t *testing.T) {
 	if !strings.Contains(got, "deadbeef") {
 		t.Errorf("message %q missing SHA", got)
 	}
-	if !strings.Contains(got, "miti99bot") {
+	if !strings.Contains(got, "tiennm99bot") {
 		t.Errorf("message %q missing bot name", got)
 	}
 }

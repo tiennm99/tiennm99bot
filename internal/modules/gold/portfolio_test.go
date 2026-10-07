@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	stockmod "github.com/tiennm99/miti99bot/internal/modules/stock"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	stockmod "github.com/tiennm99/tiennm99bot/internal/modules/stock"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // newGoldStore returns a fresh in-memory typed portfolio store for tests.

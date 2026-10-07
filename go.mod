@@ -1,4 +1,4 @@
-module github.com/tiennm99/miti99bot
+module github.com/tiennm99/tiennm99bot
 
 go 1.26.5
 

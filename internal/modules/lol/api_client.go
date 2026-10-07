@@ -39,8 +39,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 const (
@@ -51,7 +51,7 @@ const (
 
 	// userAgentProduct leads the User-Agent; Client.userAgent appends the
 	// running bot's t.me link when its username is known.
-	userAgentProduct = "miti99bot/0.1"
+	userAgentProduct = "tiennm99bot/0.1"
 	// pageSize is PandaScore's per_page maximum; 100 covers a dense day in
 	// one request and a full week in a couple.
 	pageSize = 100

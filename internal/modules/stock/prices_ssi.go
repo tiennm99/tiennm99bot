@@ -149,7 +149,7 @@ func newSSIRequest(ctx context.Context, method, full string, body io.Reader) (*h
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Origin", "https://iboard.ssi.com.vn")
 	req.Header.Set("Referer", "https://iboard.ssi.com.vn/")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (miti99bot)")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (tiennm99bot)")
 	return req, nil
 }
 

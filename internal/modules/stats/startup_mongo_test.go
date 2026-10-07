@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/systemstate"
-	"github.com/tiennm99/miti99bot/internal/testutil/mongotest"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/systemstate"
+	"github.com/tiennm99/tiennm99bot/internal/testutil/mongotest"
 )
 
 var mongoTests mongotest.Manager
@@ -126,7 +126,7 @@ func setupMongoStatsTest(t *testing.T) (context.Context, storage.Collection, sto
 	if err != nil {
 		t.Fatalf("NewMongoClient: %v", err)
 	}
-	dbName := fmt.Sprintf("miti99bot_stats_test_%d", time.Now().UnixNano())
+	dbName := fmt.Sprintf("tiennm99bot_stats_test_%d", time.Now().UnixNano())
 	db := client.Database(dbName)
 	t.Cleanup(func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

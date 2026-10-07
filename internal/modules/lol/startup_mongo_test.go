@@ -9,8 +9,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
-	"github.com/tiennm99/miti99bot/internal/testutil/mongotest"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/testutil/mongotest"
 )
 
 var mongoTests mongotest.Manager
@@ -29,7 +29,7 @@ func TestInitStore_MongoCreatesMatchCacheTTLIndex(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewMongoClient: %v", err)
 	}
-	dbName := fmt.Sprintf("miti99bot_lol_test_%d", time.Now().UnixNano())
+	dbName := fmt.Sprintf("tiennm99bot_lol_test_%d", time.Now().UnixNano())
 	db := client.Database(dbName)
 	defer func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

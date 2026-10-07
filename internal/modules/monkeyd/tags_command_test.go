@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiennm99/miti99bot/internal/testutil"
+	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
 // stubTags returns a fetcher yielding fixed tags and records the URL it saw.

@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/log"
 )
 
 func TestAuth_Permits(t *testing.T) {
@@ -89,13 +89,13 @@ func TestMatchCommand(t *testing.T) {
 			// the entity. The upstream library's MatchTypeCommand misses this.
 			name:   "group slash-help-at-botname",
 			want:   "help",
-			update: mkUpdate("/help@miti99bot", cmd(0, 15)),
+			update: mkUpdate("/help@tiennm99bot", cmd(0, 15)),
 			expect: true,
 		},
 		{
 			name:   "group slash-help-at-botname with trailing arg",
 			want:   "help",
-			update: mkUpdate("/help@miti99bot arg", cmd(0, 15)),
+			update: mkUpdate("/help@tiennm99bot arg", cmd(0, 15)),
 			expect: true,
 		},
 		{
@@ -107,7 +107,7 @@ func TestMatchCommand(t *testing.T) {
 		{
 			name:   "different command with botname no match",
 			want:   "help",
-			update: mkUpdate("/info@miti99bot", cmd(0, 15)),
+			update: mkUpdate("/info@tiennm99bot", cmd(0, 15)),
 			expect: false,
 		},
 		{
@@ -137,7 +137,7 @@ func TestMatchCommand(t *testing.T) {
 		{
 			name:   "uppercase command with botname matches",
 			want:   "help",
-			update: mkUpdate("/HELP@miti99bot", cmd(0, 15)),
+			update: mkUpdate("/HELP@tiennm99bot", cmd(0, 15)),
 			expect: true,
 		},
 		{

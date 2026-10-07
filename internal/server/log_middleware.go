@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/tiennm99/miti99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/log"
 )
 
 // statusRecorder wraps http.ResponseWriter to capture the final status

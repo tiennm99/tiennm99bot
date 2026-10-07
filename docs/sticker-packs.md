@@ -24,7 +24,7 @@ Single-shot: one message replying to the media to add. No conversation state.
 
 | Env | Default | Meaning |
 |---|---|---|
-| `STICKER_PACK_NAME` | `miti99_by_<bot username>` | The Telegram set to write to |
+| `STICKER_PACK_NAME` | `stickers_by_<bot username>` | The Telegram set to write to |
 | `OWNER_ID` | — | Must be the account that **owns** that set |
 
 `OWNER_ID` is reused rather than given a sticker-specific twin because
@@ -52,7 +52,7 @@ before any download or API call:
 
 **The pack creates itself on first use.** If the set does not exist, the first
 `/addsticker` creates it — owned by `OWNER_ID`, titled with the slug half of the
-name (`miti99_by_examplebot` → *miti99*), and seeded with the sticker that
+name (`stickers_by_examplebot` → *stickers*), and seeded with the sticker that
 triggered it, because Telegram cannot create an empty set. The reply says
 *"Created the shared pack with this sticker."*
 

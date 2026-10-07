@@ -3,7 +3,7 @@ package gold
 import (
 	"context"
 
-	"github.com/tiennm99/miti99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 // sjcPriceFetcher is the subset of VNAppMobClient needed by the composite

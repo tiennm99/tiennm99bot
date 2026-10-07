@@ -15,7 +15,7 @@ import (
 
 	"github.com/go-telegram/bot"
 
-	"github.com/tiennm99/miti99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/log"
 )
 
 // defaultTimeout caps the whole Run path (Telegram send) so a misbehaving
@@ -71,7 +71,7 @@ func skipReason(cfg Config) string {
 // renderMessage builds the DM text. Keep the format stable so the owner can
 // search their Telegram history by SHA.
 func renderMessage(sha string) string {
-	return fmt.Sprintf("🚀 miti99bot deployed: %s", sha)
+	return fmt.Sprintf("🚀 tiennm99bot deployed: %s", sha)
 }
 
 // sendMessage routes through Config.Sender when set (tests); otherwise it

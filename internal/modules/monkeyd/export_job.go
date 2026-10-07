@@ -11,10 +11,10 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/miti99bot/internal/modules/monkeyd/export"
+	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd/export"
 
-	"github.com/tiennm99/miti99bot/internal/log"
-	"github.com/tiennm99/miti99bot/internal/modules/util/chathelper"
+	"github.com/tiennm99/tiennm99bot/internal/log"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
 
 const (
@@ -39,7 +39,7 @@ const (
 // cacheDirName is the shared page cache under the system temp directory.
 // Keeping it outside the per-run directory is what makes a repeat export of the
 // same novel cost no requests. It is not pruned; a container restart clears it.
-const cacheDirName = "miti99bot-monkeyd-cache"
+const cacheDirName = "tiennm99bot-monkeyd-cache"
 
 // export runs one crawl to completion and delivers the PDF. It is called on its
 // own goroutine, detached from the Telegram handler context.

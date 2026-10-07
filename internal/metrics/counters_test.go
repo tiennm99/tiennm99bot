@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	logger "github.com/tiennm99/miti99bot/internal/log"
+	logger "github.com/tiennm99/tiennm99bot/internal/log"
 )
 
 // captureLogger swaps the package-level logger for one writing to buf and

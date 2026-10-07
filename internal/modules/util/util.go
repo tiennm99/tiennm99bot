@@ -4,7 +4,7 @@
 package util
 
 import (
-	"github.com/tiennm99/miti99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules"
 )
 
 // New is the module Factory. /help closes over deps.Registry so it renders
