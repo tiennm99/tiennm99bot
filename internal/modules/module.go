@@ -117,6 +117,10 @@ type Deps struct {
 	Store    storage.Collection // the module's own collection; build typed views with storage.Typed[T]
 	Registry *Registry          // populated by Build; safe to capture but read-only at module use
 	Bot      *bot.Bot           // nil-safe: only crons that fan-out (lol daily push) need it
+	// BotUsername is the bot's Telegram username without "@", from BOT_USERNAME
+	// or getMe at startup. Empty when neither was available; consumers must
+	// cope (sticker resolves it lazily, lol omits it from its User-Agent).
+	BotUsername string
 }
 
 // Factory constructs a Module from its Deps. Deps are passed directly (instead

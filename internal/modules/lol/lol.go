@@ -19,7 +19,7 @@ func New(deps modules.Deps) modules.Module {
 		subscribers: storage.Typed[subscription.Doc](deps.Store),
 		pushDate:    storage.Typed[subscription.DayDoc](deps.Store),
 		cache:       storage.Typed[cacheRecord](deps.Store),
-		client:      &Client{},
+		client:      &Client{BotUsername: deps.BotUsername},
 	}
 	return modules.Module{
 		Commands: []modules.Command{

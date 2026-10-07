@@ -24,7 +24,7 @@ Single-shot: one message replying to the media to add. No conversation state.
 
 | Env | Default | Meaning |
 |---|---|---|
-| `STICKER_PACK_NAME` | `miti99_by_miti99bot` | The Telegram set to write to |
+| `STICKER_PACK_NAME` | `miti99_by_<bot username>` | The Telegram set to write to |
 | `OWNER_ID` | — | Must be the account that **owns** that set |
 
 `OWNER_ID` is reused rather than given a sticker-specific twin because
@@ -35,6 +35,9 @@ the configured pack belongs to someone else.
 The caller's identity is used nowhere. That is what makes the command stateless:
 no records, no keys, no per-user locks, and no ownership checks. It is also why
 `/addsticker` needs no per-user storage.
+
+The bot's username comes from `BOT_USERNAME` when set, otherwise from one
+`getMe` call at startup (retried on the first `/addsticker` if that failed).
 
 `STICKER_PACK_NAME` **must end in `_by_<this bot's username>`** — Telegram
 requires that suffix on every set a bot creates, and refuses to let a bot edit
@@ -49,7 +52,7 @@ before any download or API call:
 
 **The pack creates itself on first use.** If the set does not exist, the first
 `/addsticker` creates it — owned by `OWNER_ID`, titled with the slug half of the
-name (`miti99_by_miti99bot` → *miti99*), and seeded with the sticker that
+name (`miti99_by_examplebot` → *miti99*), and seeded with the sticker that
 triggered it, because Telegram cannot create an empty set. The reply says
 *"Created the shared pack with this sticker."*
 

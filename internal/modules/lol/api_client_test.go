@@ -422,3 +422,12 @@ func TestTruncate(t *testing.T) {
 		t.Errorf("truncate = %q, want 'a lon...'", got)
 	}
 }
+
+func TestClientUserAgent(t *testing.T) {
+	if got := (&Client{}).userAgent(); got != "miti99bot/0.1" {
+		t.Errorf("no username: got %q", got)
+	}
+	if got := (&Client{BotUsername: "examplebot"}).userAgent(); got != "miti99bot/0.1 (https://t.me/examplebot)" {
+		t.Errorf("with username: got %q", got)
+	}
+}

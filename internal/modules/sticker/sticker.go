@@ -15,13 +15,13 @@ import (
 // same handle to Build and to any startup task, matching lol/coin/stock.
 const CollectionName = "sticker"
 
-// New is the module Factory. It takes no Deps: the command reads its pack from
-// the environment and keeps no state, so the collection this module is handed
-// goes unused.
-func New(_ modules.Deps) modules.Module {
+// New is the module Factory. Only Deps.BotUsername is used: the command reads
+// its pack from the environment and keeps no state, so the collection this
+// module is handed goes unused.
+func New(deps modules.Deps) modules.Module {
 	return modules.Module{
 		Commands: []modules.Command{
-			addStickerCommand(),
+			addStickerCommand(deps.BotUsername),
 		},
 	}
 }

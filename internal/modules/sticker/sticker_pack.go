@@ -23,8 +23,10 @@ const (
 	// not exist yet is created by the first successful /addsticker.
 	stickerPackNameEnv = "STICKER_PACK_NAME"
 
-	// defaultStickerPackName is the shared pack used when the env is unset.
-	defaultStickerPackName = "miti99_by_miti99bot"
+	// defaultStickerPackSlug names the shared pack used when the env is unset.
+	// The full name is this slug plus "_by_<bot_username>", so the default
+	// follows whichever bot runs the code.
+	defaultStickerPackSlug = "miti99"
 
 	// stickerPackOwnerEnv reuses the bot-wide owner setting rather than
 	// introducing a second variable: AddStickerToSet needs the *set owner's*
@@ -74,7 +76,7 @@ const (
 
 // stickerPack is the resolved target of /addsticker.
 type stickerPack struct {
-	Name    string // Telegram set name, e.g. "miti99_by_miti99bot"
+	Name    string // Telegram set name, e.g. "miti99_by_examplebot"; empty until defaulted
 	OwnerID int64  // the account the set belongs to; AddStickerToSet demands it
 }
 
@@ -82,21 +84,25 @@ type stickerPack struct {
 // Internal, not user-facing: nothing the caller does fixes a misconfiguration.
 var errNoPackOwner = errors.New("util: sticker pack owner ID unset")
 
-// loadStickerPack resolves the shared pack from the environment.
+// loadStickerPack resolves the shared pack from the environment. Name is left
+// empty when STICKER_PACK_NAME is unset: the default depends on the bot's
+// username, which the caller fills in with defaultPackName once resolved.
 //
 // Read per invocation rather than captured at startup, matching how gold and
 // lol read their credentials: it keeps the command testable with t.Setenv and
 // costs nothing next to the API calls that follow.
 func loadStickerPack() (stickerPack, error) {
 	name := strings.TrimSpace(os.Getenv(stickerPackNameEnv))
-	if name == "" {
-		name = defaultStickerPackName
-	}
 	ownerID, err := strconv.ParseInt(strings.TrimSpace(os.Getenv(stickerPackOwnerEnv)), 10, 64)
 	if err != nil || ownerID == 0 {
 		return stickerPack{}, errNoPackOwner
 	}
 	return stickerPack{Name: name, OwnerID: ownerID}, nil
+}
+
+// defaultPackName is the shared pack's name for a bot with this username.
+func defaultPackName(botUsername string) string {
+	return defaultStickerPackSlug + setNameSuffix + botUsername
 }
 
 // stickerShareLink is the public URL of a sticker set.
@@ -150,9 +156,10 @@ func packTitle(name, botUsername string) (string, error) {
 
 // botUsernameResolver caches the bot's username.
 //
-// The bot starts with bot.WithSkipGetMe(), so nothing populates a username
-// until this asks. Failures are never cached: a transient GetMe error must not
-// disable /addsticker for the process's lifetime.
+// main seeds it from BOT_USERNAME or a startup getMe. The bot starts with
+// bot.WithSkipGetMe(), so when neither produced a username nothing populates
+// one until this asks. Failures are never cached: a transient GetMe error must
+// not disable /addsticker for the process's lifetime.
 type botUsernameResolver struct {
 	mu       sync.Mutex
 	username string

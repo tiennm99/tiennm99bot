@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-telegram/bot"
+
 	"github.com/tiennm99/miti99bot/internal/cron"
 	"github.com/tiennm99/miti99bot/internal/deploynotify"
 	"github.com/tiennm99/miti99bot/internal/log"
@@ -164,8 +166,10 @@ func main() {
 		log.Fatal("telegram bot init failed", "err", err)
 	}
 
+	botUsername := resolveBotUsername(rootCtx, b, cfg.BotUsername)
 	reg, err := modules.Build(cfg.Modules, factories(), provider, modules.BuildOptions{
-		Bot: b,
+		Bot:         b,
+		BotUsername: botUsername,
 	})
 	if err != nil {
 		log.Fatal("module registry build failed", "err", err)
@@ -355,11 +359,36 @@ func buildProvider(ctx context.Context, cfg config) (storage.Provider, func(), e
 	}
 }
 
+// botUsernameTimeout bounds the startup getMe. It is best-effort, so a slow
+// Telegram must not hold up the rest of startup for long.
+const botUsernameTimeout = 10 * time.Second
+
+// resolveBotUsername returns the bot's username: BOT_USERNAME when set,
+// otherwise one getMe call. A failed getMe is logged and yields "" rather than
+// stopping startup; modules that need the username then learn it lazily or
+// do without.
+func resolveBotUsername(ctx context.Context, b *bot.Bot, configured string) string {
+	if configured != "" {
+		log.Info("bot username", "username", configured, "source", "BOT_USERNAME")
+		return configured
+	}
+	ctx, cancel := context.WithTimeout(ctx, botUsernameTimeout)
+	defer cancel()
+	me, err := b.GetMe(ctx)
+	if err != nil || me == nil || me.Username == "" {
+		log.Warn("getMe failed; bot username unknown until a module asks again", "err", err)
+		return ""
+	}
+	log.Info("bot username", "username", me.Username, "source", "getMe")
+	return me.Username
+}
+
 // config is the process configuration read from the environment by loadConfig.
 type config struct {
 	Port             string
 	TelegramBotToken string
 	SourceCommit     string // Coolify-injected commit SHA (runtime env) for deploynotify
+	BotUsername      string // optional; empty = ask Telegram via getMe at startup
 	Modules          []string
 	BotOwnerID       int64
 	AdminUserIDs     map[int64]bool
@@ -392,6 +421,7 @@ func loadConfig() config {
 		Port:             port,
 		TelegramBotToken: envMap["TELEGRAM_BOT_TOKEN"],
 		SourceCommit:     envMap["SOURCE_COMMIT"],
+		BotUsername:      strings.TrimPrefix(strings.TrimSpace(envMap["BOT_USERNAME"]), "@"),
 		Modules:          splitCSV(envMap["MODULES"]),
 		BotOwnerID:       parseInt64(envMap["OWNER_ID"]),
 		AdminUserIDs:     parseInt64Set(envMap["ADMIN_IDS"]),

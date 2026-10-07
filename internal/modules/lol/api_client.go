@@ -49,7 +49,9 @@ const (
 	// credential itself.
 	tokenEnv = "LOL_PANDASCORE_TOKEN" // #nosec G101
 
-	userAgent = "miti99bot/0.1 (https://t.me/miti99bot)"
+	// userAgentProduct leads the User-Agent; Client.userAgent appends the
+	// running bot's t.me link when its username is known.
+	userAgentProduct = "miti99bot/0.1"
 	// pageSize is PandaScore's per_page maximum; 100 covers a dense day in
 	// one request and a full week in a couple.
 	pageSize = 100
@@ -247,8 +249,18 @@ type CacheStore = storage.DocStore[cacheRecord]
 // default HTTP client; tests inject a custom HTTP client (typically pointing
 // at httptest.Server).
 type Client struct {
-	HTTP *http.Client
-	URL  string // override for tests; empty falls back to apiURL
+	HTTP        *http.Client
+	URL         string // override for tests; empty falls back to apiURL
+	BotUsername string // running bot's username for the User-Agent; may be empty
+}
+
+// userAgent identifies the caller to PandaScore, linking the running bot when
+// its username is known.
+func (c *Client) userAgent() string {
+	if c.BotUsername == "" {
+		return userAgentProduct
+	}
+	return userAgentProduct + " (https://t.me/" + c.BotUsername + ")"
 }
 
 // httpClient returns the client to use, or a sensible default.
@@ -296,7 +308,7 @@ func (c *Client) fetchEventsPage(ctx context.Context, from, to time.Time, page i
 	// stay safe to log.
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", c.userAgent())
 
 	resp, err := c.httpClient().Do(req)
 	if err != nil {

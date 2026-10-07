@@ -159,7 +159,8 @@ func (r *Registry) Crons() []Cron {
 // Factory's Deps. Adding new optional deps here keeps Build's signature
 // stable as the dep list grows.
 type BuildOptions struct {
-	Bot *bot.Bot
+	Bot         *bot.Bot
+	BotUsername string
 }
 
 // Build constructs a Registry from the requested module names. The Provider
@@ -220,9 +221,10 @@ func Build(enabled []string, factories map[string]Factory, provider storage.Prov
 		}
 
 		moduleDeps := Deps{
-			Store:    provider.Collection(name),
-			Registry: reg,
-			Bot:      opts.Bot,
+			Store:       provider.Collection(name),
+			Registry:    reg,
+			Bot:         opts.Bot,
+			BotUsername: opts.BotUsername,
 		}
 		mod := factory(moduleDeps)
 		// A factory that hardcodes its own Name is a bug: the registry key is

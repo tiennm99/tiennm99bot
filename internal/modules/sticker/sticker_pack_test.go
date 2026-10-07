@@ -106,15 +106,15 @@ func TestPackTitle_AtNameLengthCap(t *testing.T) {
 }
 
 func TestLoadStickerPack(t *testing.T) {
-	t.Run("defaults the name and requires an owner", func(t *testing.T) {
+	t.Run("leaves the name to the default and requires an owner", func(t *testing.T) {
 		t.Setenv("OWNER_ID", "42")
 		t.Setenv("STICKER_PACK_NAME", "")
 		pack, err := loadStickerPack()
 		if err != nil {
 			t.Fatalf("loadStickerPack: %v", err)
 		}
-		if pack.Name != defaultStickerPackName {
-			t.Errorf("name = %q, want %q", pack.Name, defaultStickerPackName)
+		if pack.Name != "" {
+			t.Errorf("name = %q, want empty until the username fills the default", pack.Name)
 		}
 		if pack.OwnerID != 42 {
 			t.Errorf("ownerID = %d, want 42", pack.OwnerID)

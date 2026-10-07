@@ -53,9 +53,10 @@ type stickerSource struct {
 // no ownership to check. That is what keeps the command stateless.
 //
 // The resolver is built here and captured by the handler so the bot's username
-// is fetched at most once per process rather than once per invocation.
-func addStickerCommand() modules.Command {
-	resolver := &botUsernameResolver{}
+// is fetched at most once per process rather than once per invocation. It
+// starts from botUsername, which is empty when startup could not learn it.
+func addStickerCommand(botUsername string) modules.Command {
+	resolver := &botUsernameResolver{username: botUsername}
 	return modules.Command{
 		Name:        "addsticker",
 		Visibility:  modules.VisibilityPublic,
@@ -92,6 +93,9 @@ func handleAddSticker(ctx context.Context, b *bot.Bot, update *models.Update, re
 	username, err := resolver.resolve(ctx, b)
 	if err != nil {
 		return replyErr(ctx, b, msg, "util_addsticker_username", err)
+	}
+	if pack.Name == "" {
+		pack.Name = defaultPackName(username)
 	}
 	title, err := packTitle(pack.Name, username)
 	if err != nil {

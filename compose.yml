@@ -23,7 +23,8 @@ services:
       # ADMIN_IDS: ${ADMIN_IDS:-}                      # CSV of admin Telegram user ids; empty = none
       # LOL_PANDASCORE_TOKEN: ${LOL_PANDASCORE_TOKEN:-}  # PandaScore token — SECRET; empty = /lol* fetches fail
       # GOLD_VNAPP_API_KEY: ${GOLD_VNAPP_API_KEY:-}    # VNAppMob key — SECRET; empty = fetched and cached in Mongo
-      # STICKER_PACK_NAME: ${STICKER_PACK_NAME:-miti99_by_miti99bot}  # /addsticker set
+      # BOT_USERNAME: ${BOT_USERNAME:-}                # bot username without "@"; empty = getMe at startup
+      # STICKER_PACK_NAME: ${STICKER_PACK_NAME:-}      # /addsticker set; empty = miti99_by_<bot username>
       # LOG_LEVEL: ${LOG_LEVEL:-info}                  # debug|info|warn|error
 
       # --- Fixed by this stack (not Coolify settings) ---

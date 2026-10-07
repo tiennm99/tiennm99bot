@@ -94,8 +94,10 @@ func TestAddSticker_NonOwnerWritesToConfiguredPack(t *testing.T) {
 	}
 }
 
-func TestAddSticker_DefaultsToMiti99Pack(t *testing.T) {
-	rb := installAddSticker(t, "", "miti99bot")
+// The default pack follows the running bot: its name ends in the username
+// getMe reports, so the same build works under any bot token.
+func TestAddSticker_DefaultPackFollowsBotUsername(t *testing.T) {
+	rb := installAddSticker(t, "", "otherbot")
 
 	rb.Bot.ProcessUpdate(context.Background(), stickerReply(999, "", "src", ""))
 
@@ -103,8 +105,36 @@ func TestAddSticker_DefaultsToMiti99Pack(t *testing.T) {
 	if !ok {
 		t.Fatalf("no addStickerToSet call; got %+v", rb.Sent())
 	}
-	if got := call.Form["name"]; got != "miti99_by_miti99bot" {
-		t.Errorf("name = %q, want the default pack", got)
+	if got := call.Form["name"]; got != "miti99_by_otherbot" {
+		t.Errorf("name = %q, want the default pack for @otherbot", got)
+	}
+}
+
+// A username known at startup (BOT_USERNAME or the startup getMe) is used as
+// is: the command must not spend a getMe call re-learning it.
+func TestAddSticker_SeededUsernameSkipsGetMe(t *testing.T) {
+	t.Setenv("OWNER_ID", "999")
+	t.Setenv("STICKER_PACK_NAME", "")
+	rb := testutil.NewRecordingBot(t)
+	reg, err := modules.Build([]string{"sticker"},
+		map[string]modules.Factory{"sticker": sticker.New},
+		storage.NewMemoryProvider(), modules.BuildOptions{BotUsername: "seededbot"})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	modules.Install(rb.Bot, reg, modules.Auth{})
+
+	rb.Bot.ProcessUpdate(context.Background(), stickerReply(999, "", "src", ""))
+
+	if _, ok := callTo(rb, "getMe"); ok {
+		t.Error("getMe called although the username was seeded")
+	}
+	call, ok := callTo(rb, "addStickerToSet")
+	if !ok {
+		t.Fatalf("no addStickerToSet call; got %+v", rb.Sent())
+	}
+	if got := call.Form["name"]; got != "miti99_by_seededbot" {
+		t.Errorf("name = %q, want the default pack for @seededbot", got)
 	}
 }
 
