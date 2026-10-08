@@ -6,12 +6,7 @@ storage, and no per-user packs.
 
 **The module stores nothing.** Its factory ignores the collection it is handed:
 the pack comes from the environment and the set owner from `OWNER_ID`, so there
-is nothing per-user to key. A one-time startup cleanup
-(`migration:sticker-drop-legacy-packs-v1`) removes the records the retired
-per-user pack commands left in the `sticker` collection — pack documents keyed
-by owner ID, `slug:` name reservations, and `pending-delete:` confirmations.
-It is marker-guarded, so it scans once per database and never touches anything
-written afterwards.
+is nothing per-user to key.
 
 | Command | Parameters | Reply to | What it does |
 |---|---|---|---|

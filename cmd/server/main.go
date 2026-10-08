@@ -42,7 +42,6 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/modules/wordle"
 	"github.com/tiennm99/tiennm99bot/internal/server"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
-	"github.com/tiennm99/tiennm99bot/internal/systemstate"
 	"github.com/tiennm99/tiennm99bot/internal/telegram"
 )
 
@@ -117,10 +116,6 @@ func factories() map[string]modules.Factory {
 // container; 10s leaves headroom without hiding a wedged cluster.
 const mongodbInitTimeout = 10 * time.Second
 
-// stockMigrationTimeout bounds the one-time scan of persisted stock
-// portfolios without tying it to the shorter MongoDB connection timeout.
-const stockMigrationTimeout = 2 * time.Minute
-
 func main() {
 	rootCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -145,21 +140,12 @@ func main() {
 	}
 	defer closeProvider()
 
-	if err := initStatsStore(rootCtx, provider); err != nil {
+	if err := stats.InitStore(rootCtx, provider.Collection("stats")); err != nil {
 		log.Fatal("stats storage init failed", "err", err)
 	}
 	if err := lol.InitStore(rootCtx, provider.Collection(lol.CollectionName)); err != nil {
 		log.Fatal("lol storage init failed", "err", err)
 	}
-	if err := initStickerStore(rootCtx, provider); err != nil {
-		log.Fatal("sticker storage init failed", "err", err)
-	}
-	migrationCtx, cancelMigration := context.WithTimeout(rootCtx, stockMigrationTimeout)
-	if err := initStockStore(migrationCtx, provider); err != nil {
-		cancelMigration()
-		log.Fatal("stock storage init failed", "err", err)
-	}
-	cancelMigration()
 
 	b, err := telegram.NewBot(cfg.TelegramBotToken)
 	if err != nil {
@@ -259,48 +245,6 @@ func main() {
 	}
 	<-metricsDone
 	metrics.Flush()
-}
-
-func initStockStore(ctx context.Context, provider storage.Provider) error {
-	return initStockStoreWith(ctx, provider, stock.InitStore)
-}
-
-func initStatsStore(ctx context.Context, provider storage.Provider) error {
-	return initStatsStoreWith(ctx, provider, stats.InitStore)
-}
-
-type statsStoreInitializer func(context.Context, storage.Collection, storage.Collection) error
-
-func initStatsStoreWith(ctx context.Context, provider storage.Provider, init statsStoreInitializer) error {
-	return init(
-		ctx,
-		provider.Collection("stats"),
-		provider.Collection(systemstate.CollectionName),
-	)
-}
-
-func initStickerStore(ctx context.Context, provider storage.Provider) error {
-	return initStickerStoreWith(ctx, provider, sticker.InitStore)
-}
-
-type stickerStoreInitializer func(context.Context, storage.Collection, storage.Collection) error
-
-func initStickerStoreWith(ctx context.Context, provider storage.Provider, init stickerStoreInitializer) error {
-	return init(
-		ctx,
-		provider.Collection(sticker.CollectionName),
-		provider.Collection(systemstate.CollectionName),
-	)
-}
-
-type stockStoreInitializer func(context.Context, storage.Collection, storage.Collection) error
-
-func initStockStoreWith(ctx context.Context, provider storage.Provider, init stockStoreInitializer) error {
-	return init(
-		ctx,
-		provider.Collection(stock.CollectionName),
-		provider.Collection(systemstate.CollectionName),
-	)
 }
 
 // buildProvider picks the storage backend. Selection order:

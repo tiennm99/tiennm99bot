@@ -149,13 +149,9 @@ MP4, with the same text fallback.
 - **`coin`** stores cash as `usd` and embeds positions as
   `assets.<symbol>.{quantity,base}`.
 - **`system`** holds one marker per completed one-time startup migration. Keep
-  those records as audit history. The current markers are
-  `migration:stats-delete-stock-dividend-v1` (retires historical
-  `/stock_dividend` stats rows without erasing them),
-  `migration:stock-dividend-history-v1` (removes the retired dividend cursor
-  and hashed applied-event ledger), and
-  `migration:sticker-drop-legacy-packs-v1` (removes records left by the retired
-  per-user sticker pack commands).
+  those records as audit history. No one-time migration runs at startup now;
+  the completed ones were removed from the code once production data was
+  verified migrated.
 
 ## 2. Coolify
 

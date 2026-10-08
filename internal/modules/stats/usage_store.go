@@ -504,9 +504,12 @@ func (s *mongoUsageStore) userIDByUsername(ctx context.Context, username string)
 	return doc.UserID, true, nil
 }
 
+// deletedStockDividendCommand names the retired /stock_dividend command. Its
+// rows are kept with deleted: true as history.
+const deletedStockDividendCommand = "stock_dividend"
+
 // isRetiredCommand reports whether cmd has been removed from the bot. Its rows
-// are never incremented or shown, even ones written before the migration
-// marked them deleted.
+// are never incremented or shown, even ones missing the deleted flag.
 func isRetiredCommand(cmd string) bool {
 	return cmd == deletedStockDividendCommand
 }
