@@ -77,8 +77,8 @@ func New(deps modules.Deps) modules.Module {
 	}
 	return modules.Module{
 		Commands: append([]modules.Command{
-			command("thoitiethomnay", "Thời tiết hôm nay (mặc định Tân Thuận, Q.7)", todayView),
 			command("thoitiet", "Thời tiết từng giờ trong 6 giờ tới (mặc định Tân Thuận, Q.7)", hourlyView),
+			command("thoitiethomnay", "Thời tiết hôm nay (mặc định Tân Thuận, Q.7)", todayView),
 			command("thoitietngaymai", "Thời tiết ngày mai (mặc định Tân Thuận, Q.7)", tomorrowView),
 			command("thoitiettuannay", "Thời tiết 7 ngày tới (mặc định Tân Thuận, Q.7)", weekView),
 		}, fl.commands()...),

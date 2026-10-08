@@ -105,8 +105,8 @@ func send(rb *testutil.RecordingBot, text string) string {
 func TestCommands_RegistrationAndParameters(t *testing.T) {
 	mod := New(modules.Deps{Store: storage.NewMemoryProvider().Collection(CollectionName)})
 	want := []struct{ name, parameters string }{
-		{"thoitiethomnay", "[location... | lat,long]"},
 		{"thoitiet", "[location... | lat,long]"},
+		{"thoitiethomnay", "[location... | lat,long]"},
 		{"thoitietngaymai", "[location... | lat,long]"},
 		{"thoitiettuannay", "[location... | lat,long]"},
 		{"thuyvan", ""},

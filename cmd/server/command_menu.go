@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/go-telegram/bot"
@@ -14,8 +16,8 @@ import (
 const commandMenuTimeout = 8 * time.Second
 
 // botCommandMenu builds the Telegram command menu from the loaded public
-// commands. It intentionally follows registry module order so MODULES controls
-// both enabled commands and their menu grouping.
+// commands, sorted by name so related commands such as /thoitiet and
+// /thoitiethomnay sit together whatever their module order.
 func botCommandMenu(reg *modules.Registry) []models.BotCommand {
 	if reg == nil {
 		return nil
@@ -32,6 +34,7 @@ func botCommandMenu(reg *modules.Registry) []models.BotCommand {
 			})
 		}
 	}
+	slices.SortFunc(out, func(a, b models.BotCommand) int { return strings.Compare(a.Command, b.Command) })
 	return out
 }
 

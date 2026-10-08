@@ -16,7 +16,7 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
-func TestBotCommandMenu_UsesLoadedPublicCommandsInModuleOrder(t *testing.T) {
+func TestBotCommandMenu_ListsLoadedPublicCommandsByName(t *testing.T) {
 	reg := &modules.Registry{
 		Modules: []modules.Module{
 			{
@@ -39,8 +39,8 @@ func TestBotCommandMenu_UsesLoadedPublicCommandsInModuleOrder(t *testing.T) {
 
 	got := botCommandMenu(reg)
 	want := []models.BotCommand{
-		{Command: "beta_public", Description: "<value>. Beta public."},
 		{Command: "alpha_public", Description: "Alpha public."},
+		{Command: "beta_public", Description: "<value>. Beta public."},
 	}
 	if len(got) != len(want) {
 		t.Fatalf("commands = %v, want %v", got, want)
