@@ -105,10 +105,10 @@ func send(rb *testutil.RecordingBot, text string) string {
 func TestCommands_RegistrationAndParameters(t *testing.T) {
 	mod := New(modules.Deps{Store: storage.NewMemoryProvider().Collection(CollectionName)})
 	want := []struct{ name, parameters string }{
-		{"thoitiethomnay", "[location...]"},
-		{"thoitiet", "[location...]"},
-		{"thoitietngaymai", "[location...]"},
-		{"thoitiettuannay", "[location...]"},
+		{"thoitiethomnay", "[location... | lat,long]"},
+		{"thoitiet", "[location... | lat,long]"},
+		{"thoitietngaymai", "[location... | lat,long]"},
+		{"thoitiettuannay", "[location... | lat,long]"},
 		{"thuyvan", ""},
 		{"thuyvan_subscribe", ""},
 		{"thuyvan_unsubscribe", ""},
@@ -132,29 +132,64 @@ func TestCommands_RegistrationAndParameters(t *testing.T) {
 	}
 }
 
-func TestToday_DefaultsToHCMWithoutGeocoding(t *testing.T) {
+func TestToday_DefaultsToTanThuanWithoutGeocoding(t *testing.T) {
 	f := &fakeOpenMeteo{forecastBody: forecastFixture}
 	stubOpenMeteo(t, f)
 	rb := installWeather(t)
 
-	want := "🌦️ Thời tiết hôm nay 01/10 — Thành phố Hồ Chí Minh\n" +
+	want := "🌦️ Thời tiết hôm nay 01/10 — Tân Thuận, Thành phố Hồ Chí Minh\n" +
 		"Hiện tại: 29°C (cảm giác 36°C), Nhiều mây ☁️\n" +
 		"Độ ẩm 78%, gió 3,2 km/h\n" +
 		"Cả ngày: 24–33°C, Mưa rào nhẹ 🌦️\n" +
 		"Khả năng mưa 70% (5,3 mm), UV 8,9\n" +
 		"Mặt trời mọc 05:42, lặn 17:44\n" +
 		"Nguồn: Open-Meteo"
-	for _, cmd := range []string{"/thoitiethomnay", "/thoitiethomnay hcm", "/thoitiethomnay Sài Gòn"} {
-		if got := send(rb, cmd); got != want {
-			t.Errorf("%s reply =\n%s\nwant\n%s", cmd, got, want)
+	if got := send(rb, "/thoitiethomnay"); got != want {
+		t.Errorf("reply =\n%s\nwant\n%s", got, want)
+	}
+	if len(f.geocodeQueries) != 0 {
+		t.Errorf("geocode called with %v, want no calls", f.geocodeQueries)
+	}
+	if f.lastForecastQ["latitude"] != "10.74111" || f.lastForecastQ["longitude"] != "106.71806" ||
+		f.lastForecastQ["timezone"] != "auto" ||
+		f.lastForecastQ["forecast_days"] != "7" || f.lastForecastQ["forecast_hours"] != "7" {
+		t.Errorf("forecast query = %v", f.lastForecastQ)
+	}
+}
+
+func TestToday_HCMAliasSkipsGeocoding(t *testing.T) {
+	f := &fakeOpenMeteo{forecastBody: forecastFixture}
+	stubOpenMeteo(t, f)
+	rb := installWeather(t)
+
+	for _, cmd := range []string{"/thoitiethomnay hcm", "/thoitiethomnay Sài Gòn"} {
+		got := send(rb, cmd)
+		if !strings.HasPrefix(got, "🌦️ Thời tiết hôm nay 01/10 — Thành phố Hồ Chí Minh\n") {
+			t.Errorf("%s reply header = %q", cmd, strings.SplitN(got, "\n", 2)[0])
+		}
+		if f.lastForecastQ["latitude"] != "10.82302" {
+			t.Errorf("%s forecast latitude = %q", cmd, f.lastForecastQ["latitude"])
 		}
 	}
 	if len(f.geocodeQueries) != 0 {
 		t.Errorf("geocode called with %v, want no calls", f.geocodeQueries)
 	}
-	if f.lastForecastQ["latitude"] != "10.82302" || f.lastForecastQ["timezone"] != "auto" ||
-		f.lastForecastQ["forecast_days"] != "7" || f.lastForecastQ["forecast_hours"] != "7" {
+}
+
+func TestCoordinatesSkipGeocoding(t *testing.T) {
+	f := &fakeOpenMeteo{forecastBody: forecastFixture}
+	stubOpenMeteo(t, f)
+	rb := installWeather(t)
+
+	got := send(rb, "/thoitiet 10.7769, 106.7009")
+	if !strings.HasPrefix(got, "🕐 Thời tiết 6 giờ tới — 10.7769, 106.7009\n") {
+		t.Errorf("reply header = %q", strings.SplitN(got, "\n", 2)[0])
+	}
+	if f.lastForecastQ["latitude"] != "10.7769" || f.lastForecastQ["longitude"] != "106.7009" {
 		t.Errorf("forecast query = %v", f.lastForecastQ)
+	}
+	if len(f.geocodeQueries) != 0 {
+		t.Errorf("geocode called with %v, want no calls", f.geocodeQueries)
 	}
 }
 
@@ -163,7 +198,7 @@ func TestHourly_ListsNextSixHours(t *testing.T) {
 	stubOpenMeteo(t, f)
 	rb := installWeather(t)
 
-	want := "🕐 Thời tiết 6 giờ tới — Thành phố Hồ Chí Minh\n" +
+	want := "🕐 Thời tiết 6 giờ tới — Tân Thuận, Thành phố Hồ Chí Minh\n" +
 		"Hiện tại 10:30: 29°C (cảm giác 36°C), Nhiều mây ☁️\n" +
 		"\n11:00 ☁️ Nhiều mây, 31°C (cảm giác 40°C)\n" +
 		"Mưa 2% (0,0 mm), độ ẩm 71%, gió 2,4 km/h\n" +
@@ -220,7 +255,7 @@ func TestWeek_ListsSevenDays(t *testing.T) {
 	stubOpenMeteo(t, f)
 	rb := installWeather(t)
 
-	want := "📅 Thời tiết 7 ngày tới — Thành phố Hồ Chí Minh\n" +
+	want := "📅 Thời tiết 7 ngày tới — Tân Thuận, Thành phố Hồ Chí Minh\n" +
 		"T5 01/10: 24–33°C 🌦️ Mưa rào nhẹ, mưa 70%\n" +
 		"T6 02/10: 24–32°C 🌦️ Mưa rào nhẹ, mưa 88%\n" +
 		"T7 03/10: 24–32°C 🌦️ Mưa rào, mưa 85%\n" +

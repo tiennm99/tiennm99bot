@@ -9,18 +9,6 @@ import (
 	"time"
 )
 
-// tanThuanPlace is the flood view's fixed location: phường Tân Thuận, Quận 7.
-// The coordinates are Open-Meteo's geocoding result for "Tân Thuận" in Quận
-// Bảy; geocoding the name at runtime returns 14 Vietnamese places.
-var tanThuanPlace = place{
-	Name:        "Tân Thuận",
-	Latitude:    10.74111,
-	Longitude:   106.71806,
-	CountryCode: "VN",
-	Country:     "Việt Nam",
-	Admin1:      "Thành phố Hồ Chí Minh",
-}
-
 const (
 	// floodDays is the window the flood view and alert cover, starting today;
 	// it matches the tide bulletin's 5-day forecast.

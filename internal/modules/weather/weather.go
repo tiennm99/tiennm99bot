@@ -1,11 +1,12 @@
 // Package weather is the weather and flood module. /thoitiet shows the next 6
 // hours hour by hour, and /thoitiethomnay, /thoitietngaymai, and
 // /thoitiettuannay show today's, tomorrow's, and the next 7 days' forecast for
-// a location, Ho Chi Minh City by default; that data comes from Open-Meteo,
-// which needs no API key. /thuyvan shows the flood risk at Tân Thuận (Quận 7)
-// from the KTTV Nam Bộ tide bulletin, the Open-Meteo rain forecast and VNDMS
-// river gauges, and /thuyvan_subscribe opts a chat into a daily alert sent
-// only when a tide or rain threshold is forecast.
+// a location or "lat,long" coordinates, Tân Thuận (formerly Quận 7) by
+// default; that data comes from Open-Meteo, which needs no API key. /thuyvan
+// shows the flood risk at Tân Thuận from the KTTV Nam Bộ tide bulletin, the
+// Open-Meteo rain forecast and VNDMS river gauges, and /thuyvan_subscribe
+// opts a chat into a daily alert sent only when a tide or rain threshold is
+// forecast.
 package weather
 
 import (
@@ -25,7 +26,7 @@ import (
 )
 
 const (
-	locationParameter = "[location...]"
+	locationParameter = "[location... | lat,long]"
 	fetchErrorText    = "Không lấy được dữ liệu thời tiết. Thử lại sau nhé."
 )
 
@@ -76,10 +77,10 @@ func New(deps modules.Deps) modules.Module {
 	}
 	return modules.Module{
 		Commands: append([]modules.Command{
-			command("thoitiethomnay", "Thời tiết hôm nay (mặc định TP.HCM)", todayView),
-			command("thoitiet", "Thời tiết từng giờ trong 6 giờ tới (mặc định TP.HCM)", hourlyView),
-			command("thoitietngaymai", "Thời tiết ngày mai (mặc định TP.HCM)", tomorrowView),
-			command("thoitiettuannay", "Thời tiết 7 ngày tới (mặc định TP.HCM)", weekView),
+			command("thoitiethomnay", "Thời tiết hôm nay (mặc định Tân Thuận, Q.7)", todayView),
+			command("thoitiet", "Thời tiết từng giờ trong 6 giờ tới (mặc định Tân Thuận, Q.7)", hourlyView),
+			command("thoitietngaymai", "Thời tiết ngày mai (mặc định Tân Thuận, Q.7)", tomorrowView),
+			command("thoitiettuannay", "Thời tiết 7 ngày tới (mặc định Tân Thuận, Q.7)", weekView),
 		}, fl.commands()...),
 		Crons: fl.crons(),
 	}
@@ -110,7 +111,8 @@ func handler(client *http.Client, v view) modules.CommandHandler {
 }
 
 // lookup resolves the user's location and fetches its forecast. An empty
-// query or a Ho Chi Minh City alias skips geocoding.
+// query (Tân Thuận), "lat,long" coordinates, or a Ho Chi Minh City alias
+// skips geocoding.
 func lookup(ctx context.Context, client *http.Client, query string) (place, forecast, error) {
 	p, err := resolvePlace(ctx, client, query)
 	if err != nil {
@@ -121,8 +123,14 @@ func lookup(ctx context.Context, client *http.Client, query string) (place, fore
 }
 
 func resolvePlace(ctx context.Context, client *http.Client, query string) (place, error) {
+	if p, ok := parseCoords(query); ok {
+		return p, nil
+	}
 	q := normalizeQuery(query)
-	if q == "" || hcmAliases[q] {
+	if q == "" {
+		return tanThuanPlace, nil
+	}
+	if hcmAliases[q] {
 		return hcmPlace, nil
 	}
 	if expanded, ok := queryAliases[q]; ok {

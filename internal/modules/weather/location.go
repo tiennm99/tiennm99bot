@@ -1,6 +1,8 @@
 package weather
 
 import (
+	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -9,8 +11,22 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// hcmPlace is the default location. Its coordinates are Open-Meteo's own
-// geocoding result for the city, so the default needs no geocoding request.
+// tanThuanPlace is the default location for every forecast command and the
+// flood view's fixed location: phường Tân Thuận, formerly in Quận 7. The
+// coordinates are Open-Meteo's geocoding result for "Tân Thuận" in Quận Bảy;
+// geocoding the name at runtime returns 14 Vietnamese places.
+var tanThuanPlace = place{
+	Name:        "Tân Thuận",
+	Latitude:    10.74111,
+	Longitude:   106.71806,
+	CountryCode: "VN",
+	Country:     "Việt Nam",
+	Admin1:      "Thành phố Hồ Chí Minh",
+}
+
+// hcmPlace is the location for a Ho Chi Minh City alias. Its coordinates are
+// Open-Meteo's own geocoding result for the city, so it needs no geocoding
+// request.
 var hcmPlace = place{
 	Name:        "Thành phố Hồ Chí Minh",
 	Latitude:    10.82302,
@@ -38,6 +54,25 @@ var hcmAliases = map[string]bool{
 var queryAliases = map[string]string{
 	"hn": "Ha Noi",
 	"dn": "Da Nang",
+}
+
+// coordsPattern matches "lat,long" in decimal degrees, separated by a comma,
+// a semicolon, or whitespace: "10.74,106.72", "10.74, 106.72", "10.74 106.72".
+var coordsPattern = regexp.MustCompile(`^([+-]?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*([+-]?\d{1,3}(?:\.\d+)?)$`)
+
+// parseCoords reads a "lat,long" query as a place named by its coordinates.
+// Open-Meteo has no reverse geocoding, so the coordinates are the label.
+func parseCoords(query string) (place, bool) {
+	m := coordsPattern.FindStringSubmatch(strings.TrimSpace(query))
+	if m == nil {
+		return place{}, false
+	}
+	lat, errLat := strconv.ParseFloat(m[1], 64)
+	lon, errLon := strconv.ParseFloat(m[2], 64)
+	if errLat != nil || errLon != nil || lat < -90 || lat > 90 || lon < -180 || lon > 180 {
+		return place{}, false
+	}
+	return place{Name: m[1] + ", " + m[2], Latitude: lat, Longitude: lon}, true
 }
 
 // stripMarks removes combining marks after NFD decomposition, which drops
