@@ -134,16 +134,33 @@ type Result struct {
 	Throttled            bool
 }
 
-// Fanout sends params(sub) to every subscriber. Per-chat send failures are
+// Fanout sends params to every subscriber. ChatID and MessageThreadID are
+// filled in from each subscriber so forum subscribers receive the push in
+// their topic, not in General. Throttling, failure handling and pruning are
+// FanoutFunc's.
+func Fanout(ctx context.Context, name string, store Store, mu *sync.Mutex, subs []Subscriber, sender Sender, params bot.SendMessageParams) (Result, error) {
+	return FanoutFunc(ctx, name, store, mu, subs, func(ctx context.Context, sub Subscriber) error {
+		p := params
+		p.ChatID = sub.ChatID
+		p.MessageThreadID = sub.ThreadID
+		_, err := sender.SendMessage(ctx, &p)
+		return err
+	})
+}
+
+// SendFunc delivers one subscriber's push. It may send several messages; the
+// error of the first one that failed is what FanoutFunc classifies.
+type SendFunc func(ctx context.Context, sub Subscriber) error
+
+// FanoutFunc calls send for every subscriber. Per-chat send failures are
 // logged but do not abort the batch — one bad chat does not deny the rest.
-// ChatID and MessageThreadID are filled in from each subscriber so forum
-// subscribers receive the push in their topic, not in General.
+// Above rateLimitThreshold subscribers, calls are spaced by rateLimitDelay.
 //
 // Unreachable subscribers are pruned afterwards, best-effort, while holding
 // mu (the same mutex that guards Add and Remove). A failed prune just leaves
 // the dead chats listed, and the next push fails on them and retries.
 // The only returned error is ctx cancellation while throttling.
-func Fanout(ctx context.Context, name string, store Store, mu *sync.Mutex, subs []Subscriber, sender Sender, params bot.SendMessageParams) (Result, error) {
+func FanoutFunc(ctx context.Context, name string, store Store, mu *sync.Mutex, subs []Subscriber, send SendFunc) (Result, error) {
 	res := Result{Throttled: len(subs) > rateLimitThreshold}
 	deadChats := map[int64]struct{}{}
 	var deadTopics []Subscriber
@@ -155,10 +172,7 @@ func Fanout(ctx context.Context, name string, store Store, mu *sync.Mutex, subs 
 			case <-time.After(rateLimitDelay):
 			}
 		}
-		p := params
-		p.ChatID = sub.ChatID
-		p.MessageThreadID = sub.ThreadID
-		if _, err := sender.SendMessage(ctx, &p); err != nil {
+		if err := send(ctx, sub); err != nil {
 			log.Warn(name+" push send failed", "chat", sub.ChatID, "thread", sub.ThreadID, "err", err)
 			res.Failed++
 			switch ClassifyTerminal(err) {

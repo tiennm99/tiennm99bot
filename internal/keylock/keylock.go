@@ -31,3 +31,14 @@ func (m *Map) Acquire(key string) func() {
 	mu.Lock()
 	return mu.Unlock
 }
+
+// Len counts the keys that have a mutex, which is the map's memory
+// footprint: keys are never freed, so callers keep their key set bounded.
+func (m *Map) Len() int {
+	n := 0
+	m.m.Range(func(_, _ any) bool {
+		n++
+		return true
+	})
+	return n
+}

@@ -12,6 +12,7 @@ Atlas via long polling and an in-process cron scheduler.
 | `random` | Pick one comma-separated option at random: `/random` (text), `/wheelofnames` (wheel GIF), `/gacha` (card-pack wish MP4; options are 5★ by default, prefix `4*` or `3*`), `/genshin` (unlisted; the same wish as a Genshin-style meteor). The animations use the bundled [renderer](renderer/README.md) service |
 | `amlich` | Vietnamese lunar calendar: `/amlich` (dương lịch → âm lịch, defaults to today), `/duonglich` (âm lịch → dương lịch, `nhuan` flag for leap months); dates accept `d`, `d/m`, or `d/m/yyyy` — missing parts fill from today in the input's calendar. Years 1800–2199 only |
 | `wordle` | Daily Wordle game: `/wordle [word]`, `/wordle_new`, `/wordle_giveup`, `/wordle_stats` |
+| `wordledaily` | Wordle Daily HTML5 game: one shared puzzle a day for everyone, new at 07:00 ICT. `/wordledaily` sends the card; Play opens a board page this bot serves, progress and stats are kept per player, and a win goes to Telegram's high-score table. In a group the bot keeps one live results message per day with spoiler-free colour grids. `/wordledaily_subscribe` / `/wordledaily_unsubscribe` toggle a 07:00 ICT push of the new card plus yesterday's group results. Needs `GAME_BASE_URL`. See [docs/wordledaily.md](docs/wordledaily.md) |
 | `noitu` | Nối từ HTML5 game against the other members of a group (`/noitu`, groups only: everyone who presses Play on that card joins one room, last player standing wins; in a private chat it points to `/noitubot`), or vs the bot (`/noitubot`, its own `noitubot` BotFather game); `/noitutop` shows the group's leaderboard of room games (wins, best game, games played). Needs `GAME_BASE_URL`. Play opens a page this bot serves; words are checked against a Vietnamese dictionary derived from [Wiktionary tiếng Việt](https://vi.wiktionary.org/) (CC BY-SA 4.0, see [its attribution](internal/modules/noitu/dict/data/ATTRIBUTION.md)), and scores go to Telegram's high-score table. See [docs/noitu-game.md](docs/noitu-game.md) |
 | `loldle` | League-of-Legends "guess the champion": `/loldle [champion]`, `/loldle_giveup`, `/loldle_stats`, `/loldle_setmax` (owner) |
 | `lol` | Pro-match schedule (`/lol [date]`, `/lol_tomorrow`, `/lol_this_week`, `/lol_next_week`), per-chat digest opt-in (`/lol_subscribe`, `/lol_unsubscribe`) + daily push at 08:00 ICT |
@@ -233,7 +234,7 @@ all.
 
 ```
 cmd/server/                  entrypoint (long polling + in-process cron + HTTP server)
-internal/server/             HTTP routes (/ health, plus module routes such as /games/noitu/; cron has no HTTP route)
+internal/server/             HTTP routes (/ health, plus module routes such as /games/noitu/ and /games/wordledaily/; cron has no HTTP route)
 internal/telegram/           Telegram long-polling bot wrapper
 internal/cron/               in-process cron scheduler (UTC)
 internal/deploynotify/       startup DM to the owner with the deployed commit
@@ -253,6 +254,7 @@ compose.yml                  Coolify self-host stack (bot + renderer services)
 - [Blacklist](docs/blacklist.md)
 - [Sticker pack](docs/sticker-packs.md)
 - [Nối từ game](docs/noitu-game.md)
+- [Wordle Daily](docs/wordledaily.md)
 - [Lunar calendar algorithm and known issues](docs/amlich-known-issues.md)
 - [Agent and contributor rules](AGENTS.md)
 

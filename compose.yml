@@ -25,8 +25,9 @@ services:
       # GOLD_VNAPP_API_KEY: ${GOLD_VNAPP_API_KEY:-}    # VNAppMob key — SECRET; empty = fetched and cached in Mongo
       # BOT_USERNAME: ${BOT_USERNAME:-}                # bot username without "@"; empty = getMe at startup
       # STICKER_PACK_NAME: ${STICKER_PACK_NAME:-}      # /addsticker set; empty = stickers_by_<bot username>
-      # GAME_BASE_URL: ${GAME_BASE_URL:-}              # public https base routed to this service's :8080; empty = noitu game disabled
+      # GAME_BASE_URL: ${GAME_BASE_URL:-}              # public https base routed to this service's :8080; empty = noitu and wordledaily games disabled
       # NOITU_GAME_SECRET: ${NOITU_GAME_SECRET:-}      # >= 32 bytes, signs game links — SECRET; empty = derived from the bot token
+      # WORDLEDAILY_GAME_SECRET: ${WORDLEDAILY_GAME_SECRET:-}  # >= 32 bytes, signs wordledaily links and keys its answers — SECRET; empty = derived from the bot token
       # LOG_LEVEL: ${LOG_LEVEL:-info}                  # debug|info|warn|error
 
       # --- Fixed by this stack (not Coolify settings) ---

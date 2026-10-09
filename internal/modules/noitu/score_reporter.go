@@ -2,12 +2,11 @@ package noitu
 
 import (
 	"context"
-	"strings"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/tiennm99/tiennm99bot/internal/telegram"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/htmlgame"
 )
 
 // scoreReporter records a finished game's score on the game message.
@@ -23,16 +22,7 @@ type botReporter struct {
 }
 
 func (r botReporter) Report(ctx context.Context, c claims, score int) error {
-	if c.InlineID != "" {
-		return telegram.SetInlineGameScore(ctx, r.b.Token(), c.InlineID, c.UserID, score)
-	}
-	_, err := r.b.SetGameScore(ctx, &bot.SetGameScoreParams{
-		UserID:    c.UserID,
-		Score:     score,
-		ChatID:    c.ChatID,
-		MessageID: c.MessageID,
-	})
-	return err
+	return htmlgame.ReportScore(ctx, r.b, htmlgame.Address{ChatID: c.ChatID, MessageID: c.MessageID, InlineID: c.InlineID}, c.UserID, score)
 }
 
 // announcer posts a finished room game's result into the card's chat.
@@ -54,6 +44,4 @@ func (r botReporter) Announce(ctx context.Context, card claims, text string) err
 
 // scoreNotModified reports Telegram's answer to a score that does not beat the
 // player's best. With force=false that is the expected outcome, not a failure.
-func scoreNotModified(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "BOT_SCORE_NOT_MODIFIED")
-}
+func scoreNotModified(err error) bool { return htmlgame.ScoreNotModified(err) }

@@ -1,15 +1,11 @@
 package noitu
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"strconv"
-	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/htmlgame"
 )
 
 // tokenTTL bounds how long a Play link stays usable.
@@ -19,8 +15,8 @@ const tokenTTL = 6 * time.Hour
 const maxNameRunes = 64
 
 var (
-	errBadToken     = errors.New("noitu: bad token")
-	errTokenExpired = errors.New("noitu: token expired")
+	errBadToken     = htmlgame.ErrBadToken
+	errTokenExpired = htmlgame.ErrTokenExpired
 )
 
 // claims is what a game token asserts: who pressed Play, on which game
@@ -40,6 +36,12 @@ type claims struct {
 	ThreadID  int    `json:"t,omitempty"`
 	Expiry    int64  `json:"e"`
 }
+
+// Valid and ExpiresAt let htmlgame.Verify check a decoded token.
+func (c claims) Valid() bool { return c.valid() }
+
+// ExpiresAt is the unix second the token stops working.
+func (c claims) ExpiresAt() int64 { return c.Expiry }
 
 func (c claims) valid() bool {
 	if c.UserID <= 0 || c.Expiry <= 0 {
@@ -71,44 +73,13 @@ func truncateName(name string) string {
 }
 
 // signToken encodes claims as base64url(json) "." base64url(HMAC-SHA256).
-func signToken(key []byte, c claims) (string, error) {
-	payload, err := json.Marshal(c)
-	if err != nil {
-		return "", err
-	}
-	body := base64.RawURLEncoding.EncodeToString(payload)
-	return body + "." + base64.RawURLEncoding.EncodeToString(tokenMAC(key, body)), nil
-}
-
-func tokenMAC(key []byte, body string) []byte {
-	mac := hmac.New(sha256.New, key)
-	mac.Write([]byte(body))
-	return mac.Sum(nil)
-}
+func signToken(key []byte, c claims) (string, error) { return htmlgame.Sign(key, c) }
 
 // verifyToken checks the signature first, then the claims and the expiry.
 func verifyToken(key []byte, token string, now time.Time) (claims, error) {
-	if len(key) == 0 || len(token) > 1024 {
-		return claims{}, errBadToken
-	}
-	body, sig, ok := strings.Cut(token, ".")
-	if !ok {
-		return claims{}, errBadToken
-	}
-	gotMAC, err := base64.RawURLEncoding.DecodeString(sig)
-	if err != nil || !hmac.Equal(gotMAC, tokenMAC(key, body)) {
-		return claims{}, errBadToken
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(body)
-	if err != nil {
-		return claims{}, errBadToken
-	}
 	var c claims
-	if err := json.Unmarshal(payload, &c); err != nil || !c.valid() {
-		return claims{}, errBadToken
-	}
-	if now.Unix() >= c.Expiry {
-		return claims{}, errTokenExpired
+	if err := htmlgame.Verify(key, token, now, &c); err != nil {
+		return claims{}, err
 	}
 	return c, nil
 }

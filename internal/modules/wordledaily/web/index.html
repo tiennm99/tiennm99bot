@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>Wordle Daily</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div class="title">
+      <h1>Wordle Daily <span id="num"></span></h1>
+      <p id="subtitle" class="muted"></p>
+    </div>
+    <div class="top-actions">
+      <button type="button" id="contrast-btn" class="icon" aria-pressed="false" aria-label="High contrast colours" title="High contrast colours"><span aria-hidden="true">◐</span></button>
+      <button type="button" id="stats-btn" class="icon" aria-label="Results" title="Results" hidden><span aria-hidden="true">▤</span></button>
+    </div>
+  </header>
+
+  <section id="screen-missing" class="card" hidden>
+    <p class="lead">Open the game from Telegram.</p>
+    <p class="muted">Send <code>/wordledaily</code> in a chat with the bot, then press Play.</p>
+  </section>
+
+  <section id="screen-game" hidden>
+    <div class="board-wrap">
+      <div id="board" class="board" role="group" aria-label="Guesses"></div>
+    </div>
+    <div id="keyboard" class="keyboard" aria-label="Keyboard"></div>
+  </section>
+
+  <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
+  <p id="announce" class="sr-only" aria-live="polite"></p>
+
+  <div id="end" class="overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="end-title">
+      <button type="button" id="end-close" class="icon close" aria-label="Close" title="Close"><span aria-hidden="true">✕</span></button>
+      <h2 id="end-title"></h2>
+      <p id="end-answer" class="answer"></p>
+      <h3>Statistics</h3>
+      <div class="stats">
+        <div><strong id="st-played">0</strong><span>Played</span></div>
+        <div><strong id="st-pct">0</strong><span>Win %</span></div>
+        <div><strong id="st-cur">0</strong><span>Current Streak</span></div>
+        <div><strong id="st-max">0</strong><span>Max Streak</span></div>
+      </div>
+      <h3>Guess Distribution</h3>
+      <ol id="dist" class="dist"></ol>
+      <p class="next">Next puzzle in <strong id="countdown">--:--:--</strong></p>
+      <button type="button" id="next-btn" class="primary" hidden>Play the new puzzle</button>
+      <div class="actions">
+        <button type="button" id="share-btn" class="primary" hidden>Share</button>
+        <button type="button" id="copy-btn">Copy result</button>
+      </div>
+    </section>
+  </div>
+</main>
+<script src="app.js"></script>
+<script src="https://telegram.org/js/games.js" async></script>
+</body>
+</html>

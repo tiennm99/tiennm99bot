@@ -165,6 +165,15 @@ func (rb *RecordingBot) FailMethod(method string, status int, body string) {
 	rb.failures[method] = failureResponse{status: status, body: body}
 }
 
+// ClearFailure removes a failure registered with FailMethod or
+// FailMethodCode, so the method succeeds again (a test of a retry after a
+// transient error).
+func (rb *RecordingBot) ClearFailure(method string) {
+	rb.mu.Lock()
+	defer rb.mu.Unlock()
+	delete(rb.failures, method)
+}
+
 // handle is the httptest server's request handler. Path shape is
 // "/bot<token>/<method>" per the go-telegram/bot URL builder. We extract the
 // method, parse the multipart form, record, and respond with a minimal-ok

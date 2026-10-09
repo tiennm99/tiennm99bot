@@ -122,6 +122,30 @@ func TestFactoriesRegistersNoituDisabledByDefault(t *testing.T) {
 	}
 }
 
+// wordledaily is in the catalog and, with GAME_BASE_URL unset, registers its
+// commands and game but no public HTTP route and no daily push.
+func TestFactoriesRegistersWordleDailyDisabledByDefault(t *testing.T) {
+	t.Setenv("GAME_BASE_URL", "")
+	t.Setenv("WORDLEDAILY_GAME_SECRET", "")
+	reg, err := modules.Build([]string{"wordledaily"}, factories(), storage.NewMemoryProvider(), modules.BuildOptions{})
+	if err != nil {
+		t.Fatalf("Build wordledaily: %v", err)
+	}
+	for _, name := range []string{"wordledaily", "wordledaily_subscribe", "wordledaily_unsubscribe"} {
+		if _, ok := reg.AllCommands[name]; !ok {
+			t.Fatalf("missing command %s", name)
+		}
+	}
+	if routes := serverRoutes(reg); len(routes) != 0 {
+		t.Fatalf("disabled game exposes routes: %+v", routes)
+	}
+	for _, m := range reg.Modules {
+		if len(m.Crons) != 0 {
+			t.Fatalf("disabled game registers crons: %+v", m.Crons)
+		}
+	}
+}
+
 // An empty MODULES loads every module, so a command name that collides with an
 // existing module surfaces here as a test failure rather than as a startup
 // crash on deploy.

@@ -71,3 +71,16 @@ func TestMap_SameKeySerialises(t *testing.T) {
 		t.Errorf("counter = %d, want %d (lost updates → mutex didn't serialise)", got, goroutines*itersEach)
 	}
 }
+
+func TestMap_LenCountsDistinctKeys(t *testing.T) {
+	var m Map
+	if m.Len() != 0 {
+		t.Fatalf("empty Len = %d", m.Len())
+	}
+	m.Acquire("a")()
+	m.Acquire("a")()
+	m.Acquire("b")()
+	if m.Len() != 2 {
+		t.Fatalf("Len = %d, want 2", m.Len())
+	}
+}

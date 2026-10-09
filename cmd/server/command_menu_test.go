@@ -107,6 +107,10 @@ func TestCommandDiscovery_AllPublicCommandsHaveSafeMetadata(t *testing.T) {
 		"tth":                  "[target...]",
 		"wheelofnames":         "<option,...>",
 		"wordle":               "[word]",
+
+		"wordledaily":             "",
+		"wordledaily_subscribe":   "",
+		"wordledaily_unsubscribe": "",
 	}
 
 	menu := botCommandMenu(reg)

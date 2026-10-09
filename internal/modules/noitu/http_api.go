@@ -1,9 +1,7 @@
 package noitu
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -13,10 +11,11 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/dict"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/engine"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/opponent"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/htmlgame"
 )
 
 const (
-	maxBodyBytes  = 4 << 10
+	maxBodyBytes  = htmlgame.MaxBodyBytes
 	maxWordRunes  = 64
 	maxWordTokens = 8
 )
@@ -101,37 +100,17 @@ func (s *service) handler() http.Handler {
 // travels in the page URL, so no referrer may leak it. Telegram Web embeds
 // games in an iframe, so framing is deliberately not restricted.
 func securityHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h := w.Header()
-		h.Set("Referrer-Policy", "no-referrer")
-		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'")
-		if strings.HasPrefix(r.URL.Path, routePrefix+"api/") {
-			h.Set("Cache-Control", "no-store")
-		}
-		next.ServeHTTP(w, r)
-	})
+	return htmlgame.SecurityHeaders(routePrefix, next)
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
-}
+func writeJSON(w http.ResponseWriter, status int, v any) { htmlgame.WriteJSON(w, status, v) }
 
 func writeError(w http.ResponseWriter, e apiError) { writeJSON(w, e.status, e) }
 
 // decode reads one JSON object of at most maxBodyBytes with no unknown fields
 // and nothing after it.
 func decode(w http.ResponseWriter, r *http.Request, dst any) bool {
-	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(dst); err != nil {
-		writeError(w, errBadRequest)
-		return false
-	}
-	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
+	if err := htmlgame.DecodeJSON(w, r, dst); err != nil {
 		writeError(w, errBadRequest)
 		return false
 	}

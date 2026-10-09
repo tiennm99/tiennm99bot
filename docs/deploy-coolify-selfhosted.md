@@ -45,8 +45,9 @@ Copy [`.env.example`](../.env.example) → `.env` (gitignored) and fill in.
 | `BOT_USERNAME` | optional | the bot's Telegram username, without `@`; unset = asked from Telegram (`getMe`) once at startup. Used for the default sticker pack name and the lol User-Agent |
 | `STICKER_PACK_NAME` | optional | set `/addsticker` writes to; default `stickers_by_<bot username>`. See [sticker packs](sticker-packs.md) |
 | `LOL_PANDASCORE_TOKEN` | optional | PandaScore API token for the lol module (free tier) — secret, never logged; without it every `/lol*` fetch fails (stale cache may still serve briefly) |
-| `GAME_BASE_URL` | optional | public `https://` base routed to the bot's `:8080`, e.g. `https://noitu.example.com`; unset or invalid = the `noitu` game is disabled. See [the noitu game](noitu-game.md) |
+| `GAME_BASE_URL` | optional | public `https://` base routed to the bot's `:8080`, e.g. `https://noitu.example.com`; unset or invalid = the `noitu` and `wordledaily` games are disabled. See [the noitu game](noitu-game.md) and [Wordle Daily](wordledaily.md) |
 | `NOITU_GAME_SECRET` | optional | at least 32 bytes; signs game links — secret. Unset = derived from `TELEGRAM_BOT_TOKEN`, so rotating the token invalidates open game links |
+| `WORDLEDAILY_GAME_SECRET` | optional | at least 32 bytes; signs `wordledaily` game links and keys its daily answer order — secret. Unset = derived from `TELEGRAM_BOT_TOKEN`. Puzzles already started keep their stored answer when it changes. See [Wordle Daily](wordledaily.md) |
 | `RENDERER_URL` | leave unset | base URL of the animation renderer; fixed by `compose.yml` to the bundled renderer (`http://renderer:3000`), so a Coolify value is ignored |
 | `LOG_LEVEL` | optional | `debug`, `info` (default), `warn`, or `error`; logs are JSON on stdout |
 | `GOLD_VNAPP_API_KEY` | optional | VNAppMob key — secret; empty = the gold module fetches one and caches it in MongoDB |
@@ -175,7 +176,7 @@ MP4, with the same text fallback.
    is enabled:** attach a domain to the `bot` service with port 8080 (in Coolify,
    `https://noitu.example.com:8080`), and set `GAME_BASE_URL` to that domain
    without the port. Coolify's proxy terminates TLS and forwards to the
-   container's 8080; only `/games/noitu/` and the health text are served there.
+   container's 8080; only `/games/noitu/`, `/games/wordledaily/` and the health text are served there.
    Never attach a domain to the `renderer` service.
 4. **Exactly one replica.** Telegram permits only one `getUpdates` consumer per
    bot token; a second poller gets HTTP 409, and a second in-process scheduler

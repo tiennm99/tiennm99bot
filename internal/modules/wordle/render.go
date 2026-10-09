@@ -2,19 +2,9 @@ package wordle
 
 import (
 	"strings"
-)
 
-// markerFor maps a LetterScore.Result to the NYT-Wordle share emoji.
-func markerFor(result string) string {
-	switch result {
-	case ResultCorrect:
-		return "🟩"
-	case ResultPartial:
-		return "🟨"
-	default:
-		return "⬜"
-	}
-}
+	"github.com/tiennm99/tiennm99bot/internal/modules/wordle/wordlist"
+)
 
 // renderGuess formats one guess as the NYT share-pattern: word on one line,
 // emoji marker row below.
@@ -22,11 +12,7 @@ func markerFor(result string) string {
 //	CRANE
 //	🟩🟨⬜🟩🟩
 func renderGuess(word string, results []LetterScore) string {
-	var markers strings.Builder
-	for _, r := range results {
-		markers.WriteString(markerFor(r.Result))
-	}
-	return strings.ToUpper(word) + "\n" + markers.String()
+	return strings.ToUpper(word) + "\n" + wordlist.EmojiRow(results)
 }
 
 // renderBoard joins all prior guesses, blank-line separated. Used when a

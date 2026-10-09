@@ -42,6 +42,7 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/modules/util"
 	"github.com/tiennm99/tiennm99bot/internal/modules/weather"
 	"github.com/tiennm99/tiennm99bot/internal/modules/wordle"
+	"github.com/tiennm99/tiennm99bot/internal/modules/wordledaily"
 	"github.com/tiennm99/tiennm99bot/internal/server"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
 	"github.com/tiennm99/tiennm99bot/internal/systemstate"
@@ -101,6 +102,7 @@ func factories() map[string]modules.Factory {
 		"amlich":               amlich.New,
 		"monkeyd":              monkeyd.New,
 		"wordle":               wordle.New,
+		wordledaily.ShortName:  wordledaily.New,
 		noitu.ShortName:        noitu.New,
 		"loldle":               loldle.New,
 		lol.CollectionName:     lol.New,
