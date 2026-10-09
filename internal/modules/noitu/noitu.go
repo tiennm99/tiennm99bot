@@ -12,16 +12,19 @@
 package noitu
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
 	mrand "math/rand/v2"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/tiennm99/tiennm99bot/internal/log"
 	"github.com/tiennm99/tiennm99bot/internal/modules"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/dict"
-	"github.com/tiennm99/tiennm99bot/internal/modules/util/htmlgame"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
@@ -143,7 +146,18 @@ func (svc *service) module() modules.Module {
 
 // parseBaseURL accepts https://host[/path] and returns it without a trailing
 // slash. Anything else is logged and disables the game.
-func parseBaseURL(raw string) string { return htmlgame.ParseBaseURL(raw, ShortName) }
+func parseBaseURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		log.Warn("GAME_BASE_URL must be https://host[/path]; noitu game disabled")
+		return ""
+	}
+	return strings.TrimRight(u.String(), "/")
+}
 
 // tokenKey returns NOITU_GAME_SECRET when set, otherwise a key derived from
 // the bot token. A secret that is set but too short disables the game rather
@@ -165,7 +179,12 @@ func tokenKey(secret string, deps modules.Deps) []byte {
 // deriveKey is HMAC-SHA256(key=bot token, tokenKeyLabel). Rotating the bot
 // token therefore invalidates every open game link.
 func deriveKey(botToken string) []byte {
-	return htmlgame.DeriveKey([]byte(botToken), tokenKeyLabel)
+	if botToken == "" {
+		return nil
+	}
+	mac := hmac.New(sha256.New, []byte(botToken))
+	mac.Write([]byte(tokenKeyLabel))
+	return mac.Sum(nil)
 }
 
 // newSessionRNG seeds a per-game generator for the opening word and the bot's
