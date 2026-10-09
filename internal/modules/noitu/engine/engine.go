@@ -1,20 +1,16 @@
-// Package engine holds the rules of one nối từ game between a human and the
-// bot: what counts as a legal move, whose turn it is, when the turn expires
-// and how a word is scored.
+// Package engine holds the rules of one nối từ game, either a human against
+// the bot or people against each other: what counts as a legal move, whose
+// turn it is, when the turn expires and how a word is scored.
 //
-// It is a two-player cut of tiennm99/noitu server/internal/game/engine.go.
+// It is ported from tiennm99/noitu server/internal/game/engine.go: Engine
+// is the two-player cut against the bot, Match the game between people.
 // The engine never reads the clock: every call that depends on time takes a
 // now argument, so the rules are testable without a timer.
 package engine
 
 import (
-	"errors"
-	"fmt"
 	"iter"
-	"slices"
 	"time"
-
-	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/dict"
 )
 
 // Side is one of the two players.
@@ -55,9 +51,9 @@ type EndReason string
 // End reasons. EndNone means the game is still in play.
 const (
 	EndNone        EndReason = ""
-	EndTimeout     EndReason = "timeout"       // the human ran out of time
-	EndNoLegalMove EndReason = "no_legal_move" // the human was left a dead end
-	EndGaveUp      EndReason = "gave_up"       // the human resigned
+	EndTimeout     EndReason = "timeout"       // the player to act ran out of time
+	EndNoLegalMove EndReason = "no_legal_move" // the player to act was left a dead end
+	EndGaveUp      EndReason = "gave_up"       // the player resigned
 	EndBotStuck    EndReason = "bot_stuck"     // the bot had no legal move
 	EndMaxMoves    EndReason = "max_moves"     // the chain reached the per-game cap
 )
@@ -72,27 +68,22 @@ type Dictionary interface {
 }
 
 // Move is one played word. Word is the canonical spelling, which may differ
-// from what the player typed.
+// from what the player typed. By is set in an Engine game, Seat in a Match.
 type Move struct {
 	By        Side
+	Seat      int
 	Word      string
 	Syllables int
 	Points    int
 	At        time.Time
 }
 
-// Engine is one game. Not safe for concurrent use; the caller serializes.
+// Engine is one game of the human against the bot. Not safe for concurrent
+// use; the caller serializes.
 type Engine struct {
-	dict      Dictionary
-	opening   string
-	used      map[string]struct{}
-	current   string
-	turn      Side
-	turnLimit time.Duration
-	grace     time.Duration
-	deadline  time.Time
-	history   []Move
-	score     int
+	board
+	turn  Side
+	score int
 
 	over      bool
 	winner    Side
@@ -105,47 +96,15 @@ type Engine struct {
 // grace is extra time after the deadline during which a submission still
 // counts, to absorb network latency. It never earns speed points.
 func New(d Dictionary, opening string, turnLimit, grace time.Duration, now time.Time) (*Engine, error) {
-	if d == nil {
-		return nil, errors.New("engine: nil dictionary")
+	b, err := newBoard(d, opening, turnLimit, grace, now)
+	if err != nil {
+		return nil, err
 	}
-	if turnLimit <= 0 || grace < 0 {
-		return nil, fmt.Errorf("engine: invalid turn limit %v / grace %v", turnLimit, grace)
-	}
-	canonical, ok := d.Resolve(opening)
-	if !ok {
-		return nil, fmt.Errorf("engine: opening word %q is not in the dictionary", opening)
-	}
-	last, _ := d.LastSyllable(canonical)
-	e := &Engine{
-		dict:      d,
-		opening:   canonical,
-		used:      map[string]struct{}{canonical: {}},
-		current:   last,
-		turn:      Human,
-		turnLimit: turnLimit,
-		grace:     grace,
-		deadline:  now.Add(turnLimit),
-	}
-	if !e.HasLegalMove() {
-		return nil, fmt.Errorf("engine: opening word %q ends on %q, which starts no other word", canonical, last)
-	}
-	return e, nil
+	return &Engine{board: b, turn: Human}, nil
 }
-
-// Opening is the bot's opening word.
-func (e *Engine) Opening() string { return e.opening }
-
-// Current is the syllable the next word must start with.
-func (e *Engine) Current() string { return e.current }
 
 // Turn reports whose move it is.
 func (e *Engine) Turn() Side { return e.turn }
-
-// Deadline is when the current turn ends, before the grace period.
-func (e *Engine) Deadline() time.Time { return e.deadline }
-
-// TurnLimit is the length of one turn.
-func (e *Engine) TurnLimit() time.Duration { return e.turnLimit }
 
 // Over reports whether the game has finished.
 func (e *Engine) Over() bool { return e.over }
@@ -159,23 +118,11 @@ func (e *Engine) EndReason() EndReason { return e.endReason }
 // Score is the human's total points.
 func (e *Engine) Score() int { return e.score }
 
-// History returns the played moves after the opening word, oldest first.
-func (e *Engine) History() []Move { return slices.Clone(e.history) }
-
-// ChainLength counts the words played, opening word included.
-func (e *Engine) ChainLength() int { return len(e.history) + 1 }
-
-// Expired reports whether the current turn ran out, grace period included.
-func (e *Engine) Expired(now time.Time) bool {
-	return now.After(e.deadline.Add(e.grace))
-}
-
 // Submit validates a word from side and, when legal, plays it.
 //
-// Checks run in this order: game over, turn, expiry, syllable count,
-// dictionary, link, reuse. Resolving before the link check matters: the
-// canonical spelling can change the first syllable ("sỹ hai" → "sĩ hai").
-// An expired turn ends the game against the human (the bot never waits).
+// Checks run in this order: game over, turn, expiry, then the word rules
+// (see board.check). An expired turn ends the game against the human (the
+// bot never waits).
 func (e *Engine) Submit(side Side, raw string, now time.Time) (Move, Reason) {
 	if e.over {
 		return Move{}, ReasonGameOver
@@ -187,44 +134,20 @@ func (e *Engine) Submit(side Side, raw string, now time.Time) (Move, Reason) {
 		e.expire()
 		return Move{}, ReasonTimeout
 	}
-	normalized, syllables, err := dict.Normalize(raw)
-	if err != nil || !dict.HasEnoughSyllables(syllables) {
-		return Move{}, ReasonTooFewSyllables
+	move, last, reason := e.check(raw, now)
+	if reason != ReasonNone {
+		return Move{}, reason
 	}
-	canonical, ok := e.dict.Resolve(normalized)
-	if !ok {
-		return Move{}, ReasonNotInDictionary
-	}
-	first, _ := e.dict.FirstSyllable(canonical)
-	if first != e.current {
-		return Move{}, ReasonWrongLink
-	}
-	if _, played := e.used[canonical]; played {
-		return Move{}, ReasonAlreadyUsed
-	}
-	last, _ := e.dict.LastSyllable(canonical)
-	// Count the canonical word's syllables: a variant spelling never changes
-	// the count, but the canonical form is what was played.
-	n := len(syllablesOf(canonical))
-	move := Move{By: side, Word: canonical, Syllables: n, Points: e.pointsFor(n, first, now), At: now}
-
-	e.used[canonical] = struct{}{}
-	e.history = append(e.history, move)
+	move.By = side
+	e.play(move, last, now)
 	if side == Human {
 		e.score += move.Points
 	}
-	e.current = last
 	e.turn = side.other()
-	e.deadline = now.Add(e.turnLimit)
 	// A dead end does not end the game here. The human keeps the turn and
 	// loses it on the clock or claims it with NoMove; the caller settles the
 	// bot's with BotStuck.
 	return move, ReasonNone
-}
-
-func syllablesOf(word string) []string {
-	_, s, _ := dict.Normalize(word)
-	return s
 }
 
 // Timeout ends the game against the human when their turn has expired.
@@ -293,53 +216,4 @@ func (e *Engine) end(winner Side, reason EndReason) {
 	e.over = true
 	e.winner = winner
 	e.endReason = reason
-}
-
-// Used reports whether a canonical word has been played.
-func (e *Engine) Used(word string) bool {
-	_, ok := e.used[word]
-	return ok
-}
-
-// WordsStartingWith iterates the dictionary words starting with syllable,
-// played ones included.
-func (e *Engine) WordsStartingWith(syllable string) iter.Seq[string] {
-	return e.dict.WordsStartingWith(syllable)
-}
-
-// LastSyllable reports the last syllable of a canonical word.
-func (e *Engine) LastSyllable(word string) (string, bool) {
-	return e.dict.LastSyllable(word)
-}
-
-// LegalMoves lists every unused word that answers the current syllable.
-func (e *Engine) LegalMoves() []string {
-	var out []string
-	for w := range e.dict.WordsStartingWith(e.current) {
-		if !e.Used(w) {
-			out = append(out, w)
-		}
-	}
-	return out
-}
-
-// HasLegalMove reports whether the side to act has anything to play.
-func (e *Engine) HasLegalMove() bool {
-	for w := range e.dict.WordsStartingWith(e.current) {
-		if !e.Used(w) {
-			return true
-		}
-	}
-	return false
-}
-
-// Suggestions lists up to n words the side to act could still play, sorted.
-// Shown to a player who lost; empty means the position was a dead end.
-func (e *Engine) Suggestions(n int) []string {
-	if n <= 0 {
-		return nil
-	}
-	moves := e.LegalMoves()
-	slices.Sort(moves)
-	return moves[:min(n, len(moves))]
 }

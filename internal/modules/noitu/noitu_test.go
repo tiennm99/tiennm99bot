@@ -109,11 +109,23 @@ func TestNew_DisabledWithoutBaseURL(t *testing.T) {
 	if len(mod.HTTP) != 0 || len(mod.Crons) != 0 {
 		t.Fatalf("disabled game exposes routes %v / crons %v", mod.HTTP, mod.Crons)
 	}
-	if len(mod.Commands) != 1 || mod.Commands[0].Name != "noitu" || mod.Commands[0].Parameters != "" {
+	if len(mod.Commands) != 2 || mod.Commands[0].Name != "noitu" || mod.Commands[1].Name != "noitupvp" ||
+		mod.Commands[0].Parameters != "" || mod.Commands[1].Parameters != "" {
 		t.Fatalf("commands = %+v", mod.Commands)
+	}
+	for _, c := range mod.Commands {
+		if c.Visibility != modules.VisibilityPublic || c.Description == "" {
+			t.Fatalf("command %+v is not a described public command", c)
+		}
 	}
 	if len(mod.Games) != 1 || mod.Games[0].ShortName != "noitu" {
 		t.Fatalf("games = %+v", mod.Games)
+	}
+	// /noitupvp registers cards even while the game is disabled, so their
+	// cleanup still runs; nothing else does.
+	mod = New(modules.Deps{Bot: rb.Bot, Store: storage.NewMemoryProvider().Collection("noitu")})
+	if len(mod.HTTP) != 0 || len(mod.Crons) != 1 || mod.Crons[0].Name != "noitu_pvp_cards" {
+		t.Fatalf("disabled game with a store: routes %v / crons %+v", mod.HTTP, mod.Crons)
 	}
 }
 

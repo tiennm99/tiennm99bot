@@ -1,6 +1,8 @@
 // Package noitu is the "nối từ" Telegram HTML5 game: the /noitu command sends
 // the BotFather game, the Play button opens a page this bot serves, and the
-// player chains Vietnamese words against the bot opponent there.
+// player chains Vietnamese words against the bot opponent there. /noitupvp
+// sends a card whose Play button opens a room where the chat's members chain
+// words against each other.
 //
 // The server owns the game. The page only sends words; validation, the turn
 // timer, the bot's replies and the score all happen here, and the score is
@@ -22,6 +24,7 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/log"
 	"github.com/tiennm99/tiennm99bot/internal/modules"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/dict"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 const (
@@ -42,12 +45,14 @@ const (
 
 // config is everything New reads from the environment, injectable in tests.
 type config struct {
-	baseURL  string // public https base without trailing slash; "" disables
-	key      []byte // token HMAC key; empty disables
-	now      func() time.Time
-	newRNG   func() *mrand.Rand
-	reporter scoreReporter // nil disables
-	loadDict func() (*dict.Store, error)
+	baseURL   string // public https base without trailing slash; "" disables
+	key       []byte // token HMAC key; empty disables
+	now       func() time.Time
+	newRNG    func() *mrand.Rand
+	reporter  scoreReporter // nil disables
+	announcer announcer     // nil skips room result messages
+	cards     storage.DocStore[pvpCard]
+	loadDict  func() (*dict.Store, error)
 }
 
 // New builds the module from the environment. The game is enabled only when
@@ -63,6 +68,10 @@ func New(deps modules.Deps) modules.Module {
 	}
 	if deps.Bot != nil {
 		cfg.reporter = botReporter{b: deps.Bot}
+		cfg.announcer = botReporter{b: deps.Bot}
+	}
+	if deps.Store != nil {
+		cfg.cards = storage.Typed[pvpCard](deps.Store)
 	}
 	return newWithConfig(cfg)
 }
@@ -73,7 +82,7 @@ func newWithConfig(cfg config) modules.Module { return newService(cfg).module() 
 // newService loads the dictionary when the game is configured. A load failure
 // leaves the game disabled rather than failing startup for every module.
 func newService(cfg config) *service {
-	svc := &service{cfg: cfg, sessions: newSessionStore()}
+	svc := &service{cfg: cfg, sessions: newSessionStore(), rooms: newRoomStore()}
 	if cfg.baseURL != "" && len(cfg.key) > 0 && cfg.reporter != nil {
 		words, err := cfg.loadDict()
 		if err != nil {
@@ -88,7 +97,8 @@ func newService(cfg config) *service {
 
 // module describes the service to the registry. Routes and the sweep cron
 // exist only when the game is enabled, so a disabled game exposes nothing
-// over HTTP.
+// over HTTP. The card cleanup runs whenever cards can be stored, because
+// /noitupvp registers cards even while the game is disabled.
 func (svc *service) module() modules.Module {
 	mod := modules.Module{
 		Commands: []modules.Command{{
@@ -96,6 +106,11 @@ func (svc *service) module() modules.Module {
 			Visibility:  modules.VisibilityPublic,
 			Description: "Chơi nối từ với bot",
 			Handler:     svc.handleCommand,
+		}, {
+			Name:        pvpCommand,
+			Visibility:  modules.VisibilityPublic,
+			Description: "Chơi nối từ với các thành viên trong nhóm",
+			Handler:     svc.handlePvPCommand,
 		}},
 		Games: []modules.Game{{
 			ShortName:  ShortName,
@@ -106,6 +121,9 @@ func (svc *service) module() modules.Module {
 	if svc.enabled() {
 		mod.HTTP = []modules.Route{{Pattern: routePrefix, Handler: svc.handler()}}
 		mod.Crons = []modules.Cron{{Schedule: "* * * * *", Name: "noitu_sweep", Handler: svc.sweepCron}}
+	}
+	if svc.cfg.cards != nil {
+		mod.Crons = append(mod.Crons, modules.Cron{Schedule: cardCleanupSchedule, Name: "noitu_pvp_cards", Handler: svc.cleanupCards})
 	}
 	return mod
 }

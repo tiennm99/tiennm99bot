@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tiennm99/tiennm99bot/internal/keylock"
 	"github.com/tiennm99/tiennm99bot/internal/log"
 	"github.com/tiennm99/tiennm99bot/internal/modules"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/dict"
@@ -197,6 +198,10 @@ type service struct {
 	cfg      config
 	words    *dict.Store // nil when the game is disabled
 	sessions *sessionStore
+	rooms    *roomStore
+	// publishing serializes each card's room results: its announcements and
+	// setGameScore edits.
+	publishing keylock.Map
 }
 
 func (s *service) enabled() bool { return s.words != nil }
@@ -218,7 +223,9 @@ func (s *service) sweep(now time.Time) {
 }
 
 func (s *service) sweepCron(context.Context, modules.Deps) error {
-	s.sweep(s.cfg.now())
+	now := s.cfg.now()
+	s.sweep(now)
+	s.sweepRooms(now)
 	return nil
 }
 

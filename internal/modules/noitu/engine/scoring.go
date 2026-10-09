@@ -26,13 +26,13 @@ const (
 
 // pointsFor scores a word about to be played: syllables is its length, link
 // the syllable it answers, now when it was played.
-func (e *Engine) pointsFor(syllables int, link string, now time.Time) int {
+func (b *board) pointsFor(syllables int, link string, now time.Time) int {
 	parts := []int{
 		basePoints,
-		chainBonus * min(e.ChainLength(), chainBonusWords),
+		chainBonus * min(b.ChainLength(), chainBonusWords),
 		syllableBonus * (syllables - dict.MinSyllables),
-		e.speedPoints(now),
-		e.rarityPoints(link),
+		b.speedPoints(now),
+		b.rarityPoints(link),
 	}
 	total := 0
 	for _, p := range parts {
@@ -43,19 +43,19 @@ func (e *Engine) pointsFor(syllables int, link string, now time.Time) int {
 
 // speedPoints pays for the share of the turn left on the clock. A move in the
 // grace period is past the deadline and earns nothing.
-func (e *Engine) speedPoints(now time.Time) int {
-	remaining := e.deadline.Sub(now)
+func (b *board) speedPoints(now time.Time) int {
+	remaining := b.deadline.Sub(now)
 	if remaining <= 0 {
 		return 0
 	}
-	remaining = min(remaining, e.turnLimit)
-	return int(int64(speedBonus) * int64(remaining) / int64(e.turnLimit))
+	remaining = min(remaining, b.turnLimit)
+	return int(int64(speedBonus) * int64(remaining) / int64(b.turnLimit))
 }
 
 // rarityPoints pays for how few corpus words answer link, spent ones
 // included: the reward is a property of the dictionary, not of this game.
-func (e *Engine) rarityPoints(link string) int {
-	options := e.dict.OutDegree(link)
+func (b *board) rarityPoints(link string) int {
+	options := b.dict.OutDegree(link)
 	if options < 1 {
 		return 0
 	}

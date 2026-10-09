@@ -26,12 +26,18 @@ var (
 // claims is what a game token asserts: who pressed Play, on which game
 // message, until when. Exactly one address is set: ChatID+MessageID for a
 // message the bot sent, or InlineID for one sent via the bot.
+//
+// PvP marks a Play press on a card /noitupvp registered: the page then joins
+// the card's room instead of playing the bot. Only a chat message can be a
+// card, and ThreadID is its forum topic, where the room posts its results.
 type claims struct {
 	UserID    int64  `json:"u"`
 	Name      string `json:"n,omitempty"`
 	ChatID    int64  `json:"c,omitempty"`
 	MessageID int    `json:"m,omitempty"`
 	InlineID  string `json:"i,omitempty"`
+	PvP       bool   `json:"p,omitempty"`
+	ThreadID  int    `json:"t,omitempty"`
 	Expiry    int64  `json:"e"`
 }
 
@@ -41,6 +47,9 @@ func (c claims) valid() bool {
 	}
 	chat := c.ChatID != 0 && c.MessageID != 0
 	inline := c.InlineID != ""
+	if c.PvP && !chat {
+		return false
+	}
 	return chat != inline
 }
 

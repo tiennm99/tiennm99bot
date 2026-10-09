@@ -5,6 +5,10 @@ the bot. `/noitu` sends the game into the chat. Pressing **Play** opens a page
 that this bot serves itself, where the player chains words against the bot.
 The final score goes to Telegram's in-chat high-score table.
 
+`/noitupvp` sends the same game as a room card: the members of a group who
+press Play on it play each other instead of the bot. See
+[Playing together](#playing-together-noitupvp).
+
 The rules, the dictionary and the bot opponent come from `tiennm99/noitu`. Its
 Go code is ported in-tree under `internal/modules/noitu/{dict,engine,opponent}`,
 and its dictionary is embedded in the binary.
@@ -159,7 +163,8 @@ Errors are `{"error","message"}`:
 - **Token:**
   - Format: `base64url(json) "." base64url(HMAC-SHA256)`, checked with
     `hmac.Equal`.
-  - It expires after 6 hours and is checked only at `api/start`.
+  - It expires after 6 hours and is checked only at `api/start` and
+    `api/room/join`.
   - It travels in the query string, never in the path. The request log records
     only the path. The page removes it from the address bar on load and keeps
     it in memory and `sessionStorage`, so copying or sharing the page link
@@ -192,6 +197,136 @@ Errors are `{"error","message"}`:
   - `X-Content-Type-Options: nosniff`.
   - API responses are `no-store`.
   - Framing is not restricted, because Telegram Web shows games in an iframe.
+
+## Playing together (`/noitupvp`)
+
+`/noitupvp` works in groups and supergroups only; in a private chat or a
+channel it answers "Chơi nối từ cùng nhau cần một nhóm…". It sends the same
+BotFather game, `noitu`, and records the sent message as a **card** in the
+module's storage collection (`noitu`, key `pvp:<chat_id>:<message_id>`, with
+the forum topic). If the card cannot be recorded, the bot deletes it again and
+answers "Không tạo được phòng nối từ. Thử lại sau nhé."
+
+- Play on a card issues a token marked PvP (`p`), carrying the card's forum
+  topic (`t`). The page reads that flag and opens the room instead of the
+  start screen. The server checks the flag again: `api/start` refuses a PvP
+  token and `api/room/join` refuses any other.
+- A forwarded copy of a card is a different message, and a `?game=` share is
+  an inline message; neither is a card, so both play against the bot.
+- A card stays a room for 30 days after its last Play press. Play refreshes
+  that date at most once a day, and a daily cron (`noitu_pvp_cards`, 03:30
+  ICT) forgets older cards, which then play solo. The cron runs whenever the
+  storage is available, even while the game is disabled.
+
+### Rooms
+
+- Everyone who presses Play on the same card joins **one room**. A second
+  press, or a reload, keeps the member's place.
+- The lobby lists the members in join order. The first is the **host** and
+  starts a game with "Bắt đầu", which needs at least 2 players.
+- A game seats the first 8 members, in join order. Anyone else, and anyone
+  who joins during a game, watches.
+- When a game ends, the room returns to the lobby with the result, and the
+  host can start the next game on the same card.
+- Rooms live in memory only, so a restart ends them. A lobby member whose page
+  stops polling for a minute leaves the room, and the next member becomes
+  host; a running game never drops anyone. A room without a game is dropped
+  once nobody is left, so a lobby stays open while any page still polls. A
+  page whose room is gone joins again with its token, which opens a fresh
+  room on the same card.
+- Limits: at most 500 live rooms, and at most 3 per chat. Joins share the solo
+  limit of 10 starts per user per minute. The host's "Bắt đầu" counts against
+  that same limit, and one room starts at most one game every 3 seconds.
+
+### Room rules
+
+The words, the checks, the 30-second turn with its 2-second grace and the
+per-word points are the same as against the bot (see [Rules](#rules) and
+[Scoring](#scoring)); one engine implements both. What changes:
+
+- Turns rotate in join order, starting with the first seat. The bot only plays
+  the opening word.
+- A player whose turn runs out, or who presses "Chịu thua", is **eliminated**.
+  The syllable and the used words stay as they were, and the turn passes to
+  the next player still in.
+- "Chịu thua" also works out of turn, to leave a game. In a dead end on the
+  player's own turn it counts as no legal move.
+- A word handed to the next player as a dead end does not end anything: that
+  player loses it on the clock or with "Chịu thua", and everyone behind them,
+  who faces the same board, goes out with them. The player who closed the
+  position wins.
+- An expired turn is settled on the next request or by the minutely sweep.
+  The next turn starts when the expired one ended, grace included, so a late
+  settlement does not shorten or lengthen anyone's turn.
+- The **last player standing** wins. If the chain reaches 300 words, the
+  player still in with the most points wins.
+
+### Room scoring
+
+- Each player scores the per-word points of their accepted words. The winner
+  gets 50 more.
+- A game in which nobody played a word (everyone left at once) earns nothing:
+  no bonus, no score report and no announcement.
+- When a game ends, the bot posts "Ván nối từ kết thúc: <tên> thắng sau <n>
+  từ!" as a reply to the card, in its topic. A failure is logged and ignored.
+- Then it reports each player whose score is above 0 with `setGameScore`
+  (`force=false`) on the card, one at a time. Results of one card are
+  published one game after another, so two games never edit the card at
+  once; results of different cards publish independently. The card's
+  high-score table therefore ranks the group, and keeps each member's best.
+
+### Room API
+
+All room routes are `POST` with a JSON body, under `/games/noitu/api/room/`.
+The join answers a `member` bearer; every other route takes it.
+
+| Route | Body | Answer |
+|---|---|---|
+| `join` | `{"token"}` | room view |
+| `state` | `{"member","version"}` | room view, or `{"version","unchanged":true,"server_now_ms"}` when `version` is current |
+| `start` | `{"member"}` | room view; host only |
+| `move` | `{"member","word"}` | `{"result":{accepted,reason,message,player_word},"state":view}` |
+| `give-up` | `{"member"}` | room view |
+
+The page polls `state` every second (every 4 seconds while hidden) and sends
+the last `version` it saw, so an unchanged room costs one small answer. Every
+change to the room, a finished score report included, bumps the version.
+
+The room view has these fields:
+
+- `member`, `version`, `game` (games started in this room)
+- `status`: `lobby` or `playing`
+- `host`: whether this member hosts the lobby
+- `seat`: this member's seat in the running game, `-1` otherwise; `turn`: the
+  seat to act, `-1` in the lobby
+- `players`: `{name, you, host, score, alive, out_reason}`, the seats in a
+  game or the first 8 members in the lobby; `watchers`: everyone else
+- `min_players`, `max_players`
+- `current`, `chain` (entries also carry `seat`, `-1` for the opening, and
+  `name`), `turn_limit_ms`, `deadline_ms`, `server_now_ms`
+- `result`: the last finished game until the next starts, `{winner, words,
+  end_reason, standings[{name, rank, score, bonus, words, out_reason, you}],
+  score_reported}`
+
+A word sent out of turn, by an eliminated player or by a watcher answers
+`accepted:false` with reason `not_your_turn`; a word that arrives after the
+grace period answers `timeout`.
+
+| Code | Status |
+|---|---|
+| `no_room` | 404: unknown member, or the room is gone |
+| `not_host` | 403 |
+| `room_full` | 409: 32 members |
+| `not_enough_players` | 409 |
+| `game_running` | 409 |
+| `no_game` | 409: move or give-up without a running game |
+| `not_in_game` | 409: give-up by a watcher or an eliminated player |
+
+The solo limits apply to rooms too: the 4 KiB body cap and strict JSON, the
+word length, one move per 300 ms per member, and the 10 starts per user per
+minute, which joins share. At most 500 rooms exist; beyond that a join answers
+`busy`. Player names are Telegram first names cut to 64 characters; the page
+only ever renders them as text.
 
 ## Sharing, and why there is no inline mode
 

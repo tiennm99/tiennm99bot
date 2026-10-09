@@ -8,6 +8,7 @@
   --accent-text: #ffffff;
   --bot: #eef1f5;
   --player: #e3f0fb;
+  --other: #fbf1e3;
   --error: #c0392b;
   --ok: #1e8e3e;
   --warn: #d68910;
@@ -25,6 +26,7 @@
     --accent-text: #0e1621;
     --bot: #263342;
     --player: #1d3b55;
+    --other: #3d3423;
     --error: #ff7b6b;
     --ok: #6fcf87;
     --warn: #f5b041;
@@ -125,7 +127,8 @@ button.ghost { background: transparent; color: var(--muted); align-self: center;
 .chain > li { border-radius: 10px; padding: 8px 12px; background: var(--bot); }
 .chain > li.player { background: var(--player); }
 .chain .row { display: flex; align-items: center; gap: 8px; }
-.chain .who { font-size: .8rem; color: var(--muted); min-width: 34px; }
+.chain .who { font-size: .8rem; color: var(--muted); min-width: 34px; max-width: 35%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chain > li.other { background: var(--other); }
 .chain .word { font-weight: 600; flex: 1; overflow-wrap: anywhere; }
 .chain .points { font-size: .85rem; color: var(--ok); }
 .chain .toggle { padding: 2px 8px; min-height: 30px; font-size: .8rem; }
@@ -133,6 +136,23 @@ button.ghost { background: transparent; color: var(--muted); align-self: center;
 .chain ol.senses { margin: 6px 0 0; padding-left: 22px; font-size: .9rem; color: var(--muted); }
 .chain > li.fresh { animation: pop .35s ease-out; }
 @keyframes pop { from { transform: scale(.97); opacity: .4; } to { transform: none; opacity: 1; } }
+
+.players { list-style: none; margin: 12px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.players > li { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--bot); }
+.players > li.you { background: var(--player); }
+.players .name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.players .tag { font-size: .8rem; color: var(--muted); }
+.players .score { font-variant-numeric: tabular-nums; color: var(--ok); }
+.players.compact { flex-direction: row; flex-wrap: wrap; margin: 0; }
+.players.compact > li { padding: 4px 10px; font-size: .9rem; max-width: 100%; }
+.players.compact > li.turn { outline: 2px solid var(--accent); }
+.players > li.out { opacity: .55; }
+.players > li.out .name { text-decoration: line-through; }
+.turn-line { margin: 0; font-weight: 600; }
+.turn-line.mine { color: var(--accent); }
+.room-result { border-bottom: 1px solid var(--border); margin-bottom: 12px; padding-bottom: 8px; }
+.standings { padding-left: 22px; margin: 8px 0; }
+.standings li.you { font-weight: 600; }
 
 .final-score { font-size: 1.2rem; }
 .suggestions { padding-left: 20px; }

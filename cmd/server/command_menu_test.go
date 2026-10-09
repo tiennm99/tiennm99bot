@@ -74,6 +74,7 @@ func TestCommandDiscovery_AllPublicCommandsHaveSafeMetadata(t *testing.T) {
 		"monkeyd_crawl":        "<url> [font_size]",
 		"monkeyd_tags":         "<url>",
 		"noitu":                "",
+		"noitupvp":             "",
 		"random":               "<option,...>",
 		"addsticker":           "[emoji...]",
 		"alias":                "<name>",

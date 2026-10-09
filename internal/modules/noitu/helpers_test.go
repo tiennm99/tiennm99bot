@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiennm99/tiennm99bot/internal/modules"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/dict"
+	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 var testKey = []byte("0123456789abcdef0123456789abcdef")
@@ -49,12 +50,47 @@ type reportCall struct {
 }
 
 type fakeReporter struct {
-	mu    sync.Mutex
-	calls []reportCall
-	err   error
+	mu        sync.Mutex
+	calls     []reportCall
+	err       error
+	announced []string
+	cards     []claims
+	// beforeReport, when set before any game ends, runs at the start of
+	// every Report, outside the mutex, so a test can hold a report.
+	beforeReport func(claims)
+}
+
+func (r *fakeReporter) Announce(_ context.Context, card claims, text string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.announced = append(r.announced, text)
+	r.cards = append(r.cards, card)
+	return r.err
+}
+
+// announcedOn counts the announcements made on the card with message msg.
+func (r *fakeReporter) announcedOn(msg int) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	n := 0
+	for _, c := range r.cards {
+		if c.MessageID == msg {
+			n++
+		}
+	}
+	return n
+}
+
+func (r *fakeReporter) announcements() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]string(nil), r.announced...)
 }
 
 func (r *fakeReporter) Report(_ context.Context, c claims, score int) error {
+	if r.beforeReport != nil {
+		r.beforeReport(c)
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.calls = append(r.calls, reportCall{c, score})
@@ -90,12 +126,14 @@ func newHarnessWithStore(t *testing.T, store *dict.Store) *harness {
 	h := &harness{t: t, clock: &fakeClock{t: time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)}, reporter: &fakeReporter{}}
 	seed := uint64(0)
 	cfg := config{
-		baseURL:  testBase,
-		key:      testKey,
-		now:      h.clock.now,
-		newRNG:   func() *rand.Rand { seed++; return rand.New(rand.NewPCG(seed, 42)) },
-		reporter: h.reporter,
-		loadDict: func() (*dict.Store, error) { return store, nil },
+		baseURL:   testBase,
+		key:       testKey,
+		now:       h.clock.now,
+		newRNG:    func() *rand.Rand { seed++; return rand.New(rand.NewPCG(seed, 42)) },
+		reporter:  h.reporter,
+		announcer: h.reporter,
+		cards:     storage.Typed[pvpCard](storage.NewMemoryProvider().Collection("noitu")),
+		loadDict:  func() (*dict.Store, error) { return store, nil },
 	}
 	h.svc = newService(cfg)
 	h.mod = h.svc.module()
@@ -129,6 +167,16 @@ func (h *harness) post(path, body string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	h.handler.ServeHTTP(rec, req)
 	return rec
+}
+
+// postJSON marshals v and posts it.
+func (h *harness) postJSON(path string, v any) *httptest.ResponseRecorder {
+	h.t.Helper()
+	body, err := json.Marshal(v)
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	return h.post(path, string(body))
 }
 
 // call posts v and decodes the answer into out, failing on an unexpected status.

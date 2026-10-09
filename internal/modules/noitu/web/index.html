@@ -17,7 +17,7 @@
 
   <section id="screen-missing" class="card" hidden>
     <p class="lead">Hãy mở trò chơi từ Telegram.</p>
-    <p class="muted">Gửi <code>/noitu</code> cho bot rồi bấm nút Chơi.</p>
+    <p class="muted">Gửi <code>/noitu</code> cho bot rồi bấm nút Chơi. Để chơi cùng bạn bè, gửi <code>/noitupvp</code> trong nhóm.</p>
   </section>
 
   <section id="screen-start" class="card" hidden>
@@ -37,7 +37,30 @@
     <p id="start-error" class="error" role="alert"></p>
   </section>
 
+  <section id="screen-lobby" class="card" hidden>
+    <div id="room-result" class="room-result" hidden>
+      <h2 id="room-result-title"></h2>
+      <p id="room-result-detail" class="muted"></p>
+      <ol id="room-standings" class="standings"></ol>
+      <p id="room-report" class="muted"></p>
+    </div>
+    <h2>Phòng chơi nhóm</h2>
+    <p class="lead">Mọi người bấm Chơi trên cùng thẻ trò chơi để vào phòng, rồi lần lượt nối từ theo thứ tự vào phòng.</p>
+    <ul class="rules">
+      <li>Mỗi lượt có 30 giây. Hết giờ hoặc chịu thua là bị loại.</li>
+      <li>Người còn lại cuối cùng thắng và được thêm 50 điểm.</li>
+      <li>Từ 2 đến 8 người chơi; người vào sau xem ván đang diễn ra.</li>
+    </ul>
+    <ul id="lobby-players" class="players"></ul>
+    <p id="lobby-watchers" class="muted" hidden></p>
+    <button type="button" id="room-start" class="primary" hidden>Bắt đầu</button>
+    <p id="lobby-wait" class="muted"></p>
+    <p id="lobby-error" class="error" role="alert"></p>
+  </section>
+
   <section id="screen-game" hidden>
+    <ul id="room-players" class="players compact" hidden></ul>
+    <p id="turn-line" class="turn-line" hidden></p>
     <div class="scoreline">
       <span>Điểm: <strong id="score">0</strong></span>
       <span id="timer-text" class="timer-text">30</span>

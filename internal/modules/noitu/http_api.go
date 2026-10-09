@@ -28,6 +28,8 @@ type apiError struct {
 	Message string `json:"message"`
 }
 
+func (e apiError) Error() string { return "noitu: " + e.Code }
+
 var (
 	errBadRequest  = apiError{http.StatusBadRequest, "bad_request", "Yêu cầu không hợp lệ."}
 	errWordTooLong = apiError{http.StatusBadRequest, "bad_request", "Từ quá dài."}
@@ -87,6 +89,11 @@ func (s *service) handler() http.Handler {
 	mux.HandleFunc("POST "+routePrefix+"api/move", s.apiMove)
 	mux.HandleFunc("POST "+routePrefix+"api/state", s.apiState)
 	mux.HandleFunc("POST "+routePrefix+"api/give-up", s.apiGiveUp)
+	mux.HandleFunc("POST "+routePrefix+"api/room/join", s.apiRoomJoin)
+	mux.HandleFunc("POST "+routePrefix+"api/room/state", s.apiRoomState)
+	mux.HandleFunc("POST "+routePrefix+"api/room/start", s.apiRoomStart)
+	mux.HandleFunc("POST "+routePrefix+"api/room/move", s.apiRoomMove)
+	mux.HandleFunc("POST "+routePrefix+"api/room/give-up", s.apiRoomGiveUp)
 	return securityHeaders(mux)
 }
 
@@ -142,13 +149,12 @@ func (s *service) apiStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := s.cfg.now()
-	c, err := verifyToken(s.cfg.key, req.Token, now)
-	switch {
-	case errors.Is(err, errTokenExpired):
-		writeError(w, errTokenExpAPI)
+	c, ok := s.verifyRequestToken(w, req.Token, now)
+	if !ok {
 		return
-	case err != nil:
-		writeError(w, errBadTokenAPI)
+	}
+	if c.PvP {
+		writeError(w, errPvPSoloAPI)
 		return
 	}
 	difficulty, ok := opponent.ParseDifficulty(req.Difficulty)
@@ -375,9 +381,14 @@ func (s *service) botMove(sess *session, now time.Time) (string, error) {
 }
 
 func (s *service) rejected(sess *session, reason engine.Reason) moveResult {
+	return rejectedFor(reason, sess.eng.Current())
+}
+
+// rejectedFor explains a rejected word; current is the syllable to answer.
+func rejectedFor(reason engine.Reason, current string) moveResult {
 	msg := rejectMessages[reason]
 	if reason == engine.ReasonWrongLink {
-		msg = strings.Replace(msg, "%s", sess.eng.Current(), 1)
+		msg = strings.Replace(msg, "%s", current, 1)
 	}
 	return moveResult{Reason: string(reason), Message: msg}
 }

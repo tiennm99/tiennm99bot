@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 
 	"github.com/tiennm99/tiennm99bot/internal/telegram"
 )
@@ -30,6 +31,23 @@ func (r botReporter) Report(ctx context.Context, c claims, score int) error {
 		Score:     score,
 		ChatID:    c.ChatID,
 		MessageID: c.MessageID,
+	})
+	return err
+}
+
+// announcer posts a finished room game's result into the card's chat.
+type announcer interface {
+	Announce(ctx context.Context, card claims, text string) error
+}
+
+// Announce replies to the card in its chat and forum topic, as plain text so
+// player names need no escaping.
+func (r botReporter) Announce(ctx context.Context, card claims, text string) error {
+	_, err := r.b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:          card.ChatID,
+		MessageThreadID: card.ThreadID,
+		Text:            text,
+		ReplyParameters: &models.ReplyParameters{MessageID: card.MessageID, AllowSendingWithoutReply: true},
 	})
 	return err
 }

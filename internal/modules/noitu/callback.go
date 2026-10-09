@@ -16,8 +16,9 @@ const (
 )
 
 // handlePlay answers a Play press with the game URL carrying a signed token,
-// or with an alert when the game cannot open. Every path answers the query,
-// so the client never keeps spinning.
+// or with an alert when the game cannot open. A press on a /noitupvp card
+// marks the token PvP, so the page joins the card's room. Every path answers
+// the query, so the client never keeps spinning.
 func (s *service) handlePlay(ctx context.Context, b *bot.Bot, update *models.Update) error {
 	q := update.CallbackQuery
 	if !s.enabled() {
@@ -27,6 +28,16 @@ func (s *service) handlePlay(ctx context.Context, b *bot.Bot, update *models.Upd
 	if form == "" {
 		return answerAlert(ctx, b, q.ID, msgNoGameTarget)
 	}
+	// Cards live only in groups, whose chat IDs are negative; a private chat
+	// never needs the lookup, so a storage fault cannot block its solo game.
+	if c.InlineID == "" && c.ChatID < 0 {
+		card, ok, err := s.lookupCard(ctx, c.ChatID, c.MessageID)
+		if err != nil {
+			_ = answerAlert(ctx, b, q.ID, msgCardLookup)
+			return err
+		}
+		c.PvP, c.ThreadID = ok, card.ThreadID
+	}
 	c.Expiry = s.cfg.now().Add(tokenTTL).Unix()
 	token, err := signToken(s.cfg.key, c)
 	if err != nil {
@@ -35,7 +46,7 @@ func (s *service) handlePlay(ctx context.Context, b *bot.Bot, update *models.Upd
 	}
 	// The form tells whether ?game= shares arrive as inline messages; the IDs
 	// themselves are never logged.
-	log.Debug("noitu play", "address", form)
+	log.Debug("noitu play", "address", form, "pvp", c.PvP)
 	_, err = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
 		CallbackQueryID: q.ID,
 		URL:             s.cfg.baseURL + routePrefix + "?t=" + url.QueryEscape(token),
