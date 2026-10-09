@@ -123,6 +123,7 @@ func Install(b *bot.Bot, reg *Registry, auth Auth) {
 			})
 	}
 
+	installGames(b, reg, auth)
 	// Registered LAST, and that placement is load-bearing: the bot library
 	// returns the first handler whose matcher accepts an update, so every
 	// Command above out-ranks the fallback. A name defined in code therefore
@@ -305,4 +306,48 @@ func matchCommand(name, botUsername string, update *models.Update) bool {
 		}
 	}
 	return false
+}
+
+// installGames registers one handler per BotFather game short name, then a
+// catch-all for any other game callback.
+//
+// A Play press carries game_short_name and no callback data, so the Data-prefix
+// handlers never see it. The same panic barrier, auth gate and metrics as the
+// Data callbacks apply. The catch-all answers a game that is not loaded (a
+// short name created in BotFather whose module is missing from MODULES) with an
+// empty answer, so the client stops spinning instead of waiting forever.
+func installGames(b *bot.Bot, reg *Registry, auth Auth) {
+	for short, game := range reg.games {
+		gameCopy := game
+		shortCopy := short
+		b.RegisterHandler(bot.HandlerTypeCallbackQueryGameShortName, shortCopy, bot.MatchTypeExact,
+			func(ctx context.Context, b *bot.Bot, update *models.Update) {
+				defer recoverHandler("game", shortCopy, func() { answerEmptyCallback(ctx, b, update) })
+				if !auth.Permits(gameCopy.Visibility, update) {
+					answerEmptyCallback(ctx, b, update)
+					return
+				}
+				if err := gameCopy.Handler(ctx, b, update); err != nil {
+					metrics.IncError("game-handler-error")
+					log.Error("game", "short_name", shortCopy, "err", err)
+				}
+			})
+	}
+	b.RegisterHandlerMatchFunc(
+		func(update *models.Update) bool {
+			return update != nil && update.CallbackQuery != nil && update.CallbackQuery.GameShortName != ""
+		},
+		func(ctx context.Context, b *bot.Bot, update *models.Update) {
+			defer recoverHandler("game", "unknown", nil)
+			answerEmptyCallback(ctx, b, update)
+		},
+	)
+}
+
+// answerEmptyCallback stops the client's spinner without showing anything.
+func answerEmptyCallback(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update == nil || update.CallbackQuery == nil {
+		return
+	}
+	_, _ = b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
 }

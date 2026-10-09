@@ -2,6 +2,7 @@ package modules
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -43,6 +44,29 @@ type Callback struct {
 	Handler    CallbackHandler
 }
 
+// Game registers the handler for a BotFather HTML5 game's Play button.
+//
+// Telegram delivers a Play press as a callback query that carries
+// game_short_name instead of callback data, so a Data-prefix Callback can never
+// see it. The handler must answer the query — with the game URL, or with an
+// alert explaining why the game cannot open — or the client keeps spinning.
+type Game struct {
+	ShortName  string // BotFather short name: ^[A-Za-z0-9_]{3,64}$, unique across modules
+	Visibility Visibility
+	Handler    CallbackHandler
+}
+
+// Route is an HTTP handler a module serves on the bot's HTTP server.
+//
+// Pattern is a net/http ServeMux path pattern without a method or host, and
+// must live under /games/<module>/ so a module can never shadow the health
+// route or another module's paths. A module that has nothing to serve (for
+// example because its public URL is not configured) returns no routes.
+type Route struct {
+	Pattern string
+	Handler http.Handler
+}
+
 // CronHandler runs when a cron fires, driven by the in-process scheduler
 // (internal/cron). The handler receives the owning module's Deps — the same
 // bundle its Factory got, including its own storage Collection.
@@ -75,6 +99,8 @@ type Module struct {
 	Commands    []Command
 	Callbacks   []Callback
 	Crons       []Cron
+	Games       []Game                                                        // optional; BotFather games whose Play button this module answers
+	HTTP        []Route                                                       // optional; routes served on the bot's HTTP server
 	CommandHook func(ctx context.Context, name string, update *models.Update) // optional; called by dispatcher after each authorized command invocation. update carries the originating Telegram update so hooks can attribute usage to a user.
 	Fallback    *CommandFallback                                              // optional; handles a /command no module registered. At most one across all modules.
 	Inline      *InlineQuery                                                  // optional; handles inline-mode queries. At most one across all modules.

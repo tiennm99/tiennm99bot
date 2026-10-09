@@ -10,17 +10,25 @@ Run `tiennm99bot` as a long-lived container on [Coolify](https://coolify.io) wit
    in-process scheduler ───────────────────> module crons
    MongoDB Atlas (db / one collection per module + system metadata)
    Coolify env vars (plain secrets)
-   NO public ingress (polling = outbound only; no domain, no /webhook, no TLS in)
+   no ingress for Telegram (polling = outbound only; no /webhook)
+   optional HTTPS ingress ──> container :8080 /games/noitu/ (only when GAME_BASE_URL is set)
 ```
 
 - **Storage** — `mongodb` auto-selected when `MONGO_URL` is set (no `KV_PROVIDER`).
 - **Cron** — an in-process scheduler (`internal/cron`) runs unconditionally and
-  fires each module cron on its `Schedule`, evaluated in UTC. The only cron
-  today is the `lol` daily digest at `0 1 * * *` (08:00 ICT).
+  fires each module cron on its `Schedule`, evaluated in UTC. Examples: the
+  `lol` daily digest at `0 1 * * *` (08:00 ICT), and the `noitu` game's
+  minutely session sweep when the game is enabled.
 - **Transport** — long polling (`b.Start`) is the **only** transport. The bot
   opens an outbound connection to Telegram and pulls updates, so there is no
   public domain, no `/webhook`, and no webhook secret. The container clears any
   leftover webhook on startup (`deleteWebhook`) before polling.
+- **Game page** — the `noitu` HTML5 game is the one thing served to the
+  public. With `GAME_BASE_URL` set, the bot's HTTP server on `:8080` serves the
+  game page and its JSON API under `/games/noitu/`, and that path must be
+  reachable over HTTPS from players' phones. With it unset, those routes do not
+  exist and the bot needs no public ingress at all. See
+  [the noitu game](noitu-game.md).
 
 ## Environment
 
@@ -37,11 +45,13 @@ Copy [`.env.example`](../.env.example) → `.env` (gitignored) and fill in.
 | `BOT_USERNAME` | optional | the bot's Telegram username, without `@`; unset = asked from Telegram (`getMe`) once at startup. Used for the default sticker pack name and the lol User-Agent |
 | `STICKER_PACK_NAME` | optional | set `/addsticker` writes to; default `stickers_by_<bot username>`. See [sticker packs](sticker-packs.md) |
 | `LOL_PANDASCORE_TOKEN` | optional | PandaScore API token for the lol module (free tier) — secret, never logged; without it every `/lol*` fetch fails (stale cache may still serve briefly) |
+| `GAME_BASE_URL` | optional | public `https://` base routed to the bot's `:8080`, e.g. `https://noitu.example.com`; unset or invalid = the `noitu` game is disabled. See [the noitu game](noitu-game.md) |
+| `NOITU_GAME_SECRET` | optional | at least 32 bytes; signs game links — secret. Unset = derived from `TELEGRAM_BOT_TOKEN`, so rotating the token invalidates open game links |
 | `RENDERER_URL` | leave unset | base URL of the animation renderer; fixed by `compose.yml` to the bundled renderer (`http://renderer:3000`), so a Coolify value is ignored |
 | `LOG_LEVEL` | optional | `debug`, `info` (default), `warn`, or `error`; logs are JSON on stdout |
 | `GOLD_VNAPP_API_KEY` | optional | VNAppMob key — secret; empty = the gold module fetches one and caches it in MongoDB |
 | `KV_PROVIDER` | leave unset | `memory` or `mongodb`; unset = `mongodb` when `MONGO_URL` is set, otherwise `memory` |
-| `PORT` | leave unset | health server port; default `8080` |
+| `PORT` | leave unset | health server (and game page) port; default `8080` |
 | `SOURCE_COMMIT` | never set | provided by Coolify at runtime for the deploy DM (see step 5 below) |
 
 `compose.yml` references only the required settings; every optional one is a
@@ -159,9 +169,14 @@ MP4, with the same text fallback.
    The committed [`compose.yml`](../compose.yml) defines the `bot` service
    and the internal `renderer` service.
 2. Set the env vars above in Coolify.
-3. **No public domain / port** is needed — polling is outbound-only. Do not
-   publish a port or attach a domain. `expose: 8080` keeps the health endpoint
-   reachable only inside Coolify's network.
+3. **No public domain / port** is needed for the bot itself — polling is
+   outbound-only. Never publish a host port. `expose: 8080` keeps the health
+   endpoint reachable only inside Coolify's network. **Only if the `noitu` game
+   is enabled:** attach a domain to the `bot` service with port 8080 (in Coolify,
+   `https://noitu.example.com:8080`), and set `GAME_BASE_URL` to that domain
+   without the port. Coolify's proxy terminates TLS and forwards to the
+   container's 8080; only `/games/noitu/` and the health text are served there.
+   Never attach a domain to the `renderer` service.
 4. **Exactly one replica.** Telegram permits only one `getUpdates` consumer per
    bot token; a second poller gets HTTP 409, and a second in-process scheduler
    double-fires crons. Prefer **stop-first redeploys** so two containers never

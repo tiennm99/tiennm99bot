@@ -3,6 +3,7 @@ package modules
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -420,5 +421,70 @@ func TestBuild_RejectsHandlerlessFallbackAndInline(t *testing.T) {
 				t.Errorf("expected %q, got %v", want, err)
 			}
 		})
+	}
+}
+
+func TestBuild_DetectsGameConflict(t *testing.T) {
+	game := Game{ShortName: "noitu", Visibility: VisibilityPublic, Handler: okHandler}
+	factories := map[string]Factory{
+		"alpha": func(_ Deps) Module { return Module{Games: []Game{game}} },
+		"beta":  func(_ Deps) Module { return Module{Games: []Game{game}} },
+	}
+	_, err := Build([]string{"alpha", "beta"}, factories, newProvider(), BuildOptions{})
+	if err == nil || !strings.Contains(err.Error(), "game conflict") {
+		t.Fatalf("expected game conflict, got %v", err)
+	}
+}
+
+func TestBuild_RejectsInvalidGame(t *testing.T) {
+	factories := map[string]Factory{
+		"alpha": func(_ Deps) Module {
+			return Module{Games: []Game{{ShortName: "no-itu", Visibility: VisibilityPublic, Handler: okHandler}}}
+		},
+	}
+	_, err := Build([]string{"alpha"}, factories, newProvider(), BuildOptions{})
+	if err == nil || !strings.Contains(err.Error(), `module "alpha"`) {
+		t.Fatalf("expected game validation error naming the module, got %v", err)
+	}
+}
+
+func TestBuild_IndexesHTTPRoutesSorted(t *testing.T) {
+	h := http.NotFoundHandler()
+	factories := map[string]Factory{
+		"zeta":  func(_ Deps) Module { return Module{HTTP: []Route{{Pattern: "/games/zeta/", Handler: h}}} },
+		"alpha": func(_ Deps) Module { return Module{HTTP: []Route{{Pattern: "/games/alpha/", Handler: h}}} },
+	}
+	reg, err := Build([]string{"zeta", "alpha"}, factories, newProvider(), BuildOptions{})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	routes := reg.HTTPRoutes()
+	if len(routes) != 2 || routes[0].Pattern != "/games/alpha/" || routes[1].Pattern != "/games/zeta/" {
+		t.Fatalf("HTTPRoutes = %+v, want alpha then zeta", routes)
+	}
+}
+
+func TestBuild_RejectsRouteOutsideModuleSubtree(t *testing.T) {
+	h := http.NotFoundHandler()
+	for _, pattern := range []string{"/", "/games/other/", "/games/alpha", "GET /games/alpha/", "example.com/games/alpha/", ""} {
+		factories := map[string]Factory{
+			"alpha": func(_ Deps) Module { return Module{HTTP: []Route{{Pattern: pattern, Handler: h}}} },
+		}
+		if _, err := Build([]string{"alpha"}, factories, newProvider(), BuildOptions{}); err == nil {
+			t.Errorf("pattern %q: expected validation error", pattern)
+		}
+	}
+}
+
+func TestBuild_RejectsDuplicateRoute(t *testing.T) {
+	h := http.NotFoundHandler()
+	factories := map[string]Factory{
+		"alpha": func(_ Deps) Module {
+			return Module{HTTP: []Route{{Pattern: "/games/alpha/", Handler: h}, {Pattern: "/games/alpha/", Handler: h}}}
+		},
+	}
+	_, err := Build([]string{"alpha"}, factories, newProvider(), BuildOptions{})
+	if err == nil || !strings.Contains(err.Error(), "route conflict") {
+		t.Fatalf("expected route conflict, got %v", err)
 	}
 }

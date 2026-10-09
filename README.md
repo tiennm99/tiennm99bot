@@ -12,6 +12,7 @@ Atlas via long polling and an in-process cron scheduler.
 | `random` | Pick one comma-separated option at random: `/random` (text), `/wheelofnames` (wheel GIF), `/gacha` (card-pack wish MP4; options are 5★ by default, prefix `4*` or `3*`), `/genshin` (unlisted; the same wish as a Genshin-style meteor). The animations use the bundled [renderer](renderer/README.md) service |
 | `amlich` | Vietnamese lunar calendar: `/amlich` (dương lịch → âm lịch, defaults to today), `/duonglich` (âm lịch → dương lịch, `nhuan` flag for leap months); dates accept `d`, `d/m`, or `d/m/yyyy` — missing parts fill from today in the input's calendar. Years 1800–2199 only |
 | `wordle` | Daily Wordle game: `/wordle [word]`, `/wordle_new`, `/wordle_giveup`, `/wordle_stats` |
+| `noitu` | Nối từ HTML5 game vs the bot (`/noitu`); needs `GAME_BASE_URL`. Play opens a page this bot serves; words are checked against a Vietnamese dictionary derived from [Wiktionary tiếng Việt](https://vi.wiktionary.org/) (CC BY-SA 4.0, see [its attribution](internal/modules/noitu/dict/data/ATTRIBUTION.md)), and scores go to Telegram's high-score table. See [docs/noitu-game.md](docs/noitu-game.md) |
 | `loldle` | League-of-Legends "guess the champion": `/loldle [champion]`, `/loldle_giveup`, `/loldle_stats`, `/loldle_setmax` (owner) |
 | `lol` | Pro-match schedule (`/lol [date]`, `/lol_tomorrow`, `/lol_this_week`, `/lol_next_week`), per-chat digest opt-in (`/lol_subscribe`, `/lol_unsubscribe`) + daily push at 08:00 ICT |
 | `stock` | VN-stocks paper trading: `/stock_price`, `/stock_info`, `/stock_events`, `/stock_topup`, `/stock_buy`, `/stock_sell`, `/stock_cash_dividend`, `/stock_share_dividend`, `/stock_portfolio` |
@@ -231,8 +232,8 @@ all.
 ## Layout
 
 ```
-cmd/server/                  entrypoint (long polling + in-process cron + HTTP health)
-internal/server/             HTTP route (/ health only; cron has no HTTP route)
+cmd/server/                  entrypoint (long polling + in-process cron + HTTP server)
+internal/server/             HTTP routes (/ health, plus module routes such as /games/noitu/; cron has no HTTP route)
 internal/telegram/           Telegram long-polling bot wrapper
 internal/cron/               in-process cron scheduler (UTC)
 internal/deploynotify/       startup DM to the owner with the deployed commit
@@ -251,6 +252,7 @@ compose.yml                  Coolify self-host stack (bot + renderer services)
 - [Aliases](docs/aliases.md)
 - [Blacklist](docs/blacklist.md)
 - [Sticker pack](docs/sticker-packs.md)
+- [Nối từ game](docs/noitu-game.md)
 - [Lunar calendar algorithm and known issues](docs/amlich-known-issues.md)
 - [Agent and contributor rules](AGENTS.md)
 
@@ -317,10 +319,14 @@ Lint settings live in [`.golangci.yml`](.golangci.yml).
 ## Deploy
 
 [`docs/deploy-coolify-selfhosted.md`](docs/deploy-coolify-selfhosted.md) covers
-Coolify + MongoDB Atlas (free M0), long polling (no public ingress), and
-in-process cron. Coolify redeploys on every push to `main`. Storage
+Coolify + MongoDB Atlas (free M0), long polling (no public ingress unless the
+`noitu` game is enabled), and in-process cron. Coolify redeploys on every push to `main`. Storage
 auto-selects `mongodb` when `MONGO_URL` is set; the cron scheduler always runs.
 
 ## License
 
-[Apache-2.0](LICENSE).
+[Apache-2.0](LICENSE). The `noitu` game's dictionary,
+[`internal/modules/noitu/dict/data/`](internal/modules/noitu/dict/data/), is
+data derived from Wiktionary tiếng Việt and stays under CC BY-SA 4.0; see its
+[LICENSE](internal/modules/noitu/dict/data/LICENSE) and
+[ATTRIBUTION.md](internal/modules/noitu/dict/data/ATTRIBUTION.md).

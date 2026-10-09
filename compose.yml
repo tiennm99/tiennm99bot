@@ -25,6 +25,8 @@ services:
       # GOLD_VNAPP_API_KEY: ${GOLD_VNAPP_API_KEY:-}    # VNAppMob key — SECRET; empty = fetched and cached in Mongo
       # BOT_USERNAME: ${BOT_USERNAME:-}                # bot username without "@"; empty = getMe at startup
       # STICKER_PACK_NAME: ${STICKER_PACK_NAME:-}      # /addsticker set; empty = stickers_by_<bot username>
+      # GAME_BASE_URL: ${GAME_BASE_URL:-}              # public https base routed to this service's :8080; empty = noitu game disabled
+      # NOITU_GAME_SECRET: ${NOITU_GAME_SECRET:-}      # >= 32 bytes, signs game links — SECRET; empty = derived from the bot token
       # LOG_LEVEL: ${LOG_LEVEL:-info}                  # debug|info|warn|error
 
       # --- Fixed by this stack (not Coolify settings) ---
@@ -39,14 +41,17 @@ services:
       #   declaring it here could override that with an empty value.
       # PORT: the health server defaults to 8080, which the healthcheck uses.
       # KV_PROVIDER: storage auto-selects mongodb because MONGO_URL is set.
-      # Long polling = no TELEGRAM_WEBHOOK_SECRET, no /webhook, no public domain.
+      # Long polling = no TELEGRAM_WEBHOOK_SECRET, no /webhook. A public domain
+      # is needed only for the noitu game (GAME_BASE_URL).
       # Cron is in-process only — no CRON_MODE, no /cron route, no secret.
       # No stock/coin/gold URL overrides — modules use their coded default
       # providers (stock: SSI/VCI/KBS; coin: Binance->Coinbase->CoinGecko;
       # gold: VNAppMob).
-    # Long polling is outbound-only: nothing inbound to route, so no published
-    # ports and no public domain. `expose` only documents the health server's
-    # port; it publishes nothing on the host.
+    # Long polling is outbound-only, so Telegram itself needs no inbound route
+    # and no host port is ever published. `expose` documents port 8080 (health,
+    # plus the noitu game page when GAME_BASE_URL is set). Attach a Coolify
+    # domain to this service on port 8080 only when GAME_BASE_URL is set; the
+    # game routes do not exist otherwise.
     expose:
       - "8080"
     # Coolify's UI health check does not apply to Docker Compose apps; it reads

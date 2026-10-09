@@ -89,3 +89,41 @@ func botCommandEntity(text string) models.MessageEntity {
 		Length: end,
 	}
 }
+
+// NewGameCallback builds the callback query Telegram sends when a user presses
+// Play on a game message the bot sent into a chat: game_short_name set, no
+// callback data, and the game message attached.
+func NewGameCallback(userID, chatID int64, messageID int, shortName string) *models.Update {
+	return &models.Update{
+		ID: 1,
+		CallbackQuery: &models.CallbackQuery{
+			ID:   "game-cbq",
+			From: models.User{ID: userID, FirstName: "Test"},
+			Message: models.MaybeInaccessibleMessage{
+				Type: models.MaybeInaccessibleMessageTypeMessage,
+				Message: &models.Message{
+					ID:   messageID,
+					Chat: models.Chat{ID: chatID, Type: models.ChatTypePrivate},
+				},
+			},
+			ChatInstance:  "chat-instance",
+			GameShortName: shortName,
+		},
+	}
+}
+
+// NewInlineGameCallback builds the Play callback for a game message sent via
+// the bot (inline mode or a t.me/<bot>?game= link): it carries
+// inline_message_id instead of the message.
+func NewInlineGameCallback(userID int64, inlineMessageID, shortName string) *models.Update {
+	return &models.Update{
+		ID: 1,
+		CallbackQuery: &models.CallbackQuery{
+			ID:              "game-cbq",
+			From:            models.User{ID: userID, FirstName: "Test"},
+			InlineMessageID: inlineMessageID,
+			ChatInstance:    "chat-instance",
+			GameShortName:   shortName,
+		},
+	}
+}

@@ -234,7 +234,11 @@ func (rb *RecordingBot) handle(w http.ResponseWriter, r *http.Request) {
 // real Telegram chats, where handlers key follow-up edits on the returned ID.
 func isMessageProducingMethod(method string) bool {
 	switch method {
-	case "sendMessage", "sendSticker", "sendPhoto", "sendDocument", "sendVideo", "sendAnimation":
+	case "sendMessage", "sendSticker", "sendPhoto", "sendDocument", "sendVideo", "sendAnimation",
+		// setGameScore returns the edited game Message for a chat message (an
+		// inline message gets true instead, which the library cannot decode, so
+		// that path goes through a raw call outside the recording bot).
+		"sendGame", "setGameScore":
 		return true
 	}
 	return false

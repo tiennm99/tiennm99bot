@@ -100,3 +100,28 @@ func TestValidateCron_RequiresNameAndHandler(t *testing.T) {
 		t.Error("expected error for nil handler")
 	}
 }
+
+func TestValidateGame(t *testing.T) {
+	good := Game{ShortName: "noitu_2", Visibility: VisibilityPublic, Handler: okHandler}
+	if err := validateGame(good); err != nil {
+		t.Fatalf("valid game rejected: %v", err)
+	}
+	bad := []Game{
+		{ShortName: "no", Visibility: VisibilityPublic, Handler: okHandler},
+		{ShortName: "no itu", Visibility: VisibilityPublic, Handler: okHandler},
+		{ShortName: strings.Repeat("a", 65), Visibility: VisibilityPublic, Handler: okHandler},
+		{ShortName: "noitu", Visibility: Visibility(99), Handler: okHandler},
+		{ShortName: "noitu", Visibility: VisibilityPublic},
+	}
+	for _, g := range bad {
+		if err := validateGame(g); err == nil {
+			t.Errorf("validateGame(%q, %d, nil=%v) = nil, want error", g.ShortName, g.Visibility, g.Handler == nil)
+		}
+	}
+}
+
+func TestValidateRoute(t *testing.T) {
+	if err := validateRoute("noitu", Route{Pattern: "/games/noitu/", Handler: nil}); err == nil {
+		t.Error("nil handler accepted")
+	}
+}

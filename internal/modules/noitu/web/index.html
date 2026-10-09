@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>Nối từ</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <h1>Nối từ</h1>
+    <p class="player-name" id="player"></p>
+  </header>
+
+  <section id="screen-missing" class="card" hidden>
+    <p class="lead">Hãy mở trò chơi từ Telegram.</p>
+    <p class="muted">Gửi <code>/noitu</code> cho bot rồi bấm nút Chơi.</p>
+  </section>
+
+  <section id="screen-start" class="card" hidden>
+    <p class="lead">Nối tiếp chuỗi từ với bot: từ của bạn phải bắt đầu bằng tiếng cuối của từ trước.</p>
+    <ul class="rules">
+      <li>Mỗi từ có ít nhất 2 tiếng và phải có trong từ điển.</li>
+      <li>Không dùng lại từ đã chơi.</li>
+      <li>Mỗi lượt có 30 giây. Trả lời nhanh, dùng từ dài hoặc từ hiếm để được nhiều điểm.</li>
+    </ul>
+    <fieldset class="difficulty">
+      <legend>Độ khó</legend>
+      <label><input type="radio" name="difficulty" value="easy"> Dễ</label>
+      <label><input type="radio" name="difficulty" value="medium" checked> Vừa</label>
+      <label><input type="radio" name="difficulty" value="hard"> Khó</label>
+    </fieldset>
+    <button type="button" id="start-btn" class="primary">Bắt đầu</button>
+    <p id="start-error" class="error" role="alert"></p>
+  </section>
+
+  <section id="screen-game" hidden>
+    <div class="scoreline">
+      <span>Điểm: <strong id="score">0</strong></span>
+      <span id="timer-text" class="timer-text">30</span>
+    </div>
+    <div class="timer-track" aria-hidden="true"><div id="timer-bar" class="timer-bar"></div></div>
+    <form id="move-form" class="move-form" autocomplete="off">
+      <label for="word">Từ bắt đầu bằng “<strong id="current"></strong>”</label>
+      <div class="move-row">
+        <input id="word" name="word" type="text" maxlength="64" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" required>
+        <button type="submit" id="send-btn" class="primary">Gửi</button>
+      </div>
+    </form>
+    <p id="message" class="message" role="status" aria-live="polite"></p>
+    <button type="button" id="give-up" class="ghost">Chịu thua</button>
+  </section>
+
+  <section id="screen-end" class="card" hidden>
+    <h2 id="result-title"></h2>
+    <p id="result-detail"></p>
+    <p class="final-score">Điểm: <strong id="final-score">0</strong></p>
+    <p id="report-status" class="muted"></p>
+    <div id="suggestions-box" hidden>
+      <p id="suggestions-label">Bạn có thể đã nối:</p>
+      <ul id="suggestions" class="suggestions"></ul>
+    </div>
+    <div class="actions">
+      <button type="button" id="replay" class="primary">Chơi lại</button>
+      <button type="button" id="share" hidden>Chia sẻ điểm</button>
+    </div>
+  </section>
+
+  <section id="chain-box" class="chain-box" hidden>
+    <h2 class="chain-title">Chuỗi từ</h2>
+    <ol id="chain" class="chain"></ol>
+  </section>
+
+  <footer class="footer">
+    Từ điển: <a href="https://vi.wiktionary.org/" target="_blank" rel="noopener noreferrer">Wiktionary tiếng Việt</a>
+    (<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.vi" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>)
+  </footer>
+</main>
+<script src="app.js"></script>
+<script src="https://telegram.org/js/games.js" async></script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 // Command server runs tiennm99bot: it loads configuration from the environment,
 // opens the storage backend, builds the module registry, and then serves
 // Telegram updates by long polling while an in-process scheduler fires module
-// crons. A small HTTP server answers the container health check.
+// crons. A small HTTP server answers the container health check and serves
+// module routes such as the noitu game page when they are enabled.
 package main
 
 import (
@@ -33,6 +34,7 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/modules/loldle"
 	"github.com/tiennm99/tiennm99bot/internal/modules/misc"
 	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd"
+	"github.com/tiennm99/tiennm99bot/internal/modules/noitu"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random"
 	"github.com/tiennm99/tiennm99bot/internal/modules/stats"
 	"github.com/tiennm99/tiennm99bot/internal/modules/sticker"
@@ -98,6 +100,7 @@ func factories() map[string]modules.Factory {
 		"amlich":               amlich.New,
 		"monkeyd":              monkeyd.New,
 		"wordle":               wordle.New,
+		noitu.ShortName:        noitu.New,
 		"loldle":               loldle.New,
 		lol.CollectionName:     lol.New,
 		coin.CollectionName:    coin.New,
@@ -200,15 +203,16 @@ func main() {
 		GitSHA:  resolveCommitSHA(cfg.SourceCommit),
 	})
 
-	handler := server.New()
+	handler := server.New(serverRoutes(reg)...)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           handler,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
-		// The only route is GET / (health). It responds instantly, so this
-		// write deadline is ample and bounds any slow-loris write.
+		// Routes are GET / (health) plus module routes such as the noitu game
+		// page and its small JSON API. All respond quickly, so this write
+		// deadline is ample and bounds any slow-loris write.
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
@@ -220,8 +224,8 @@ func main() {
 		}
 	}()
 
-	// Long polling is the sole Telegram transport (no webhook, no public
-	// ingress). Telegram permits exactly one getUpdates consumer per bot token,
+	// Long polling is the sole Telegram transport (no webhook; public ingress
+	// only for module HTTP routes such as the noitu game, when enabled). Telegram permits exactly one getUpdates consumer per bot token,
 	// so deploy exactly one replica. The webhook was cleared at startup above.
 	pollingDone := make(chan struct{})
 	go func() {
@@ -245,6 +249,17 @@ func main() {
 	}
 	<-metricsDone
 	metrics.Flush()
+}
+
+// serverRoutes converts the registry's module routes for internal/server,
+// which stays independent of the modules package.
+func serverRoutes(reg *modules.Registry) []server.Route {
+	var routes []server.Route
+	for _, r := range reg.HTTPRoutes() {
+		routes = append(routes, server.Route{Pattern: r.Pattern, Handler: r.Handler})
+		log.Info("http route", "pattern", r.Pattern)
+	}
+	return routes
 }
 
 // buildProvider picks the storage backend. Selection order:

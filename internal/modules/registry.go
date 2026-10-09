@@ -38,6 +38,8 @@ type Registry struct {
 	crons        map[string]Cron // name → Cron, unique across modules
 	cronDeps     map[string]Deps // cron name → owning module's Deps
 	callbacks    map[string]Callback
+	games        map[string]Game  // short name → Game, unique across modules
+	routes       map[string]Route // pattern → Route, unique across modules
 	commandHooks []func(ctx context.Context, name string, update *models.Update)
 	fallback     *CommandFallback // at most one; owner tracked in Build
 	inline       *InlineQuery     // at most one; owner tracked in Build
@@ -197,12 +199,15 @@ func Build(enabled []string, factories map[string]Factory, provider storage.Prov
 		crons:       map[string]Cron{},
 		cronDeps:    map[string]Deps{},
 		callbacks:   map[string]Callback{},
+		games:       map[string]Game{},
+		routes:      map[string]Route{},
 		botUsername: opts.BotUsername,
 	}
 
 	owners := map[string]string{} // command name → module that registered it
 	cronOwners := map[string]string{}
 	callbackOwners := map[string]string{}
+	gameOwners := map[string]string{}
 	var fallbackOwner, inlineOwner string
 	seenModule := map[string]bool{}
 	var unknown []string
@@ -261,6 +266,14 @@ func Build(enabled []string, factories map[string]Factory, provider storage.Prov
 			return nil, err
 		}
 
+		if err := reg.addGames(name, mod.Games, gameOwners); err != nil {
+			return nil, err
+		}
+
+		if err := reg.addRoutes(name, mod.HTTP); err != nil {
+			return nil, err
+		}
+
 		if err := reg.addSingletons(name, mod, &fallbackOwner, &inlineOwner); err != nil {
 			return nil, err
 		}
@@ -289,6 +302,48 @@ func (r *Registry) addCallbacks(module string, callbacks []Callback, owners map[
 		r.callbacks[callback.Prefix] = callback
 	}
 	return nil
+}
+
+// addGames validates and indexes one module's BotFather games. A short name
+// is matched exactly, so two modules claiming the same one is a conflict.
+func (r *Registry) addGames(module string, games []Game, owners map[string]string) error {
+	for _, g := range games {
+		if err := validateGame(g); err != nil {
+			return fmt.Errorf("module %q: %w", module, err)
+		}
+		if prev, dup := owners[g.ShortName]; dup {
+			return fmt.Errorf("game conflict: %q defined in %q and %q", g.ShortName, prev, module)
+		}
+		owners[g.ShortName] = module
+		r.games[g.ShortName] = g
+	}
+	return nil
+}
+
+// addRoutes validates and indexes one module's HTTP routes. validateRoute
+// confines each module to its own /games/<module>/ subtree, so a duplicate can
+// only come from the same module declaring a pattern twice.
+func (r *Registry) addRoutes(module string, routes []Route) error {
+	for _, rt := range routes {
+		if err := validateRoute(module, rt); err != nil {
+			return fmt.Errorf("module %q: %w", module, err)
+		}
+		if _, dup := r.routes[rt.Pattern]; dup {
+			return fmt.Errorf("route conflict: %q declared twice in %q", rt.Pattern, module)
+		}
+		r.routes[rt.Pattern] = rt
+	}
+	return nil
+}
+
+// HTTPRoutes returns every module-contributed HTTP route, sorted by pattern.
+func (r *Registry) HTTPRoutes() []Route {
+	out := make([]Route, 0, len(r.routes))
+	for _, rt := range r.routes {
+		out = append(out, rt)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Pattern < out[j].Pattern })
+	return out
 }
 
 func sortedCommands(m map[string]Command) []Command {

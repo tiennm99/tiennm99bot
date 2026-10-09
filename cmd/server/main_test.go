@@ -100,6 +100,23 @@ func TestFactoriesRegistersBlacklistCommands(t *testing.T) {
 	}
 }
 
+// noitu is in the catalog and, with GAME_BASE_URL unset, registers its command
+// and game but no public HTTP route.
+func TestFactoriesRegistersNoituDisabledByDefault(t *testing.T) {
+	t.Setenv("GAME_BASE_URL", "")
+	t.Setenv("NOITU_GAME_SECRET", "")
+	reg, err := modules.Build([]string{"noitu"}, factories(), storage.NewMemoryProvider(), modules.BuildOptions{})
+	if err != nil {
+		t.Fatalf("Build noitu: %v", err)
+	}
+	if _, ok := reg.AllCommands["noitu"]; !ok {
+		t.Fatal("missing command noitu")
+	}
+	if routes := serverRoutes(reg); len(routes) != 0 {
+		t.Fatalf("disabled game exposes routes: %+v", routes)
+	}
+}
+
 // An empty MODULES loads every module, so a command name that collides with an
 // existing module surfaces here as a test failure rather than as a startup
 // crash on deploy.
