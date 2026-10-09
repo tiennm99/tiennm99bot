@@ -121,7 +121,7 @@ func TestNew_DisabledWithoutBaseURL(t *testing.T) {
 			t.Fatalf("command %+v is not a described public command", c)
 		}
 	}
-	if len(mod.Games) != 1 || mod.Games[0].ShortName != "noitu" {
+	if len(mod.Games) != 2 || mod.Games[0].ShortName != "noitu" || mod.Games[1].ShortName != "noitubot" {
 		t.Fatalf("games = %+v", mod.Games)
 	}
 	// /noitu registers cards even while the game is disabled, so their
@@ -240,7 +240,7 @@ func TestCommand_SendsGameKeepingTopic(t *testing.T) {
 	update.Message.MessageThreadID = 12
 	rb.Bot.ProcessUpdate(context.Background(), update)
 	last := rb.LastSent()
-	if last.Method != "sendGame" || last.Form["game_short_name"] != "noitu" || last.ChatID() != "-100777" || last.Form["message_thread_id"] != "12" {
+	if last.Method != "sendGame" || last.Form["game_short_name"] != "noitubot" || last.ChatID() != "-100777" || last.Form["message_thread_id"] != "12" {
 		t.Fatalf("sent %+v", rb.Sent())
 	}
 	if last.Form["reply_markup"] != "" {

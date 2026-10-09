@@ -108,6 +108,10 @@ func TestPlay_OnACardIssuesAPvPToken(t *testing.T) {
 	if c := h.playToken(testutil.NewInlineGameCallback(42, "AgAAAInline", ShortName)); c.PvP {
 		t.Fatalf("inline message gave a pvp token: %+v", c)
 	}
+	// The noitubot game always plays solo, whatever is stored for its message.
+	if c := h.playToken(testutil.NewGameCallback(42, -100500, 7, SoloShortName)); c.PvP {
+		t.Fatalf("noitubot game gave a pvp token: %+v", c)
+	}
 }
 
 func TestPlay_CardLookupFailureAnswersAlert(t *testing.T) {

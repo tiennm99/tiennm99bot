@@ -6,8 +6,8 @@ three commands:
 - `/noitu` sends the game into a group as a room card: the members who press
   Play on it play each other. See [Playing together](#playing-together-noitu).
   It works only in groups; elsewhere it answers with a hint (see below).
-- `/noitubot` sends the game for a solo game against the bot, in a group or a
-  private chat.
+- `/noitubot` sends the separate `noitubot` game for a solo game against the
+  bot, in a group or a private chat.
 - `/noitutop` shows the group's leaderboard across its room games. See
   [Leaderboard](#leaderboard-noitutop).
 
@@ -24,8 +24,9 @@ and its dictionary is embedded in the binary.
 
 ## Setup
 
-1. **BotFather:** create a game for the bot with `/newgame` and the short name
-   `noitu`. The share link is then `t.me/<bot username>?game=noitu`.
+1. **BotFather:** create two games for the bot with `/newgame`, short names
+   `noitu` (the group card) and `noitubot` (the solo game). Both open the same
+   page; separate games let players tell a room card from a solo game.
 2. **Public URL:** attach an HTTPS domain to the bot container's port 8080. In
    Coolify, set the `bot` service's domain to `https://noitu.example.com:8080`.
    The proxy terminates TLS and forwards to the container.
@@ -54,7 +55,7 @@ also disables the game. So is a `NOITU_GAME_SECRET` shorter than 32 bytes.
    button itself. In a forum topic the game stays in the topic. In a channel the
    bot answers with a short text instead, because Telegram does not allow games
    in channels.
-2. Play delivers a callback query with `game_short_name=noitu`. The module
+2. Play delivers a callback query with `game_short_name=noitubot`. The module
    answers it with a URL: `<GAME_BASE_URL>/games/noitu/?t=<token>`. The token
    is signed, expires after 6 hours, and names the player and the game message.
    The game message is either a chat message (`chat_id` + `message_id`) or, for
@@ -211,8 +212,8 @@ Errors are `{"error","message"}`:
 
 `/noitu` works in groups and supergroups only. In a private chat or a channel
 it does not send a game; it answers "Gửi /noitu trong nhóm để chơi cùng nhau.
-Muốn chơi với bot thì dùng /noitubot nhé." It sends the same
-BotFather game, `noitu`, and records the sent message as a **card** in the
+Muốn chơi với bot thì dùng /noitubot nhé." It sends the
+BotFather game `noitu`, and records the sent message as a **card** in the
 module's storage collection (`noitu`, key `pvp:<chat_id>:<message_id>`, with
 the forum topic). If the card cannot be recorded, the bot deletes it again and
 answers "Không tạo được phòng nối từ. Thử lại sau nhé."
@@ -222,7 +223,9 @@ answers "Không tạo được phòng nối từ. Thử lại sau nhé."
   start screen. The server checks the flag again: `api/start` refuses a PvP
   token and `api/room/join` refuses any other.
 - A forwarded copy of a card is a different message, and a `?game=` share is
-  an inline message; neither is a card, so both play against the bot.
+  an inline message; neither is a card, so both play against the bot. A
+  `noitubot` game is never looked up as a card and always plays solo, as do
+  `noitu` games sent before the split.
 - A card stays a room for 30 days after its last Play press. Play refreshes
   that date at most once a day, and a daily cron (`noitu_pvp_cards`, 03:30
   ICT) forgets older cards, which then play solo. The cron runs whenever the
@@ -367,7 +370,7 @@ each card is separate: it keeps each member's best score on that card only.
 Players share a game in three ways:
 
 - by forwarding the game message;
-- with the `t.me/<bot>?game=noitu` link;
+- with the `t.me/<bot>?game=noitubot` or `?game=noitu` link (both play solo);
 - with the share button Telegram shows on the game page.
 
 When `telegram.org/js/games.js` loads, the page also shows "Chia sẻ điểm",

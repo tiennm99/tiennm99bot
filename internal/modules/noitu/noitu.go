@@ -1,9 +1,9 @@
 // Package noitu is the "nối từ" Telegram HTML5 game: the /noitubot command
-// sends the BotFather game, the Play button opens a page this bot serves, and
-// the player chains Vietnamese words against the bot opponent there. /noitu
-// sends a card to a group whose Play button opens a room where the chat's
-// members chain words against each other, and /noitutop shows the group's
-// leaderboard across those room games.
+// sends the noitubot BotFather game, the Play button opens a page this bot
+// serves, and the player chains Vietnamese words against the bot opponent
+// there. /noitu sends the noitu game to a group as a card whose Play button
+// opens a room where the chat's members chain words against each other, and
+// /noitutop shows the group's leaderboard across those room games.
 //
 // The server owns the game. The page only sends words; validation, the turn
 // timer, the bot's replies and the score all happen here, and the score is
@@ -12,25 +12,25 @@
 package noitu
 
 import (
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/binary"
 	mrand "math/rand/v2"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/tiennm99/tiennm99bot/internal/log"
 	"github.com/tiennm99/tiennm99bot/internal/modules"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu/dict"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/htmlgame"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
 )
 
 const (
-	// ShortName is the game's BotFather short name.
+	// ShortName is the BotFather short name of the group game /noitu sends.
 	ShortName = "noitu"
+	// SoloShortName is the BotFather short name of the game /noitubot sends.
+	// It always plays against the bot.
+	SoloShortName = "noitubot"
 
 	baseURLEnv = "GAME_BASE_URL"
 	secretEnv  = "NOITU_GAME_SECRET" //nolint:gosec // G101: an env var name, not a credential
@@ -125,6 +125,10 @@ func (svc *service) module() modules.Module {
 			ShortName:  ShortName,
 			Visibility: modules.VisibilityPublic,
 			Handler:    svc.handlePlay,
+		}, {
+			ShortName:  SoloShortName,
+			Visibility: modules.VisibilityPublic,
+			Handler:    svc.handlePlay,
 		}},
 	}
 	if svc.enabled() {
@@ -139,18 +143,7 @@ func (svc *service) module() modules.Module {
 
 // parseBaseURL accepts https://host[/path] and returns it without a trailing
 // slash. Anything else is logged and disables the game.
-func parseBaseURL(raw string) string {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return ""
-	}
-	u, err := url.Parse(raw)
-	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
-		log.Warn("GAME_BASE_URL must be https://host[/path]; noitu game disabled")
-		return ""
-	}
-	return strings.TrimRight(u.String(), "/")
-}
+func parseBaseURL(raw string) string { return htmlgame.ParseBaseURL(raw, ShortName) }
 
 // tokenKey returns NOITU_GAME_SECRET when set, otherwise a key derived from
 // the bot token. A secret that is set but too short disables the game rather
@@ -172,12 +165,7 @@ func tokenKey(secret string, deps modules.Deps) []byte {
 // deriveKey is HMAC-SHA256(key=bot token, tokenKeyLabel). Rotating the bot
 // token therefore invalidates every open game link.
 func deriveKey(botToken string) []byte {
-	if botToken == "" {
-		return nil
-	}
-	mac := hmac.New(sha256.New, []byte(botToken))
-	mac.Write([]byte(tokenKeyLabel))
-	return mac.Sum(nil)
+	return htmlgame.DeriveKey([]byte(botToken), tokenKeyLabel)
 }
 
 // newSessionRNG seeds a per-game generator for the opening word and the bot's

@@ -28,9 +28,10 @@ func (s *service) handlePlay(ctx context.Context, b *bot.Bot, update *models.Upd
 	if form == "" {
 		return answerAlert(ctx, b, q.ID, msgNoGameTarget)
 	}
-	// Cards live only in groups, whose chat IDs are negative; a private chat
-	// never needs the lookup, so a storage fault cannot block its solo game.
-	if c.InlineID == "" && c.ChatID < 0 {
+	// Cards are noitu games and live only in groups, whose chat IDs are
+	// negative; a noitubot game or a private chat never needs the lookup, so a
+	// storage fault cannot block a solo game.
+	if q.GameShortName == ShortName && c.InlineID == "" && c.ChatID < 0 {
 		card, ok, err := s.lookupCard(ctx, c.ChatID, c.MessageID)
 		if err != nil {
 			_ = answerAlert(ctx, b, q.ID, msgCardLookup)
