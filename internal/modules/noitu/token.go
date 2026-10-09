@@ -27,7 +27,7 @@ var (
 // message, until when. Exactly one address is set: ChatID+MessageID for a
 // message the bot sent, or InlineID for one sent via the bot.
 //
-// PvP marks a Play press on a card /noitupvp registered: the page then joins
+// PvP marks a Play press on a card /noitu registered: the page then joins
 // the card's room instead of playing the bot. Only a chat message can be a
 // card, and ThreadID is its forum topic, where the room posts its results.
 type claims struct {

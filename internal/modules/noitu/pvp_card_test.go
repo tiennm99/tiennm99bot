@@ -19,7 +19,7 @@ import (
 func TestPvPCommand_RegistersCardKeepingTopic(t *testing.T) {
 	h := newHarness(t, testCorpus)
 	rb := installModule(t, h.mod)
-	update := testutil.NewSupergroupMessage(-100777, 42, "/noitupvp")
+	update := testutil.NewSupergroupMessage(-100777, 42, "/noitu")
 	update.Message.MessageThreadID = 12
 	rb.Bot.ProcessUpdate(context.Background(), update)
 
@@ -40,8 +40,8 @@ func TestPvPCommand_RegistersCardKeepingTopic(t *testing.T) {
 func TestPvPCommand_RefusesPrivateChatsAndChannels(t *testing.T) {
 	h := newHarness(t, testCorpus)
 	for name, update := range map[string]*models.Update{
-		"private": testutil.NewPrivateMessage(42, "/noitupvp"),
-		"channel": testutil.NewChannelMessage(-100888, "/noitupvp"),
+		"private": testutil.NewPrivateMessage(42, "/noitu"),
+		"channel": testutil.NewChannelMessage(-100888, "/noitu"),
 	} {
 		rb := installModule(t, h.mod)
 		rb.Bot.ProcessUpdate(context.Background(), update)
@@ -57,7 +57,7 @@ func TestPvPCommand_StoreFailureTakesTheCardBack(t *testing.T) {
 	h := newHarness(t, testCorpus)
 	h.svc.cfg.cards = storage.Typed[pvpCard](storage.NewMemoryProvider().Collection("Not A Valid Name"))
 	rb := installModule(t, h.svc.module())
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewGroupMessage(-100777, 42, "/noitupvp"))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewGroupMessage(-100777, 42, "/noitu"))
 	var methods []string
 	for _, c := range rb.Sent() {
 		methods = append(methods, c.Method)
@@ -68,7 +68,7 @@ func TestPvPCommand_StoreFailureTakesTheCardBack(t *testing.T) {
 
 	rb = installModule(t, h.svc.module())
 	rb.FailMethodCode("sendGame", 400, "Bad Request: GAME_SHORTNAME_INVALID")
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewGroupMessage(-100777, 42, "/noitupvp"))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewGroupMessage(-100777, 42, "/noitu"))
 	if last := rb.LastSent(); last.Method != "sendMessage" || last.Text() != msgSendGameFail {
 		t.Fatalf("sendGame failure: sent %+v", rb.Sent())
 	}

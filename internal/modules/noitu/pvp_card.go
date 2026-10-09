@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	// pvpCommand sends a game card that the chat's members play together.
-	pvpCommand = "noitupvp"
+	// pvpCommand sends a game card that the chat's members play together. It
+	// shares its name with the BotFather game.
+	pvpCommand = ShortName
 
 	cardKeyPrefix = "pvp:"
 	// cardTTL is how long a card stays a room after its last Play press;
@@ -29,12 +30,12 @@ const (
 	// cardCleanupSchedule runs at 03:30 ICT.
 	cardCleanupSchedule = "30 20 * * *"
 
-	msgPvPNeedsGroup = "Chơi nối từ cùng nhau cần một nhóm. Hãy dùng /noitupvp trong nhóm, hoặc /noitu để chơi với bot."
+	msgPvPNeedsGroup = "Gửi /noitu trong nhóm để chơi cùng nhau. Muốn chơi với bot thì dùng /noitubot nhé."
 	msgPvPFail       = "Không tạo được phòng nối từ. Thử lại sau nhé."
 	msgCardLookup    = "Không mở được trò chơi lúc này. Thử lại sau nhé."
 )
 
-// pvpCard records a game message /noitupvp sent. A Play press on it opens the
+// pvpCard records a game message /noitu sent. A Play press on it opens the
 // card's room; any other game message, a forwarded copy of a card included,
 // plays against the bot.
 type pvpCard struct {
@@ -49,8 +50,9 @@ func cardKey(chatID int64, messageID int) string {
 }
 
 // handlePvPCommand sends the game and registers it as a room card. Like
-// /noitu it works even when the game is disabled; Play explains why. Rooms
-// are for a group's members, so private chats and channels are refused.
+// /noitubot it works even when the game is disabled; Play explains why. Rooms
+// are for a group's members, so private chats and channels are refused and
+// pointed at /noitubot.
 func (s *service) handlePvPCommand(ctx context.Context, b *bot.Bot, update *models.Update) error {
 	msg := update.Message
 	if msg.Chat.Type != models.ChatTypeGroup && msg.Chat.Type != models.ChatTypeSupergroup {

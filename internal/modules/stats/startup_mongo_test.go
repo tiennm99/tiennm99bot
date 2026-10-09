@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/systemstate"
 	"github.com/tiennm99/tiennm99bot/internal/testutil/mongotest"
 )
 
@@ -18,7 +19,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestInitStore_MongoCreatesIndexes(t *testing.T) {
-	ctx, statsColl := setupMongoStatsTest(t)
+	ctx, provider := setupMongoStatsProvider(t)
+	statsColl := provider.Collection("stats")
+	systemColl := provider.Collection(systemstate.CollectionName)
 
 	rawStatsColl, ok := storage.MongoCollection(statsColl)
 	if !ok {
@@ -36,10 +39,10 @@ func TestInitStore_MongoCreatesIndexes(t *testing.T) {
 		t.Fatalf("seed prefix stats: %v", err)
 	}
 
-	if err := InitStore(ctx, statsColl); err != nil {
+	if err := InitStore(ctx, statsColl, systemColl); err != nil {
 		t.Fatalf("InitStore: %v", err)
 	}
-	if err := InitStore(ctx, statsColl); err != nil {
+	if err := InitStore(ctx, statsColl, systemColl); err != nil {
 		t.Fatalf("InitStore second run: %v", err)
 	}
 
@@ -82,6 +85,12 @@ func TestInitStore_MongoCreatesIndexes(t *testing.T) {
 
 func setupMongoStatsTest(t *testing.T) (context.Context, storage.Collection) {
 	t.Helper()
+	ctx, provider := setupMongoStatsProvider(t)
+	return ctx, provider.Collection("stats")
+}
+
+func setupMongoStatsProvider(t *testing.T) (context.Context, storage.Provider) {
+	t.Helper()
 
 	uri := mongoTests.URI(t)
 
@@ -101,11 +110,15 @@ func setupMongoStatsTest(t *testing.T) (context.Context, storage.Collection) {
 		_ = client.Disconnect(cleanupCtx)
 	})
 
-	provider := storage.NewMongoProvider(db)
-	return ctx, provider.Collection("stats")
+	return ctx, storage.NewMongoProvider(db)
 }
 
 func TestInc_MongoUsernameMoveClearsOldHolder(t *testing.T) {
 	_, statsColl := setupMongoStatsTest(t)
 	assertUsernameMoveClearsOldHolder(t, statsColl)
+}
+
+func TestInitStore_MongoSwapsNoituCommandStats(t *testing.T) {
+	_, provider := setupMongoStatsProvider(t)
+	assertNoituCommandSwap(t, provider)
 }

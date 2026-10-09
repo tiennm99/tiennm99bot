@@ -109,19 +109,22 @@ func TestNew_DisabledWithoutBaseURL(t *testing.T) {
 	if len(mod.HTTP) != 0 || len(mod.Crons) != 0 {
 		t.Fatalf("disabled game exposes routes %v / crons %v", mod.HTTP, mod.Crons)
 	}
-	if len(mod.Commands) != 2 || mod.Commands[0].Name != "noitu" || mod.Commands[1].Name != "noitupvp" ||
-		mod.Commands[0].Parameters != "" || mod.Commands[1].Parameters != "" {
-		t.Fatalf("commands = %+v", mod.Commands)
+	var names []string
+	for _, c := range mod.Commands {
+		names = append(names, c.Name)
+	}
+	if strings.Join(names, " ") != "noitu noitubot noitutop" {
+		t.Fatalf("commands = %v", names)
 	}
 	for _, c := range mod.Commands {
-		if c.Visibility != modules.VisibilityPublic || c.Description == "" {
+		if c.Visibility != modules.VisibilityPublic || c.Description == "" || c.Parameters != "" {
 			t.Fatalf("command %+v is not a described public command", c)
 		}
 	}
 	if len(mod.Games) != 1 || mod.Games[0].ShortName != "noitu" {
 		t.Fatalf("games = %+v", mod.Games)
 	}
-	// /noitupvp registers cards even while the game is disabled, so their
+	// /noitu registers cards even while the game is disabled, so their
 	// cleanup still runs; nothing else does.
 	mod = New(modules.Deps{Bot: rb.Bot, Store: storage.NewMemoryProvider().Collection("noitu")})
 	if len(mod.HTTP) != 0 || len(mod.Crons) != 1 || mod.Crons[0].Name != "noitu_pvp_cards" {
@@ -233,7 +236,7 @@ func TestPlay_InaccessibleMessageAndNoTarget(t *testing.T) {
 
 func TestCommand_SendsGameKeepingTopic(t *testing.T) {
 	rb := installModule(t, newWithConfig(config{now: time.Now}))
-	update := testutil.NewSupergroupMessage(-100777, 42, "/noitu")
+	update := testutil.NewSupergroupMessage(-100777, 42, "/noitubot")
 	update.Message.MessageThreadID = 12
 	rb.Bot.ProcessUpdate(context.Background(), update)
 	last := rb.LastSent()
@@ -247,14 +250,14 @@ func TestCommand_SendsGameKeepingTopic(t *testing.T) {
 
 func TestCommand_ChannelAndFailure(t *testing.T) {
 	rb := installModule(t, newWithConfig(config{now: time.Now}))
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewChannelMessage(-100888, "/noitu"))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewChannelMessage(-100888, "/noitubot"))
 	if last := rb.LastSent(); last.Method != "sendMessage" || last.Text() != msgChannel {
 		t.Fatalf("channel: sent %+v", rb.Sent())
 	}
 
 	rb = installModule(t, newWithConfig(config{now: time.Now}))
 	rb.FailMethodCode("sendGame", 400, "Bad Request: GAME_SHORTNAME_INVALID")
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(42, "/noitu"))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(42, "/noitubot"))
 	if last := rb.LastSent(); last.Method != "sendMessage" || last.Text() != msgSendGameFail {
 		t.Fatalf("failure: sent %+v", rb.Sent())
 	}

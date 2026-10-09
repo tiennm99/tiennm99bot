@@ -10,11 +10,14 @@ import (
 )
 
 const (
-	msgChannel      = "Không thể chơi nối từ trong kênh. Hãy dùng /noitu trong nhóm hoặc chat riêng với bot."
+	// soloCommand sends the game played against the bot.
+	soloCommand = "noitubot"
+
+	msgChannel      = "Không thể chơi nối từ trong kênh. Hãy dùng /noitubot trong nhóm hoặc chat riêng với bot."
 	msgSendGameFail = "Không gửi được trò chơi nối từ. Thử lại sau nhé."
 )
 
-// handleCommand sends the BotFather game. No reply markup: Telegram then adds
+// handleCommand (/noitubot) sends the BotFather game for a solo game. No reply markup: Telegram then adds
 // the Play button itself, which is the button the game requires first.
 // The command works even when the game is disabled; Play explains why.
 func (s *service) handleCommand(ctx context.Context, b *bot.Bot, update *models.Update) error {

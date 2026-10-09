@@ -63,7 +63,7 @@
 
   var TOKEN_KEY = 'noitu-token';
   var token = readToken();
-  /** A token from a /noitupvp card opens the card's room instead of a game vs the bot. */
+  /** A token from a /noitu card opens the card's room instead of a game vs the bot. */
   var roomMode = isRoomToken(token);
 
   /**
@@ -452,7 +452,7 @@
     if (view) api('give-up', { session: view.session }).then(render, handleError);
   }
 
-  // Room mode: the members of a chat play each other on one /noitupvp card.
+  // Room mode: the members of a chat play each other on one /noitu card.
   // The page polls the room's state; the server owns the turns and the clock.
 
   var roomStartBtn = /** @type {HTMLButtonElement} */ ($('room-start'));

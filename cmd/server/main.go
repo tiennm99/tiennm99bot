@@ -44,6 +44,7 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/modules/wordle"
 	"github.com/tiennm99/tiennm99bot/internal/server"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
+	"github.com/tiennm99/tiennm99bot/internal/systemstate"
 	"github.com/tiennm99/tiennm99bot/internal/telegram"
 )
 
@@ -143,7 +144,7 @@ func main() {
 	}
 	defer closeProvider()
 
-	if err := stats.InitStore(rootCtx, provider.Collection("stats")); err != nil {
+	if err := stats.InitStore(rootCtx, provider.Collection("stats"), provider.Collection(systemstate.CollectionName)); err != nil {
 		log.Fatal("stats storage init failed", "err", err)
 	}
 	if err := lol.InitStore(rootCtx, provider.Collection(lol.CollectionName)); err != nil {

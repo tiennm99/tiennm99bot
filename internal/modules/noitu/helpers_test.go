@@ -125,6 +125,7 @@ func newHarnessWithStore(t *testing.T, store *dict.Store) *harness {
 	t.Helper()
 	h := &harness{t: t, clock: &fakeClock{t: time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)}, reporter: &fakeReporter{}}
 	seed := uint64(0)
+	coll := storage.NewMemoryProvider().Collection("noitu")
 	cfg := config{
 		baseURL:   testBase,
 		key:       testKey,
@@ -132,7 +133,8 @@ func newHarnessWithStore(t *testing.T, store *dict.Store) *harness {
 		newRNG:    func() *rand.Rand { seed++; return rand.New(rand.NewPCG(seed, 42)) },
 		reporter:  h.reporter,
 		announcer: h.reporter,
-		cards:     storage.Typed[pvpCard](storage.NewMemoryProvider().Collection("noitu")),
+		cards:     storage.Typed[pvpCard](coll),
+		top:       storage.Typed[topEntry](coll),
 		loadDict:  func() (*dict.Store, error) { return store, nil },
 	}
 	h.svc = newService(cfg)

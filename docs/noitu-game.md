@@ -1,13 +1,22 @@
 # Nối từ game
 
-`noitu` is a Telegram HTML5 game: Vietnamese word chaining ("nối từ") against
-the bot. `/noitu` sends the game into the chat. Pressing **Play** opens a page
-that this bot serves itself, where the player chains words against the bot.
-The final score goes to Telegram's in-chat high-score table.
+`noitu` is a Telegram HTML5 game: Vietnamese word chaining ("nối từ"). It has
+three commands:
 
-`/noitupvp` sends the same game as a room card: the members of a group who
-press Play on it play each other instead of the bot. See
-[Playing together](#playing-together-noitupvp).
+- `/noitu` sends the game into a group as a room card: the members who press
+  Play on it play each other. See [Playing together](#playing-together-noitu).
+  It works only in groups; elsewhere it answers with a hint (see below).
+- `/noitubot` sends the game for a solo game against the bot, in a group or a
+  private chat.
+- `/noitutop` shows the group's leaderboard across its room games. See
+  [Leaderboard](#leaderboard-noitutop).
+
+Pressing **Play** opens a page that this bot serves itself. The final score
+goes to Telegram's in-chat high-score table.
+
+Until October 2026 the solo game was `/noitu` and the room card was
+`/noitupvp`. A one-time startup migration moved their `/stats` history to the
+new names: `noitu` to `noitubot` first, then `noitupvp` to `noitu`.
 
 The rules, the dictionary and the bot opponent come from `tiennm99/noitu`. Its
 Go code is ported in-tree under `internal/modules/noitu/{dict,engine,opponent}`,
@@ -31,7 +40,7 @@ and its dictionary is embedded in the binary.
 
 With `GAME_BASE_URL` unset or invalid, the game is disabled:
 
-- `/noitu` still sends the game.
+- `/noitu` and `/noitubot` still send the game.
 - Pressing Play shows the alert "Trò chơi nối từ chưa được cấu hình trên máy
   chủ này."
 - No `/games/` route exists, so the bot needs no public ingress.
@@ -41,7 +50,7 @@ also disables the game. So is a `NOITU_GAME_SECRET` shorter than 32 bytes.
 
 ## How a game flows
 
-1. `/noitu` calls `sendGame` with no keyboard, so Telegram adds the Play
+1. `/noitubot` calls `sendGame` with no keyboard, so Telegram adds the Play
    button itself. In a forum topic the game stays in the topic. In a channel the
    bot answers with a short text instead, because Telegram does not allow games
    in channels.
@@ -198,10 +207,11 @@ Errors are `{"error","message"}`:
   - API responses are `no-store`.
   - Framing is not restricted, because Telegram Web shows games in an iframe.
 
-## Playing together (`/noitupvp`)
+## Playing together (`/noitu`)
 
-`/noitupvp` works in groups and supergroups only; in a private chat or a
-channel it answers "Chơi nối từ cùng nhau cần một nhóm…". It sends the same
+`/noitu` works in groups and supergroups only. In a private chat or a channel
+it does not send a game; it answers "Gửi /noitu trong nhóm để chơi cùng nhau.
+Muốn chơi với bot thì dùng /noitubot nhé." It sends the same
 BotFather game, `noitu`, and records the sent message as a **card** in the
 module's storage collection (`noitu`, key `pvp:<chat_id>:<message_id>`, with
 the forum topic). If the card cannot be recorded, the bot deletes it again and
@@ -266,7 +276,7 @@ per-word points are the same as against the bot (see [Rules](#rules) and
 - Each player scores the per-word points of their accepted words. The winner
   gets 50 more.
 - A game in which nobody played a word (everyone left at once) earns nothing:
-  no bonus, no score report and no announcement.
+  no bonus, no score report, no announcement and no leaderboard entry.
 - When a game ends, the bot posts "Ván nối từ kết thúc: <tên> thắng sau <n>
   từ!" as a reply to the card, in its topic. A failure is logged and ignored.
 - Then it reports each player whose score is above 0 with `setGameScore`
@@ -327,6 +337,30 @@ word length, one move per 300 ms per member, and the 10 starts per user per
 minute, which joins share. At most 500 rooms exist; beyond that a join answers
 `busy`. Player names are Telegram first names cut to 64 characters; the page
 only ever renders them as text.
+
+## Leaderboard (`/noitutop`)
+
+Every room game in which at least one word was played (the games that are
+announced) updates the chat's leaderboard. It is stored in the module's
+storage collection (`noitu`), one document per player and chat, keyed
+`top:<chat_id>:<user_id>`:
+
+- games played and games won, as a seated player
+- the best single-game score and the total of all game scores, winner bonus
+  included
+- the player's latest first name
+
+The update runs in the background publisher after the room is back in the
+lobby, before the announcement. A failure is logged and skips only that
+player. Two games ending at once for the same player are both kept: each
+update is a versioned write that retries on conflict.
+
+`/noitutop` in a group lists the top 10, ranked by wins, then the best game,
+then fewer games played (the same record in fewer games ranks higher), then
+total points. A caller ranked below 10 also sees their own line under the
+table. Names are HTML-escaped. In a private chat or a channel it answers
+"Bảng xếp hạng nối từ chỉ có trong nhóm…". Telegram's own high-score table on
+each card is separate: it keeps each member's best score on that card only.
 
 ## Sharing, and why there is no inline mode
 

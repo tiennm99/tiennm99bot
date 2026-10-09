@@ -1,8 +1,9 @@
-// Package noitu is the "nối từ" Telegram HTML5 game: the /noitu command sends
-// the BotFather game, the Play button opens a page this bot serves, and the
-// player chains Vietnamese words against the bot opponent there. /noitupvp
-// sends a card whose Play button opens a room where the chat's members chain
-// words against each other.
+// Package noitu is the "nối từ" Telegram HTML5 game: the /noitubot command
+// sends the BotFather game, the Play button opens a page this bot serves, and
+// the player chains Vietnamese words against the bot opponent there. /noitu
+// sends a card to a group whose Play button opens a room where the chat's
+// members chain words against each other, and /noitutop shows the group's
+// leaderboard across those room games.
 //
 // The server owns the game. The page only sends words; validation, the turn
 // timer, the bot's replies and the score all happen here, and the score is
@@ -52,12 +53,14 @@ type config struct {
 	reporter  scoreReporter // nil disables
 	announcer announcer     // nil skips room result messages
 	cards     storage.DocStore[pvpCard]
+	top       storage.DocStore[topEntry] // nil disables the group leaderboard
 	loadDict  func() (*dict.Store, error)
 }
 
 // New builds the module from the environment. The game is enabled only when
 // GAME_BASE_URL is a valid https URL and a token key is available; otherwise
-// /noitu still sends the game and Play explains it is not configured.
+// /noitu and /noitubot still send the game and Play explains it is not
+// configured.
 func New(deps modules.Deps) modules.Module {
 	cfg := config{
 		baseURL:  parseBaseURL(os.Getenv(baseURLEnv)),
@@ -72,6 +75,7 @@ func New(deps modules.Deps) modules.Module {
 	}
 	if deps.Store != nil {
 		cfg.cards = storage.Typed[pvpCard](deps.Store)
+		cfg.top = storage.Typed[topEntry](deps.Store)
 	}
 	return newWithConfig(cfg)
 }
@@ -98,19 +102,24 @@ func newService(cfg config) *service {
 // module describes the service to the registry. Routes and the sweep cron
 // exist only when the game is enabled, so a disabled game exposes nothing
 // over HTTP. The card cleanup runs whenever cards can be stored, because
-// /noitupvp registers cards even while the game is disabled.
+// /noitu registers cards even while the game is disabled.
 func (svc *service) module() modules.Module {
 	mod := modules.Module{
 		Commands: []modules.Command{{
-			Name:        ShortName,
+			Name:        pvpCommand,
+			Visibility:  modules.VisibilityPublic,
+			Description: "Chơi nối từ với các thành viên trong nhóm (chỉ trong nhóm)",
+			Handler:     svc.handlePvPCommand,
+		}, {
+			Name:        soloCommand,
 			Visibility:  modules.VisibilityPublic,
 			Description: "Chơi nối từ với bot",
 			Handler:     svc.handleCommand,
 		}, {
-			Name:        pvpCommand,
+			Name:        topCommand,
 			Visibility:  modules.VisibilityPublic,
-			Description: "Chơi nối từ với các thành viên trong nhóm",
-			Handler:     svc.handlePvPCommand,
+			Description: "Bảng xếp hạng nối từ của nhóm",
+			Handler:     svc.handleTopCommand,
 		}},
 		Games: []modules.Game{{
 			ShortName:  ShortName,

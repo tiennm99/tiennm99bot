@@ -100,7 +100,7 @@ func TestFactoriesRegistersBlacklistCommands(t *testing.T) {
 	}
 }
 
-// noitu is in the catalog and, with GAME_BASE_URL unset, registers its command
+// noitu is in the catalog and, with GAME_BASE_URL unset, registers its commands
 // and game but no public HTTP route.
 func TestFactoriesRegistersNoituDisabledByDefault(t *testing.T) {
 	t.Setenv("GAME_BASE_URL", "")
@@ -109,8 +109,13 @@ func TestFactoriesRegistersNoituDisabledByDefault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Build noitu: %v", err)
 	}
-	if _, ok := reg.AllCommands["noitu"]; !ok {
-		t.Fatal("missing command noitu")
+	for _, name := range []string{"noitu", "noitubot", "noitutop"} {
+		if _, ok := reg.AllCommands[name]; !ok {
+			t.Fatalf("missing command %s", name)
+		}
+	}
+	if _, ok := reg.AllCommands["noitupvp"]; ok {
+		t.Fatal("renamed command noitupvp is still registered")
 	}
 	if routes := serverRoutes(reg); len(routes) != 0 {
 		t.Fatalf("disabled game exposes routes: %+v", routes)

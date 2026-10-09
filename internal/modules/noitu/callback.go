@@ -12,11 +12,11 @@ import (
 
 const (
 	msgDisabled     = "Trò chơi nối từ chưa được cấu hình trên máy chủ này."
-	msgNoGameTarget = "Không xác định được tin nhắn trò chơi. Hãy gửi /noitu để chơi."
+	msgNoGameTarget = "Không xác định được tin nhắn trò chơi. Hãy gửi /noitubot để chơi với bot, hoặc /noitu trong nhóm để chơi cùng nhau."
 )
 
 // handlePlay answers a Play press with the game URL carrying a signed token,
-// or with an alert when the game cannot open. A press on a /noitupvp card
+// or with an alert when the game cannot open. A press on a /noitu card
 // marks the token PvP, so the page joins the card's room. Every path answers
 // the query, so the client never keeps spinning.
 func (s *service) handlePlay(ctx context.Context, b *bot.Bot, update *models.Update) error {

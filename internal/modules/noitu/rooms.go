@@ -62,6 +62,7 @@ type roomStanding struct {
 	Words     int    `json:"words"`
 	OutReason string `json:"out_reason"`
 	You       bool   `json:"you"`
+	won       bool
 }
 
 // roomReport is one score to report on the card.
@@ -80,7 +81,7 @@ type roomResult struct {
 	ScoreReported string         `json:"score_reported"`
 }
 
-// room is the live game of one /noitupvp card. Its mutex guards every field
+// room is the live game of one /noitu card. Its mutex guards every field
 // below it; the room store's mutex is never taken while holding it.
 type room struct {
 	id   string
@@ -384,6 +385,7 @@ func (s *service) endRoomGame(r *room, now time.Time) {
 		if seat == r.match.Winner() && res.Words > 0 {
 			st.Bonus = winnerBonus
 			st.Score += winnerBonus
+			st.won = true
 		}
 		res.Standings = append(res.Standings, st)
 		if st.Score > 0 {
@@ -410,12 +412,14 @@ func (s *service) endRoomGame(r *room, now time.Time) {
 	go s.publishRoomResult(r, res, text, reports, res.ScoreReported == reportPending) //nolint:gosec // G118: the report must outlive the request that ended the game
 }
 
-// publishRoomResult announces the result in the chat and reports the scores
-// one by one. Publishing holds the card's lock, so two games on one card
-// never edit its game message at the same time. Neither step is fatal to
-// the room.
+// publishRoomResult records the game on the group leaderboard, announces the
+// result in the chat and reports the scores one by one. Publishing holds the
+// card's lock, so two games on one card never edit its game message at the
+// same time. No step is fatal to the room. res.Standings is never modified
+// after endRoomGame, so it is read here without the room's lock.
 func (s *service) publishRoomResult(r *room, res *roomResult, text string, reports []roomReport, report bool) {
 	defer s.publishing.Acquire(roomCardKey(r.card))()
+	s.recordTop(r.card.ChatID, res.Standings)
 	if s.cfg.announcer != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), reportTimeout)
 		if err := s.cfg.announcer.Announce(ctx, r.card, text); err != nil {
