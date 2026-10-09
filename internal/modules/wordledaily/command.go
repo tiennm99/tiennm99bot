@@ -33,7 +33,7 @@ func (s *service) handleCommand(ctx context.Context, b *bot.Bot, update *models.
 	if _, err := b.SendGame(ctx, &bot.SendGameParams{
 		ChatID:          msg.Chat.ID,
 		MessageThreadID: topicOf(msg),
-		GameShorName:    ShortName, // the library's field name is misspelled
+		GameShorName:    GameShortName, // the library's field name is misspelled
 	}); err != nil {
 		_ = chathelper.Reply(ctx, b, msg, msgSendGameFail)
 		return err

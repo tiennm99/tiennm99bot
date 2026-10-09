@@ -30,9 +30,11 @@ import (
 )
 
 const (
-	// ShortName is the game's BotFather short name and the module's catalog
-	// key, so its routes live under /games/wordledaily/.
+	// ShortName is the module's catalog key and command name, so its routes
+	// live under /games/wordledaily/.
 	ShortName = "wordledaily"
+	// GameShortName is the BotFather game the cards send and Play answers.
+	GameShortName = "wordle"
 
 	subscribeCommand   = ShortName + "_subscribe"
 	unsubscribeCommand = ShortName + "_unsubscribe"
@@ -203,7 +205,7 @@ func (s *service) module() modules.Module {
 			Handler:     s.handleUnsubscribe,
 		}},
 		Games: []modules.Game{{
-			ShortName:  ShortName,
+			ShortName:  GameShortName,
 			Visibility: modules.VisibilityPublic,
 			Handler:    s.handlePlay,
 		}},

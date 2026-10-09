@@ -50,7 +50,7 @@ func TestModule_Registration(t *testing.T) {
 	if strings.Join(names, " ") != "wordledaily wordledaily_subscribe wordledaily_unsubscribe" {
 		t.Fatalf("commands = %v", names)
 	}
-	if len(mod.Games) != 1 || mod.Games[0].ShortName != "wordledaily" {
+	if len(mod.Games) != 1 || mod.Games[0].ShortName != "wordle" {
 		t.Fatalf("games = %+v", mod.Games)
 	}
 	if len(mod.HTTP) != 0 || len(mod.Crons) != 0 {
@@ -84,7 +84,7 @@ func TestNew_FromEnv(t *testing.T) {
 
 func TestPlay_DisabledAnswersAlert(t *testing.T) {
 	rb := install(t, newService(config{}).module())
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewGameCallback(1, 1, 5, ShortName))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewGameCallback(1, 1, 5, GameShortName))
 	f := answerForm(t, rb)
 	if f["text"] != msgDisabled || f["show_alert"] != "true" || f["url"] != "" {
 		t.Fatalf("answer = %v", f)
@@ -108,7 +108,7 @@ func TestPlay_AnswersSignedURLForEveryCardForm(t *testing.T) {
 	h := newHarness(t)
 	rb := install(t, h.svc.module())
 
-	topic := testutil.NewGameCallback(42, groupChat, 9, ShortName)
+	topic := testutil.NewGameCallback(42, groupChat, 9, GameShortName)
 	topic.CallbackQuery.From.LastName = "Nguyen"
 	topic.CallbackQuery.Message.Message.IsTopicMessage = true
 	topic.CallbackQuery.Message.Message.MessageThreadID = 77
@@ -122,7 +122,7 @@ func TestPlay_AnswersSignedURLForEveryCardForm(t *testing.T) {
 	}
 
 	inaccessible := &models.Update{CallbackQuery: &models.CallbackQuery{
-		ID: "q", From: models.User{ID: 42, FirstName: "A"}, GameShortName: ShortName,
+		ID: "q", From: models.User{ID: 42, FirstName: "A"}, GameShortName: GameShortName,
 		Message: models.MaybeInaccessibleMessage{
 			Type:                models.MaybeInaccessibleMessageTypeInaccessibleMessage,
 			InaccessibleMessage: &models.InaccessibleMessage{Chat: models.Chat{ID: -5}, MessageID: 3},
@@ -133,12 +133,12 @@ func TestPlay_AnswersSignedURLForEveryCardForm(t *testing.T) {
 		t.Fatalf("inaccessible claims = %+v", c)
 	}
 
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewInlineGameCallback(42, "BAAAInline", ShortName))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewInlineGameCallback(42, "BAAAInline", GameShortName))
 	if c := decodeURLToken(t, h, answerForm(t, rb)["url"]); c.InlineID != "BAAAInline" || c.ChatID != 0 {
 		t.Fatalf("inline claims = %+v", c)
 	}
 
-	none := testutil.NewInlineGameCallback(42, "", ShortName)
+	none := testutil.NewInlineGameCallback(42, "", GameShortName)
 	rb.Bot.ProcessUpdate(context.Background(), none)
 	if f := answerForm(t, rb); f["text"] != msgNoGameTarget || f["show_alert"] != "true" {
 		t.Fatalf("no target = %v", f)
@@ -172,7 +172,7 @@ func TestCommand_SendsGameKeepingTopic(t *testing.T) {
 	u.Message.MessageThreadID, u.Message.IsTopicMessage = 77, true
 	rb.Bot.ProcessUpdate(context.Background(), u)
 	games := sentMethod(rb, "sendGame")
-	if len(games) != 1 || games[0].Form["game_short_name"] != ShortName || games[0].Form["message_thread_id"] != "77" || games[0].ChatID() != "-100" {
+	if len(games) != 1 || games[0].Form["game_short_name"] != GameShortName || games[0].Form["message_thread_id"] != "77" || games[0].ChatID() != "-100" {
 		t.Fatalf("sent %+v", rb.Sent())
 	}
 	// A reply chain in an ordinary supergroup carries a thread id too, but

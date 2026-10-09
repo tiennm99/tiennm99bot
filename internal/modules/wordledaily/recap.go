@@ -83,7 +83,7 @@ func (s *service) pushTo(ctx context.Context, api telegramAPI, num int, sub subs
 			}
 		}
 	}
-	_, err := api.SendGame(ctx, &bot.SendGameParams{ChatID: sub.ChatID, MessageThreadID: sub.ThreadID, GameShorName: ShortName})
+	_, err := api.SendGame(ctx, &bot.SendGameParams{ChatID: sub.ChatID, MessageThreadID: sub.ThreadID, GameShorName: GameShortName})
 	return err
 }
 

@@ -70,7 +70,7 @@ func TestPush_RecapThenCardWithCrownTiesAndLoss(t *testing.T) {
 			t.Fatalf("not sent to the topic: %+v", c)
 		}
 	}
-	if sent[1].Form["game_short_name"] != ShortName {
+	if sent[1].Form["game_short_name"] != GameShortName {
 		t.Fatalf("card = %v", sent[1].Form)
 	}
 	// The same puzzle is never pushed twice.

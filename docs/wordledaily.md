@@ -29,7 +29,9 @@ data and scoring through `internal/modules/wordle/wordlist`.
 ## Setup
 
 1. **BotFather:** create a game for the bot with `/newgame` and the short name
-   `wordledaily`. The share link is then `t.me/<bot username>?game=wordledaily`.
+   `wordle`. The share link is then `t.me/<bot username>?game=wordle`. The
+   module, its commands and its routes keep the name `wordledaily`; only the
+   BotFather game is `wordle`.
 2. **Public URL:** this uses the same `GAME_BASE_URL` as the
    [noitu game](noitu-game.md#setup). The page is served at
    `<GAME_BASE_URL>/games/wordledaily/`.
