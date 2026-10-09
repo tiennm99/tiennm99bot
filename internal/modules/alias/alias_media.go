@@ -34,13 +34,17 @@ const unsupportedRefusal = "That message cannot be saved. Reply to a sticker, ph
 // the answer to all of them — only the reason differs.
 const forwardAdvice = "Forward it into this chat, then reply to your copy with /alias <name>."
 
-// otherBotRefusal explains a refusal no change here can lift.
+// otherBotRefusal explains why another bot's message arrived empty.
 //
-// Telegram's own rule: "Bots will not be able to see messages from other bots
-// regardless of mode." The reply arrives with its content stripped, so there is
-// nothing to save and no setting that would help — worth saying outright rather
-// than letting unsupportedRefusal imply the format was wrong.
-const otherBotRefusal = "Telegram does not let bots read other bots' messages, so I cannot save that one. " + forwardAdvice
+// Telegram strips another bot's message out of a reply unless this bot has
+// Bot-to-Bot Communication Mode enabled in BotFather and receives every group
+// message — as a group admin, or with privacy mode off. Both are chat and
+// BotFather settings, not code, so the refusal names them alongside the
+// forward workaround rather than letting unsupportedRefusal imply the format
+// was wrong.
+const otherBotRefusal = "Telegram hid that bot's message from me, so I cannot save it. " +
+	"I can read other bots' messages only when I am an admin in this chat and Bot-to-Bot Communication is on for me in @BotFather. " +
+	forwardAdvice
 
 // strippedReplyRefusal answers a reply Telegram delivered empty: it carried a
 // message id but no content field at all.

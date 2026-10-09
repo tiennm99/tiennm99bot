@@ -113,6 +113,10 @@ exactly 512px with the aspect ratio preserved, uploaded as a PNG, and then
 added — attributed to the pack owner, matching the set it is about to join.
 Sources above 2 MB, or with either side above 4096px, are rejected.
 
+**Replying to another bot's image** works only after the
+[group setup](deploy-coolify-selfhosted.md#4-group-setup); otherwise Telegram
+strips the image out of the reply.
+
 ## Video and GIF
 
 A replied video, GIF, animation or video note is downloaded and transcoded with

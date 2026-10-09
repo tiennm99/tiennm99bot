@@ -448,7 +448,7 @@ func TestAlias_ExplainsAnotherBotsMessage(t *testing.T) {
 		From: &models.User{ID: 555, IsBot: true, FirstName: "OtherBot"},
 	}))
 
-	rb.AssertSentText(t, "does not let bots read other bots")
+	rb.AssertSentText(t, "hid that bot's message")
 }
 
 // A human's unsupported message still gets the format advice, not the bot one.

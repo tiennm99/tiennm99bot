@@ -205,6 +205,30 @@ truth, so no separate command-menu file or manual registration step is
 required. See [Command discovery](../README.md#command-discovery) for how the
 menu text is built.
 
+## 4. Group setup
+
+By default a bot in a group runs in privacy mode. It receives only commands
+addressed to it, replies to its own messages, and service messages, and it
+cannot read messages sent by other bots. That breaks two things:
+
+- A bare `/command` typed as a reply to another bot's message is routed to that
+  other bot. Address this bot explicitly, as `/command@<this bot>`.
+- `/addsticker` and `/alias` replying to another bot's message (for example, an
+  image another bot posted) get the reply with its content stripped.
+
+To make both work in a group:
+
+1. In @BotFather, enable **Bot-to-Bot Communication Mode** for this bot.
+2. Promote the bot to **admin** in the group. Admins receive every message, so
+   no permissions beyond the defaults are needed.
+
+Disabling privacy mode in BotFather (`/setprivacy`) is the alternative to admin
+rights, but Telegram applies it only after the bot is removed from the group and
+added back. Admin rights take effect immediately. Verified on 2026-10-09:
+`/addsticker@<this bot>` replying to another bot's image failed with privacy
+mode off and the bot not re-added, and worked once the bot was promoted to admin.
+See Telegram's [privacy mode and bot-to-bot rules](https://core.telegram.org/bots/features#privacy-mode).
+
 ## Operations
 
 The live deployment is the Coolify container and MongoDB is the sole system of

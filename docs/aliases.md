@@ -177,20 +177,20 @@ so they stay valid. They are sent back as entities rather than re-rendered as
 markup, which avoids escaping and re-parsing content the user never wrote as
 markup.
 
-**Another bot's message cannot be saved.** Telegram's own rule: *"Bots will not
-be able to see messages from other bots regardless of mode."* The reply arrives
-with its content stripped, so there is nothing to store and no setting that
-would change it.
+**Another bot's message needs group setup.** By default Telegram strips another
+bot's message out of a reply, so there is nothing to store. It arrives intact
+once the bot has Bot-to-Bot Communication Mode enabled and is a group admin; see
+[Group setup](deploy-coolify-selfhosted.md#4-group-setup).
 
 Every refusal for a message that could not be *read* — as opposed to one whose
-kind is unsupported — ends with the same advice, because it is the only thing
-that works: **forward it into the chat and reply to your copy.** A forwarded
+kind is unsupported — ends with the same advice, because it works without any
+setup: **forward it into the chat and reply to your copy.** A forwarded
 copy is a new message sent by a user, so it arrives intact. Three shapes reach
 that advice, and they are told apart deliberately:
 
 | What arrived | Answer |
 | --- | --- |
-| Reply from a sender marked as a bot | Telegram does not let bots read other bots' messages |
+| Reply from a sender marked as a bot | Telegram hid that bot's message; admin rights plus Bot-to-Bot Communication fix it |
 | Reply with a message id but no content field at all | That message reached me with no content |
 | No reply attached at all | Reply to the message you want to save — and if you did, Telegram did not pass it along |
 
