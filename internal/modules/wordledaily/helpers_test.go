@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/guessgame"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util/htmlgame"
 	"github.com/tiennm99/tiennm99bot/internal/modules/wordle/wordlist"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
@@ -20,7 +21,7 @@ var (
 	testRoot          = []byte("0123456789abcdef0123456789abcdef")
 	testAnswers       = wordlist.Answers()
 	_, testDict       = wordlist.Load()
-	testStart         = epoch.Add(12 * time.Hour) // 19:00 ICT on puzzle #1's day
+	testStart         = guessgame.Epoch.Add(12 * time.Hour) // 19:00 ICT on puzzle #1's day
 	testBase          = "https://game.example"
 	editStub          = `{"message_id":1,"date":0,"chat":{"id":-100,"type":"supergroup"}}`
 	groupChat   int64 = -100
@@ -128,7 +129,7 @@ type harness struct {
 	handler http.Handler
 }
 
-func testConfig(clock *fakeClock, coll storage.Collection, rep scoreReporter, api telegramAPI, sched *fakeScheduler) config {
+func testConfig(clock *fakeClock, coll storage.Collection, rep guessgame.ScoreReporter, api guessgame.TelegramAPI, sched *fakeScheduler) config {
 	return config{
 		baseURL:  testBase,
 		rootKey:  testRoot,
@@ -140,7 +141,17 @@ func testConfig(clock *fakeClock, coll storage.Collection, rep scoreReporter, ap
 		async:    func(f func()) { f() },
 		answers:  testAnswers,
 		dict:     testDict,
+		pick:     testPick,
 	}
+}
+
+// testPick makes unlimited rounds deterministic: crane, then slate, then
+// crane again.
+func testPick(prev string) string {
+	if prev == "crane" {
+		return "slate"
+	}
+	return "crane"
 }
 
 func newHarness(t *testing.T) *harness {
@@ -156,7 +167,7 @@ func newHarness(t *testing.T) *harness {
 	h.rb.StubMethod("editMessageText", editStub)
 	h.svc = newService(testConfig(h.clock, h.coll, h.rep, h.rb.Bot, h.sched))
 	mod := h.svc.module()
-	if len(mod.HTTP) != 1 || len(mod.Crons) != 1 {
+	if len(mod.HTTP) != 1 || len(mod.Crons) != 2 {
 		t.Fatalf("enabled module: routes %d crons %d", len(mod.HTTP), len(mod.Crons))
 	}
 	h.handler = mod.HTTP[0].Handler
@@ -172,7 +183,7 @@ func (h *harness) restart() {
 // tokenFor signs a token for user on card msg in chat (thread is its topic).
 func (h *harness) tokenFor(user, chat int64, msg, thread int, name string) string {
 	h.t.Helper()
-	tok, err := h.svc.signToken(claims{UserID: user, Name: name, ChatID: chat, MessageID: msg, ThreadID: thread, Expiry: h.clock.now().Add(tokenTTL).Unix()})
+	tok, err := h.svc.signToken(guessgame.Claims{UserID: user, Name: name, ChatID: chat, MessageID: msg, ThreadID: thread, Expiry: h.clock.now().Add(guessgame.TokenTTL).Unix()})
 	if err != nil {
 		h.t.Fatal(err)
 	}
@@ -184,7 +195,7 @@ func (h *harness) dmToken(user int64) string { return h.tokenFor(user, user, 5, 
 
 func (h *harness) answer() string {
 	h.t.Helper()
-	a, err := h.svc.resolvePuzzle(context.Background(), h.svc.puzzleNum(h.clock.now()))
+	a, err := h.svc.ResolvePuzzle(context.Background(), h.svc.PuzzleNum(h.clock.now()))
 	if err != nil {
 		h.t.Fatal(err)
 	}

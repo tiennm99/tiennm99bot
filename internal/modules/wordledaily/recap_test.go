@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/guessgame"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util/subscription"
 )
 
 func mustList(t *testing.T, h *harness) []subscription.Subscriber {
 	t.Helper()
-	subs, err := subscription.List(context.Background(), h.svc.subscribers)
+	subs, err := subscription.List(context.Background(), h.svc.Subscribers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +22,7 @@ func mustList(t *testing.T, h *harness) []subscription.Subscriber {
 
 func subscribe(t *testing.T, h *harness, chat int64, thread int) {
 	t.Helper()
-	if _, err := subscription.Add(context.Background(), h.svc.subscribers, chat, thread); err != nil {
+	if _, err := subscription.Add(context.Background(), h.svc.Subscribers, chat, thread); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -54,14 +55,14 @@ func TestPush_RecapThenCardWithCrownTiesAndLoss(t *testing.T) {
 	playGroupDay(t, h, 77)
 	subscribe(t, h, groupChat, 77)
 	h.nextDay()
-	if err := h.svc.runDailyPush(context.Background(), h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(context.Background(), h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
 	sent := h.rb.Sent()
 	if len(sent) != 2 || sent[0].Method != "sendMessage" || sent[1].Method != "sendGame" {
 		t.Fatalf("sent %+v", sent)
 	}
-	want := "Wordle Daily #1 — yesterday's results\nAnswer: " + strings.ToUpper(h.svc.answerFor(1)) + "\n👑 2/6: Alice, Dan\n3/6: Eve\nX/6: Bob"
+	want := "Wordle Daily #1 — yesterday's results\nAnswer: " + strings.ToUpper(h.svc.AnswerFor(1)) + "\n👑 2/6: Alice, Dan\n3/6: Eve\nX/6: Bob"
 	if got := sent[0].Text(); got != want {
 		t.Fatalf("recap:\n%s\nwant:\n%s", got, want)
 	}
@@ -75,7 +76,7 @@ func TestPush_RecapThenCardWithCrownTiesAndLoss(t *testing.T) {
 	}
 	// The same puzzle is never pushed twice.
 	h.rb.Reset()
-	if err := h.svc.runDailyPush(context.Background(), h.rb.Bot); err != nil || len(h.rb.Sent()) != 0 {
+	if err := h.svc.RunDailyPush(context.Background(), h.rb.Bot); err != nil || len(h.rb.Sent()) != 0 {
 		t.Fatalf("second run sent %+v, %v", h.rb.Sent(), err)
 	}
 }
@@ -91,29 +92,29 @@ func TestPush_StreakLineAndReset(t *testing.T) {
 	h.guess(h.tokenFor(1, groupChat, 8, 0, "Alice"), 2, h.answer())
 	h.nextDay()
 	h.rb.Reset()
-	if err := h.svc.runDailyPush(ctx, h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(ctx, h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
-	if got := h.rb.Sent()[0].Text(); got != "Wordle Daily #2 — yesterday's results\nAnswer: "+strings.ToUpper(h.svc.answerFor(2))+"\n🔥 Your group is on a 2 day streak!\n👑 1/6: Alice" {
+	if got := h.rb.Sent()[0].Text(); got != "Wordle Daily #2 — yesterday's results\nAnswer: "+strings.ToUpper(h.svc.AnswerFor(2))+"\n🔥 Your group is on a 2 day streak!\n👑 1/6: Alice" {
 		t.Fatalf("streak recap = %q", got)
 	}
 	// Nobody plays #3: the next push says the streak ended, then sends the card.
 	h.nextDay()
 	h.rb.Reset()
-	if err := h.svc.runDailyPush(ctx, h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(ctx, h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
 	sent := h.rb.Sent()
-	if len(sent) != 2 || sent[0].Text() != "Wordle Daily #3 — yesterday's results\nAnswer: "+strings.ToUpper(h.svc.answerFor(3))+"\nNobody solved it. Group streak reset." || sent[1].Method != "sendGame" {
+	if len(sent) != 2 || sent[0].Text() != "Wordle Daily #3 — yesterday's results\nAnswer: "+strings.ToUpper(h.svc.AnswerFor(3))+"\nNobody solved it. Group streak reset." || sent[1].Method != "sendGame" {
 		t.Fatalf("reset push = %+v", sent)
 	}
 	// The day after, with no streak left, the recap is just the answer.
 	h.nextDay()
 	h.rb.Reset()
-	if err := h.svc.runDailyPush(ctx, h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(ctx, h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
-	if sent := h.rb.Sent(); len(sent) != 2 || sent[0].Text() != "Wordle Daily #4 — yesterday's results\nAnswer: "+strings.ToUpper(h.svc.answerFor(4)) || sent[1].Method != "sendGame" {
+	if sent := h.rb.Sent(); len(sent) != 2 || sent[0].Text() != "Wordle Daily #4 — yesterday's results\nAnswer: "+strings.ToUpper(h.svc.AnswerFor(4)) || sent[1].Method != "sendGame" {
 		t.Fatalf("quiet push = %+v", sent)
 	}
 }
@@ -133,10 +134,10 @@ func TestPush_LossBreaksTheGroupStreak(t *testing.T) {
 	}
 	h.nextDay()
 	h.rb.Reset()
-	if err := h.svc.runDailyPush(ctx, h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(ctx, h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
-	want := "Wordle Daily #3 — yesterday's results\nAnswer: " + strings.ToUpper(h.svc.answerFor(3)) + "\nNobody solved it. Group streak reset.\nX/6: Alice"
+	want := "Wordle Daily #3 — yesterday's results\nAnswer: " + strings.ToUpper(h.svc.AnswerFor(3)) + "\nNobody solved it. Group streak reset.\nX/6: Alice"
 	if got := h.rb.Sent()[0].Text(); got != want {
 		t.Fatalf("loss recap = %q, want %q", got, want)
 	}
@@ -148,7 +149,7 @@ func TestPush_PrivateSubscriberGetsCardOnly(t *testing.T) {
 	subscribe(t, h, 5, 0)
 	h.nextDay()
 	h.rb.Reset()
-	if err := h.svc.runDailyPush(context.Background(), h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(context.Background(), h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
 	if sent := h.rb.Sent(); len(sent) != 1 || sent[0].Method != "sendGame" || sent[0].ChatID() != "5" {
@@ -163,7 +164,7 @@ func TestPush_BlockedRecapPrunesAndSkipsTheCard(t *testing.T) {
 	subscribe(t, h, 9, 0)
 	h.nextDay()
 	h.rb.FailMethodCode("sendMessage", 403, "Forbidden: bot was kicked from the supergroup chat; bot is not a member of the supergroup chat")
-	if err := h.svc.runDailyPush(context.Background(), h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(context.Background(), h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
 	games := sentMethod(h.rb, "sendGame")
@@ -177,14 +178,14 @@ func TestPush_BlockedRecapPrunesAndSkipsTheCard(t *testing.T) {
 
 func TestPush_NoSubscribersAndNoBot(t *testing.T) {
 	h := newHarness(t)
-	if err := h.svc.runDailyPush(context.Background(), h.rb.Bot); err != nil || len(h.rb.Sent()) != 0 {
+	if err := h.svc.RunDailyPush(context.Background(), h.rb.Bot); err != nil || len(h.rb.Sent()) != 0 {
 		t.Fatalf("no subscribers: %+v, %v", h.rb.Sent(), err)
 	}
-	if err := h.svc.dailyPushHandler(context.Background(), modules.Deps{}); err == nil {
+	if err := h.svc.PushHandler(context.Background(), modules.Deps{}); err == nil {
 		t.Fatal("push without a bot succeeded")
 	}
 	// The push pins the day's answer even with nobody subscribed.
-	if _, _, err := h.svc.puzzles.Get(context.Background(), puzzleKey(1)); err != nil {
+	if _, _, err := h.svc.Puzzles.Get(context.Background(), guessgame.PuzzleKey(1)); err != nil {
 		t.Fatalf("puzzle not pinned: %v", err)
 	}
 }
@@ -201,10 +202,10 @@ func TestPush_PrunesOldPuzzleDays(t *testing.T) {
 			h.nextDay()
 		}
 	}
-	if err := h.svc.runDailyPush(ctx, h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(ctx, h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
-	keys, err := h.svc.plays.List(ctx, "")
+	keys, err := h.svc.Plays.List(ctx, "")
 	if err != nil {
 		t.Fatal(err)
 	}

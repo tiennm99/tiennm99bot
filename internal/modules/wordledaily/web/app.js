@@ -1,6 +1,7 @@
-// Wordle Daily page. Plain JavaScript, no build step. The server owns the
-// game: this page only sends guesses and renders the state it gets back. It
-// never knows the answer until the game is over.
+// Wordle page, for both modes the card can open: the daily puzzle and the
+// player's unlimited rounds. Plain JavaScript, no build step. The server owns
+// the game: this page only sends guesses and renders the state it gets back.
+// It never knows the answer until the game is over.
 (function () {
   'use strict';
 
@@ -8,9 +9,10 @@
    * @typedef {{word: string, marks: string}} GuessView
    * @typedef {{played: number, win_pct: number, cur: number, max: number, dist: number[]}} StatsView
    * @typedef {{
-   *   num: number, date: string, player: string, max: number, len: number,
-   *   guesses: GuessView[], status: 'playing'|'won'|'lost', answer?: string,
-   *   stats?: StatsView, next_at: number, share?: string
+   *   mode: 'daily'|'unlimited', num?: number, date?: string, seq?: number,
+   *   player: string, max: number, len: number, guesses: GuessView[],
+   *   status: 'playing'|'won'|'lost', gave_up?: boolean, answer?: string,
+   *   stats?: StatsView, next_at?: number, share?: string, abandoned?: string
    * }} View
    * @typedef {{code: string, message: string}} ApiError
    */
@@ -31,6 +33,8 @@
   var MAX_TILE = 62;
   var MIN_TILE = 24;
   var WIN_WORDS = ['Genius', 'Magnificent', 'Impressive', 'Splendid', 'Great', 'Phew'];
+  /** How long the header's New game waits for the second tap. */
+  var CONFIRM_MS = 4000;
 
   /** @param {string} id @returns {HTMLElement} */
   function $(id) {
@@ -45,6 +49,7 @@
   var endBox = $('end');
   var statsBtn = $('stats-btn');
   var contrastBtn = $('contrast-btn');
+  var newTop = /** @type {HTMLButtonElement} */ ($('new-top'));
 
   /** @type {View|null} */
   var view = null;
@@ -52,6 +57,7 @@
   var busy = false;
   var toastTimer = 0;
   var countdownTimer = 0;
+  var confirmTimer = 0;
   /** The row whose marks are being revealed, and when that ends. */
   var revealRow = -1;
   var revealUntil = 0;
@@ -190,6 +196,11 @@
   /** @param {number} r @returns {HTMLElement} */
   function rowEl(r) { return /** @type {HTMLElement} */ (board.children[r]); }
 
+  /** @param {View} v @returns {string} which board v is: a puzzle or a round */
+  function boardKey(v) {
+    return v.mode === 'unlimited' ? 'u' + v.seq : 'd' + v.num;
+  }
+
   /**
    * Paints the board, the typed word and the keyboard colours. The row
    * being revealed keeps its flip classes until the reveal ends, so typing
@@ -198,8 +209,13 @@
    */
   function render() {
     if (!view) return;
-    $('num').textContent = '#' + view.num;
-    $('subtitle').textContent = view.date + (view.player ? ' · ' + view.player : '');
+    var daily = view.mode !== 'unlimited';
+    $('title').textContent = daily ? 'Wordle Daily' : 'Wordle';
+    $('num').textContent = daily ? '#' + view.num : '';
+    var where = daily ? view.date : 'Unlimited · Round ' + view.seq;
+    $('subtitle').textContent = where + (view.player ? ' · ' + view.player : '');
+    newTop.hidden = daily;
+    resetConfirm();
     var revealing = Date.now() < revealUntil;
     var best = {};
     for (var r = 0; r < ROWS; r++) {
@@ -258,7 +274,7 @@
    * @param {boolean} fromGuess v answers a guess, so its new row flips
    */
   function apply(v, fromGuess) {
-    if (view && view.num !== v.num) typed = '';
+    if (view && boardKey(view) !== boardKey(v)) typed = '';
     var fresh = fromGuess && v.status !== 'playing';
     revealRow = -1;
     revealUntil = 0;
@@ -284,7 +300,9 @@
   function showEnd() {
     if (!view || !view.stats) return;
     var won = view.status === 'won';
-    $('end-title').textContent = won ? 'Solved in ' + view.guesses.length + '/' + view.max + '!' : 'Better luck tomorrow';
+    var daily = view.mode !== 'unlimited';
+    var lost = daily ? 'Better luck tomorrow' : view.gave_up ? 'Round given up' : 'Better luck next round';
+    $('end-title').textContent = won ? 'Solved in ' + view.guesses.length + '/' + view.max + '!' : lost;
     $('end-answer').textContent = view.answer || '';
     var st = view.stats;
     $('st-played').textContent = String(st.played);
@@ -308,11 +326,15 @@
       li.appendChild(bar);
       dist.appendChild(li);
     });
-    updateShare();
+    $('end-daily').hidden = !daily;
+    $('end-unlimited').hidden = daily;
     endBox.hidden = false;
-    tick();
     clearInterval(countdownTimer);
-    countdownTimer = window.setInterval(tick, 1000);
+    if (daily) {
+      updateShare();
+      tick();
+      countdownTimer = window.setInterval(tick, 1000);
+    }
   }
 
   /**
@@ -325,7 +347,7 @@
 
   /** Counts down to the next puzzle; at zero it offers to load it. */
   function tick() {
-    if (!view) return;
+    if (!view || !view.next_at) return;
     var left = Math.max(0, Math.floor(view.next_at - Date.now() / 1000));
     var h = Math.floor(left / 3600);
     var m = Math.floor(left % 3600 / 60);
@@ -349,7 +371,8 @@
   function fail(err) {
     switch (err.code) {
       case 'new_puzzle':
-        say('A new puzzle has started.', 2500);
+      case 'new_round':
+        say(err.message, 2500);
         load();
         return;
       case 'finished':
@@ -392,7 +415,9 @@
       return;
     }
     busy = true;
-    api('guess', { token: token, num: view.num, word: typed }).then(function (v) {
+    var body = { token: token, word: typed };
+    if (view.mode === 'unlimited') body.seq = view.seq; else body.num = view.num;
+    api('guess', body).then(function (v) {
       busy = false;
       typed = '';
       apply(v, true);
@@ -401,6 +426,43 @@
       fail(err);
     });
   }
+
+  /** Starts the next unlimited round, giving up this one. */
+  function newGame() {
+    if (busy || !view || view.mode !== 'unlimited') return;
+    busy = true;
+    resetConfirm();
+    api('new', { token: token, seq: view.seq }).then(function (v) {
+      busy = false;
+      typed = '';
+      endBox.hidden = true;
+      apply(v, false);
+      if (v.abandoned) say('Round given up. The word was ' + v.abandoned + '.', 4000);
+    }, function (err) {
+      busy = false;
+      fail(err);
+    });
+  }
+
+  /** The header button asks once before giving up a round with guesses. */
+  function resetConfirm() {
+    clearTimeout(confirmTimer);
+    newTop.classList.remove('confirm');
+    newTop.textContent = 'New game';
+  }
+
+  newTop.addEventListener('click', function () {
+    if (!view) return;
+    var risky = view.status === 'playing' && view.guesses.length > 0;
+    if (risky && !newTop.classList.contains('confirm')) {
+      newTop.classList.add('confirm');
+      newTop.textContent = 'Give up this round?';
+      clearTimeout(confirmTimer);
+      confirmTimer = window.setTimeout(resetConfirm, CONFIRM_MS);
+      return;
+    }
+    newGame();
+  });
 
   /** @param {string} key a letter, 'enter' or 'back' */
   function press(key) {
@@ -477,6 +539,7 @@
   $('copy-btn').addEventListener('click', function () {
     if (view && view.share) copy(view.share);
   });
+  $('new-end').addEventListener('click', newGame);
   $('next-btn').addEventListener('click', function () {
     endBox.hidden = true;
     load();

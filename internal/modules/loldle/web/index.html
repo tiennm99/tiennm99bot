@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<title>LoLdle</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <h1 class="logo">Lo<span class="accent">L</span>dle</h1>
+    <p id="mode" class="mode"></p>
+    <p id="player" class="muted"></p>
+  </header>
+
+  <section id="screen-missing" class="card" hidden>
+    <p class="lead">Open the game from Telegram.</p>
+    <p class="muted">Send <code>/loldle</code> or <code>/loldledaily</code> in a chat with the bot, then press Play.</p>
+  </section>
+
+  <section id="screen-game" hidden>
+    <div class="bar">
+      <p id="counter" class="counter"></p>
+      <button type="button" id="new-top" class="ghost" hidden>New game</button>
+    </div>
+
+    <div class="search">
+      <label for="search-input" class="sr-only">Champion</label>
+      <input id="search-input" type="text" role="combobox" aria-expanded="false" aria-controls="search-list"
+        aria-autocomplete="list" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="Type a champion name...">
+      <ul id="search-list" class="options" role="listbox" aria-label="Champions" hidden></ul>
+    </div>
+
+    <ul class="legend" aria-label="Colour key">
+      <li><span class="swatch correct" aria-hidden="true"></span>Correct</li>
+      <li><span class="swatch partial" aria-hidden="true"></span>Partial</li>
+      <li><span class="swatch wrong" aria-hidden="true"></span>Wrong</li>
+      <li><span class="arrows" aria-hidden="true">↑↓</span>Released later / earlier</li>
+    </ul>
+
+    <section id="end" class="end card" hidden>
+      <h2 id="end-title"></h2>
+      <div class="answer">
+        <span id="end-icon" class="answer-icon"></span>
+        <p id="end-text"></p>
+      </div>
+      <h3>Statistics</h3>
+      <div class="stats">
+        <div><strong id="st-played">0</strong><span>Played</span></div>
+        <div><strong id="st-pct">0</strong><span>Win %</span></div>
+        <div><strong id="st-cur">0</strong><span>Current Streak</span></div>
+        <div><strong id="st-max">0</strong><span>Max Streak</span></div>
+      </div>
+      <h3>Guess Distribution</h3>
+      <ol id="dist" class="dist"></ol>
+      <div id="end-daily" hidden>
+        <p class="next">Next champion in <strong id="countdown">--:--:--</strong></p>
+        <button type="button" id="next-btn" class="primary" hidden>Play the new champion</button>
+        <div class="actions">
+          <button type="button" id="share-btn" class="primary" hidden>Share</button>
+          <button type="button" id="copy-btn">Copy result</button>
+        </div>
+      </div>
+      <div id="end-unlimited" class="actions" hidden>
+        <button type="button" id="new-end" class="primary">New game</button>
+      </div>
+      <p id="daily-hint" class="muted hint" hidden>Want the same champion as everyone today? Send <code>/loldledaily</code>.</p>
+    </section>
+
+    <div class="board-wrap">
+      <div id="board" class="board" role="table" aria-label="Guesses"></div>
+    </div>
+  </section>
+
+  <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
+  <p id="announce" class="sr-only" aria-live="polite"></p>
+</main>
+<script src="app.js"></script>
+<script src="https://telegram.org/js/games.js" async></script>
+</body>
+</html>

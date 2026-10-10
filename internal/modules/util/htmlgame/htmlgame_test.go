@@ -137,6 +137,23 @@ func TestSecurityHeadersAndAssets(t *testing.T) {
 	}
 }
 
+func TestSecurityHeaders_ExtraImageSources(t *testing.T) {
+	ok := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+	csp := func(h http.Handler) string {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/games/x/", nil))
+		return rec.Header().Get("Content-Security-Policy")
+	}
+	const want = "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'"
+	if got := csp(SecurityHeaders("/games/x/", ok)); got != want {
+		t.Fatalf("default CSP = %q", got)
+	}
+	got := csp(SecurityHeaders("/games/x/", ok, "https://cdn.example"))
+	if got != strings.Replace(want, "img-src 'self' data:", "img-src 'self' data: https://cdn.example", 1) {
+		t.Fatalf("CSP with an image source = %q", got)
+	}
+}
+
 func TestDecodeJSON(t *testing.T) {
 	type req struct {
 		Token string `json:"token"`

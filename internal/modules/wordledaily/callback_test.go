@@ -10,6 +10,7 @@ import (
 	"github.com/go-telegram/bot/models"
 
 	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/guessgame"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util/subscription"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
 	"github.com/tiennm99/tiennm99bot/internal/testutil"
@@ -43,11 +44,15 @@ func TestModule_Registration(t *testing.T) {
 	var names []string
 	for _, c := range mod.Commands {
 		names = append(names, c.Name)
-		if c.Visibility != modules.VisibilityPublic || c.Description == "" || c.Parameters != "" {
+		wantParams := ""
+		if c.Name == "wordle" {
+			wantParams = "[word]"
+		}
+		if c.Visibility != modules.VisibilityPublic || c.Description == "" || c.Parameters != wantParams {
 			t.Errorf("command %+v is not a described public command", c)
 		}
 	}
-	if strings.Join(names, " ") != "wordledaily wordledaily_subscribe wordledaily_unsubscribe" {
+	if strings.Join(names, " ") != "wordle wordle_new wordle_giveup wordle_stats wordledaily wordledaily_subscribe wordledaily_unsubscribe" {
 		t.Fatalf("commands = %v", names)
 	}
 	if len(mod.Games) != 1 || mod.Games[0].ShortName != "wordle" {
@@ -57,7 +62,8 @@ func TestModule_Registration(t *testing.T) {
 		t.Fatalf("disabled module exposes routes %v / crons %v", mod.HTTP, mod.Crons)
 	}
 	h := newHarness(t)
-	if mod := h.svc.module(); mod.HTTP[0].Pattern != "/games/wordledaily/" || mod.Crons[0].Name != "wordledaily_daily_push" || mod.Crons[0].Schedule != "0 0 * * *" {
+	if mod := h.svc.module(); mod.HTTP[0].Pattern != "/games/wordledaily/" || mod.Crons[0].Name != "wordledaily_daily_push" || mod.Crons[0].Schedule != "0 0 * * *" ||
+		mod.Crons[1].Name != "wordle_unlimited_cards" || mod.Crons[1].Schedule != "35 20 * * *" {
 		t.Fatalf("enabled module: %+v %+v", mod.HTTP, mod.Crons)
 	}
 }
@@ -91,7 +97,7 @@ func TestPlay_DisabledAnswersAlert(t *testing.T) {
 	}
 }
 
-func decodeURLToken(t *testing.T, h *harness, raw string) claims {
+func decodeURLToken(t *testing.T, h *harness, raw string) guessgame.Claims {
 	t.Helper()
 	u, err := url.Parse(raw)
 	if err != nil || !strings.HasPrefix(raw, testBase+routePrefix+"?t=") {
@@ -117,7 +123,7 @@ func TestPlay_AnswersSignedURLForEveryCardForm(t *testing.T) {
 	if c.UserID != 42 || c.ChatID != groupChat || c.MessageID != 9 || c.ThreadID != 77 || c.Name != "Test Nguyen" || c.InlineID != "" {
 		t.Fatalf("topic claims = %+v", c)
 	}
-	if c.Expiry != h.clock.now().Add(tokenTTL).Unix() {
+	if c.Expiry != h.clock.now().Add(guessgame.TokenTTL).Unix() {
 		t.Fatalf("expiry = %d", c.Expiry)
 	}
 
@@ -146,7 +152,7 @@ func TestPlay_AnswersSignedURLForEveryCardForm(t *testing.T) {
 }
 
 func TestClaims_Valid(t *testing.T) {
-	for name, c := range map[string]claims{
+	for name, c := range map[string]guessgame.Claims{
 		"no user":         {ChatID: 1, MessageID: 1, Expiry: 1},
 		"no expiry":       {UserID: 1, ChatID: 1, MessageID: 1},
 		"no address":      {UserID: 1, Expiry: 1},
@@ -157,10 +163,10 @@ func TestClaims_Valid(t *testing.T) {
 			t.Errorf("%s: valid", name)
 		}
 	}
-	if !(claims{UserID: 1, InlineID: "x", Expiry: 1}).Valid() || !(claims{UserID: 1, ChatID: -1, MessageID: 2, ThreadID: 3, Expiry: 1}).Valid() {
+	if !(guessgame.Claims{UserID: 1, InlineID: "x", Expiry: 1}).Valid() || !(guessgame.Claims{UserID: 1, ChatID: -1, MessageID: 2, ThreadID: 3, Expiry: 1}).Valid() {
 		t.Fatal("good claims refused")
 	}
-	if got := displayName(strings.Repeat("a", 70), "b"); len([]rune(got)) != maxNameRunes {
+	if got := guessgame.DisplayName(strings.Repeat("a", 70), "b"); len([]rune(got)) != guessgame.MaxNameRunes {
 		t.Fatalf("name not truncated: %d", len(got))
 	}
 }
@@ -264,7 +270,7 @@ func TestSubscribe_ReplyChainIsTheWholeChat(t *testing.T) {
 	}
 	playGroupDay(t, h, 0)
 	h.nextDay()
-	if err := h.svc.runDailyPush(ctx, h.rb.Bot); err != nil {
+	if err := h.svc.RunDailyPush(ctx, h.rb.Bot); err != nil {
 		t.Fatal(err)
 	}
 	sends := sentMethod(h.rb, "sendMessage")
@@ -290,10 +296,10 @@ func TestSubscribe_DisabledGameRefuses(t *testing.T) {
 	if got := rb.LastSent().Text(); got != msgDisabled {
 		t.Fatalf("subscribe = %q", got)
 	}
-	if subs, err := subscription.List(ctx, svc.subscribers); err != nil || len(subs) != 0 {
+	if subs, err := subscription.List(ctx, svc.Subscribers); err != nil || len(subs) != 0 {
 		t.Fatalf("subscribers = %v, %v", subs, err)
 	}
-	if _, err := subscription.Add(ctx, svc.subscribers, groupChat, 0); err != nil {
+	if _, err := subscription.Add(ctx, svc.Subscribers, groupChat, 0); err != nil {
 		t.Fatal(err)
 	}
 	rb.Bot.ProcessUpdate(ctx, testutil.NewSupergroupMessage(groupChat, 1, "/wordledaily_unsubscribe"))

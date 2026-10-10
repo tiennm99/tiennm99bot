@@ -1,4 +1,4 @@
-package wordledaily
+package guessgame
 
 import (
 	"context"
@@ -20,43 +20,44 @@ const (
 	maxCachedPuzzles = 4
 )
 
-// epoch is the start of puzzle #1: 07:00 ICT on 9 October 2026, which is
+// Epoch is the start of puzzle #1: 07:00 ICT on 9 October 2026, which is
 // 00:00 UTC, so every puzzle day runs 07:00 to 07:00 ICT and the cron at
-// 00:00 UTC pushes exactly the puzzle a player then gets.
-var epoch = time.Date(2026, time.October, 9, 0, 0, 0, 0, time.UTC)
+// 00:00 UTC pushes exactly the puzzle a player then gets. Every daily game
+// numbers its puzzles from it.
+var Epoch = time.Date(2026, time.October, 9, 0, 0, 0, 0, time.UTC)
 
-// ict is Vietnam time (UTC+7, no DST), used only to print a puzzle's date.
-var ict = time.FixedZone("ICT", 7*60*60)
+// ICT is Vietnam time (UTC+7, no DST), used only to print a puzzle's date.
+var ICT = time.FixedZone("ICT", 7*60*60)
 
-// puzzleNum is the number of the puzzle playing at now: 1 on the epoch day,
+// PuzzleNum is the number of the puzzle playing at now: 1 on the epoch day,
 // then one more each day. Times before the epoch play #1.
-func (s *service) puzzleNum(now time.Time) int {
-	d := now.Sub(s.epoch)
-	if d < 0 {
+func (d *Daily) PuzzleNum(now time.Time) int {
+	since := now.Sub(d.epoch)
+	if since < 0 {
 		return 1
 	}
-	return int(d/dayLength) + 1
+	return int(since/dayLength) + 1
 }
 
-// puzzleStart is when puzzle num starts; the next one starts a day later.
-func (s *service) puzzleStart(num int) time.Time {
-	return s.epoch.Add(time.Duration(num-1) * dayLength)
+// PuzzleStart is when puzzle num starts; the next one starts a day later.
+func (d *Daily) PuzzleStart(num int) time.Time {
+	return d.epoch.Add(time.Duration(num-1) * dayLength)
 }
 
-// puzzleDate is the ICT calendar date puzzle num belongs to.
-func (s *service) puzzleDate(num int) string {
-	return s.puzzleStart(num).In(ict).Format(time.DateOnly)
+// PuzzleDate is the ICT calendar date puzzle num belongs to.
+func (d *Daily) PuzzleDate(num int) string {
+	return d.PuzzleStart(num).In(ICT).Format(time.DateOnly)
 }
 
-// answerFor computes puzzle num's answer from the answer key: each cycle of
+// AnswerFor computes puzzle num's answer from the answer key: each cycle of
 // len(answers) days walks one keyed permutation of the list, so no answer
-// repeats within a cycle (about six years) and the order cannot be guessed
-// without the key. Persisted puzzles take precedence; see resolvePuzzle.
-func (s *service) answerFor(num int) string {
-	n := len(s.cfg.answers)
+// repeats within a cycle and the order cannot be guessed without the key.
+// Persisted puzzles take precedence; see ResolvePuzzle.
+func (d *Daily) AnswerFor(num int) string {
+	n := len(d.cfg.Answers)
 	idx := num - 1
 	cycle, pos := idx/n, idx%n
-	return s.cfg.answers[s.perms.get(s.answerKey, cycle, n)[pos]]
+	return d.cfg.Answers[d.perms.get(d.cfg.AnswerKey, cycle, n)[pos]]
 }
 
 // permCache keeps the permutation of the current cycle.
@@ -116,27 +117,27 @@ func (c *puzzleCache) put(num int, answer string) {
 	}
 }
 
-// resolvePuzzle returns puzzle num's answer. The first resolution persists
+// ResolvePuzzle returns puzzle num's answer. The first resolution persists
 // it, and every later one reads it back, so changing the secret or the
 // answer list never changes a puzzle that has already started.
-func (s *service) resolvePuzzle(ctx context.Context, num int) (string, error) {
-	if a, ok := s.cache.get(num); ok {
+func (d *Daily) ResolvePuzzle(ctx context.Context, num int) (string, error) {
+	if a, ok := d.cache.get(num); ok {
 		return a, nil
 	}
-	key := puzzleKey(num)
+	key := PuzzleKey(num)
 	for range writeRetries {
-		doc, _, err := s.puzzles.Get(ctx, key)
+		doc, _, err := d.Puzzles.Get(ctx, key)
 		if err == nil {
-			s.cache.put(num, doc.Answer)
+			d.cache.put(num, doc.Answer)
 			return doc.Answer, nil
 		}
 		if !errors.Is(err, storage.ErrNotFound) {
 			return "", err
 		}
-		doc = puzzleDoc{Num: num, Answer: s.answerFor(num), CreatedAt: s.cfg.now().UnixMilli()}
-		err = s.puzzles.PutVersioned(ctx, key, 0, doc)
+		doc = PuzzleDoc{Num: num, Answer: d.AnswerFor(num), CreatedAt: d.cfg.Now().UnixMilli()}
+		err = d.Puzzles.PutVersioned(ctx, key, 0, doc)
 		if err == nil {
-			s.cache.put(num, doc.Answer)
+			d.cache.put(num, doc.Answer)
 			return doc.Answer, nil
 		}
 		if !errors.Is(err, storage.ErrConflict) {

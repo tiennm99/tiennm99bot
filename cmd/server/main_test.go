@@ -146,6 +146,61 @@ func TestFactoriesRegistersWordleDailyDisabledByDefault(t *testing.T) {
 	}
 }
 
+// loldle is in the catalog and, with GAME_BASE_URL unset, registers its
+// unlimited and daily commands and its game, but no route and no cron.
+func TestFactoriesRegistersLoldleDisabledByDefault(t *testing.T) {
+	t.Setenv("GAME_BASE_URL", "")
+	t.Setenv("LOLDLE_GAME_SECRET", "")
+	reg, err := modules.Build([]string{"loldle"}, factories(), storage.NewMemoryProvider(), modules.BuildOptions{})
+	if err != nil {
+		t.Fatalf("Build loldle: %v", err)
+	}
+	for _, name := range []string{"loldle", "loldle_giveup", "loldle_stats", "loldle_setmax", "loldledaily", "loldledaily_subscribe", "loldledaily_unsubscribe"} {
+		if _, ok := reg.AllCommands[name]; !ok {
+			t.Fatalf("missing command %s", name)
+		}
+	}
+	if routes := serverRoutes(reg); len(routes) != 0 {
+		t.Fatalf("disabled game exposes routes: %+v", routes)
+	}
+	for _, m := range reg.Modules {
+		if len(m.Crons) != 0 {
+			t.Fatalf("disabled game registers crons: %+v", m.Crons)
+		}
+	}
+}
+
+// The in-chat wordle module was folded into wordledaily: a MODULES value
+// naming it loads wordledaily, once, with every /wordle command.
+func TestNormalizeModules_MapsRetiredWordleToWordleDaily(t *testing.T) {
+	for in, want := range map[string]string{
+		"wordle":                  "wordledaily",
+		"util,wordle,loldle":      "util wordledaily loldle",
+		"wordle,wordledaily,misc": "wordledaily misc",
+		"wordledaily,wordle":      "wordledaily",
+	} {
+		if got := strings.Join(normalizeModules(splitCSV(in)), " "); got != want {
+			t.Errorf("normalizeModules(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if normalizeModules(nil) != nil {
+		t.Fatal("empty MODULES must stay empty: it loads every module")
+	}
+	t.Setenv("GAME_BASE_URL", "")
+	reg, err := modules.Build(normalizeModules([]string{"wordle"}), factories(), storage.NewMemoryProvider(), modules.BuildOptions{})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	for _, name := range []string{"wordle", "wordle_new", "wordle_giveup", "wordle_stats", "wordledaily"} {
+		if _, ok := reg.AllCommands[name]; !ok {
+			t.Fatalf("missing command %s", name)
+		}
+	}
+	if _, ok := factories()["wordle"]; ok {
+		t.Fatal("the retired wordle module is still in the catalog")
+	}
+}
+
 // An empty MODULES loads every module, so a command name that collides with an
 // existing module surfaces here as a test failure rather than as a startup
 // crash on deploy.

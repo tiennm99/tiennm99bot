@@ -1,4 +1,4 @@
-package wordledaily
+package guessgame
 
 import (
 	"cmp"
@@ -19,23 +19,23 @@ import (
 )
 
 const (
-	// summaryInterval is the shortest gap between two updates of one
+	// SummaryInterval is the shortest gap between two updates of one
 	// chat's live results message.
-	summaryInterval = 5 * time.Second
-	// resendInterval is the shortest gap between two new results messages
+	SummaryInterval = 5 * time.Second
+	// ResendInterval is the shortest gap between two new results messages
 	// for one chat's day, when the old one was deleted.
-	resendInterval = 10 * time.Minute
+	ResendInterval = 10 * time.Minute
 	// maxTextUnits keeps a message under Telegram's 4096 UTF-16 unit cap,
 	// leaving room for the "+N more" line.
 	maxTextUnits = 4000
 	// minStreakShown hides a one-day "streak".
 	minStreakShown = 2
-	// maxSummaryRetries bounds the retries of one failed summary update.
-	maxSummaryRetries = 5
+	// MaxSummaryRetries bounds the retries of one failed summary update.
+	MaxSummaryRetries = 5
 )
 
 // flusher coalesces live summary updates: at most one is pending per chat
-// day, and two never run closer than summaryInterval. It is in-memory; a
+// day, and two never run closer than SummaryInterval. It is in-memory; a
 // restart only delays the next update, because the message is always
 // rendered from the store.
 type flusher struct {
@@ -50,15 +50,15 @@ type flushState struct {
 	retries   int // failed updates in a row
 }
 
-// touchSummary schedules an update of the live results message of the chat
+// TouchSummary schedules an update of the live results message of the chat
 // topic's day. Only group chats (negative IDs) get one.
-func (s *service) touchSummary(num int, chatID int64, threadID int) {
-	if s.cfg.api == nil || chatID >= 0 {
+func (d *Daily) TouchSummary(num int, chatID int64, threadID int) {
+	if d.cfg.API == nil || chatID >= 0 {
 		return
 	}
-	key := chatDayKey(num, chatID, threadID)
-	now := s.cfg.now()
-	f := &s.flush
+	key := ChatDayKey(num, chatID, threadID)
+	now := d.cfg.Now()
+	f := &d.flush
 	f.mu.Lock()
 	if f.state == nil {
 		f.state = map[string]*flushState{}
@@ -78,28 +78,28 @@ func (s *service) touchSummary(num int, chatID int64, threadID int) {
 		return
 	}
 	st.scheduled = true
-	delay := max(summaryInterval-now.Sub(st.last), 0)
+	delay := max(SummaryInterval-now.Sub(st.last), 0)
 	if st.last.IsZero() {
 		delay = 0
 	}
 	f.mu.Unlock()
-	s.cfg.schedule(delay, func() { s.flushSummary(num, chatID, threadID) })
+	d.cfg.Schedule(delay, func() { d.flushSummary(num, chatID, threadID) })
 }
 
 // flushSummary brings the chat topic's live results message up to date and
 // schedules a bounded retry when that failed for a reason that may pass (a
 // 429, a timeout, a 5xx, a store error) or when a deleted message may not be
 // sent again yet.
-func (s *service) flushSummary(num int, chatID int64, threadID int) {
-	key := chatDayKey(num, chatID, threadID)
-	f := &s.flush
+func (d *Daily) flushSummary(num int, chatID int64, threadID int) {
+	key := ChatDayKey(num, chatID, threadID)
+	f := &d.flush
 	f.mu.Lock()
 	if st := f.state[key]; st != nil {
-		st.scheduled, st.last = false, s.cfg.now()
+		st.scheduled, st.last = false, d.cfg.Now()
 	}
 	f.mu.Unlock()
 
-	retry, after := s.syncSummary(key, chatID, threadID)
+	retry, after := d.syncSummary(key, chatID, threadID)
 
 	f.mu.Lock()
 	if f.state == nil {
@@ -107,7 +107,7 @@ func (s *service) flushSummary(num int, chatID int64, threadID int) {
 	}
 	st := f.state[key]
 	if st == nil {
-		st = &flushState{num: num, last: s.cfg.now()}
+		st = &flushState{num: num, last: d.cfg.Now()}
 		f.state[key] = st
 	}
 	if !retry {
@@ -120,58 +120,58 @@ func (s *service) flushSummary(num int, chatID int64, threadID int) {
 		f.mu.Unlock()
 		return
 	}
-	if st.retries >= maxSummaryRetries {
+	if st.retries >= MaxSummaryRetries {
 		st.retries = 0
 		f.mu.Unlock()
-		log.Warn("wordledaily summary update abandoned", "puzzle", num, "chat", chatID)
+		log.Warn(d.cfg.LogName+" summary update abandoned", "puzzle", num, "chat", chatID)
 		return
 	}
-	delay := max(after, summaryInterval<<st.retries)
+	delay := max(after, SummaryInterval<<st.retries)
 	st.retries++
 	st.scheduled = true
 	f.mu.Unlock()
-	s.cfg.schedule(delay, func() { s.flushSummary(num, chatID, threadID) })
+	d.cfg.Schedule(delay, func() { d.flushSummary(num, chatID, threadID) })
 }
 
 // syncSummary sends the chat day's results message the first time and
 // edits it afterwards. A deleted message is sent again, at most once per
-// resendInterval. It reports whether the update must be retried, and the
+// ResendInterval. It reports whether the update must be retried, and the
 // shortest wait before that.
 //
 // The lock is per chat topic, not per day: only the current day's message
 // is updated, and keylock never frees a key, so a daily key would grow the
 // lock map forever.
-func (s *service) syncSummary(key string, chatID int64, threadID int) (bool, time.Duration) {
+func (d *Daily) syncSummary(key string, chatID int64, threadID int) (bool, time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), reportTimeout)
 	defer cancel()
-	defer s.locks.Acquire("summary:" + chatTopic(chatID, threadID))()
-	cd, _, err := s.chatDays.Get(ctx, key)
+	defer d.Locks.Acquire("summary:" + chatTopic(chatID, threadID))()
+	cd, _, err := d.ChatDays.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return false, 0
 		}
-		log.Warn("wordledaily summary read failed", "err", err)
+		log.Warn(d.cfg.LogName+" summary read failed", "err", err)
 		return true, 0
 	}
-	text, err := s.renderLive(ctx, cd)
+	text, err := d.RenderLive(ctx, cd)
 	if err != nil {
-		log.Warn("wordledaily summary render failed", "err", err)
+		log.Warn(d.cfg.LogName+" summary render failed", "err", err)
 		return true, 0
 	}
 	if text == "" {
 		return false, 0
 	}
-	now := s.cfg.now()
+	now := d.cfg.Now()
 	if cd.MsgID != 0 {
-		_, err := s.cfg.api.EditMessageText(ctx, &bot.EditMessageTextParams{ChatID: cd.ChatID, MessageID: cd.MsgID, Text: text})
+		_, err := d.cfg.API.EditMessageText(ctx, &bot.EditMessageTextParams{ChatID: cd.ChatID, MessageID: cd.MsgID, Text: text})
 		switch {
 		case err == nil || messageNotModified(err):
 			return false, 0
 		case !messageGone(err):
-			log.Warn("wordledaily summary edit failed", "err", err)
+			log.Warn(d.cfg.LogName+" summary edit failed", "err", err)
 			return retryAfter(err)
 		}
-		if wait := resendInterval - now.Sub(time.UnixMilli(cd.MsgSentAt)); wait > 0 {
+		if wait := ResendInterval - now.Sub(time.UnixMilli(cd.MsgSentAt)); wait > 0 {
 			// Deleted too recently to send again: try once the interval
 			// has passed, so the final state still reaches the chat.
 			return true, wait
@@ -186,17 +186,17 @@ func (s *service) syncSummary(key string, chatID int64, threadID int) (bool, tim
 	if cd.CardID != 0 {
 		params.ReplyParameters = &models.ReplyParameters{MessageID: cd.CardID, AllowSendingWithoutReply: true}
 	}
-	msg, err := s.cfg.api.SendMessage(ctx, params)
+	msg, err := d.cfg.API.SendMessage(ctx, params)
 	if err != nil {
-		log.Warn("wordledaily summary send failed", "err", err)
+		log.Warn(d.cfg.LogName+" summary send failed", "err", err)
 		return retryAfter(err)
 	}
-	err = updateVersioned(ctx, s.chatDays, key, func(v *chatDay, found bool) bool {
+	err = updateVersioned(ctx, d.ChatDays, key, func(v *ChatDay, found bool) bool {
 		v.MsgID, v.MsgSentAt = msg.ID, now.UnixMilli()
 		return found
 	})
 	if err != nil {
-		log.Warn("wordledaily summary id save failed", "err", err)
+		log.Warn(d.cfg.LogName+" summary id save failed", "err", err)
 	}
 	return false, 0
 }
@@ -232,16 +232,16 @@ func messageGone(err error) bool {
 // chatResult is one player's game as a chat's results show it.
 type chatResult struct {
 	name string
-	p    progress
+	p    Progress
 }
 
 // chatResults loads the day's game of every player listed in cd who made a
 // guess. Players are few per chat and this runs off the request path, so
 // one read per player is fine.
-func (s *service) chatResults(ctx context.Context, cd chatDay) ([]chatResult, error) {
+func (d *Daily) chatResults(ctx context.Context, cd ChatDay) ([]chatResult, error) {
 	out := make([]chatResult, 0, len(cd.Players))
 	for _, pl := range cd.Players {
-		p, _, err := s.plays.Get(ctx, playKey(cd.Num, pl.UserID))
+		p, _, err := d.Plays.Get(ctx, PlayKey(cd.Num, pl.UserID))
 		if errors.Is(err, storage.ErrNotFound) {
 			continue
 		}
@@ -265,9 +265,9 @@ func (s *service) chatResults(ctx context.Context, cd chatDay) ([]chatResult, er
 func sortResults(rs []chatResult) {
 	rank := func(r chatResult) int {
 		switch r.p.Status {
-		case statusWon:
+		case StatusWon:
 			return 0
-		case statusLost:
+		case StatusLost:
 			return 1
 		}
 		return 2
@@ -277,45 +277,38 @@ func sortResults(rs []chatResult) {
 			return c
 		}
 		switch a.p.Status {
-		case statusWon:
+		case StatusWon:
 			return cmp.Or(cmp.Compare(len(a.p.Guesses), len(b.p.Guesses)), cmp.Compare(a.p.FinishedAt, b.p.FinishedAt))
-		case statusLost:
+		case StatusLost:
 			return cmp.Compare(a.p.FinishedAt, b.p.FinishedAt)
 		}
 		return cmp.Compare(len(b.p.Guesses), len(a.p.Guesses))
 	})
 }
 
-// resultLine is "3/6" for a win, "X/6" for a loss.
-func resultLine(p progress) string {
-	if p.Status == statusWon {
-		return strconv.Itoa(len(p.Guesses)) + "/" + strconv.Itoa(maxGuesses)
-	}
-	return "X/" + strconv.Itoa(maxGuesses)
-}
-
-func (s *service) chatStreakAt(ctx context.Context, chatID int64, threadID int) (chatStreak, error) {
-	st, _, err := s.streaks.Get(ctx, chatStreakKey(chatID, threadID))
+// ChatStreakAt is the chat topic's win streak record.
+func (d *Daily) ChatStreakAt(ctx context.Context, chatID int64, threadID int) (ChatStreak, error) {
+	st, _, err := d.Streaks.Get(ctx, ChatStreakKey(chatID, threadID))
 	if errors.Is(err, storage.ErrNotFound) {
-		return chatStreak{}, nil
+		return ChatStreak{}, nil
 	}
 	return st, err
 }
 
-// renderLive is the live results message: every player's colour grid,
+// RenderLive is the live results message: every player's colour grid,
 // never a letter. It returns "" when nobody in the chat has guessed yet.
-func (s *service) renderLive(ctx context.Context, cd chatDay) (string, error) {
-	results, err := s.chatResults(ctx, cd)
+func (d *Daily) RenderLive(ctx context.Context, cd ChatDay) (string, error) {
+	results, err := d.chatResults(ctx, cd)
 	if err != nil || len(results) == 0 {
 		return "", err
 	}
 	sortResults(results)
-	st, err := s.chatStreakAt(ctx, cd.ChatID, cd.ThreadID)
+	st, err := d.ChatStreakAt(ctx, cd.ChatID, cd.ThreadID)
 	if err != nil {
 		return "", err
 	}
 	var head strings.Builder
-	head.WriteString("Wordle Daily #" + strconv.Itoa(cd.Num) + " · live results\n")
+	head.WriteString(d.cfg.Rules.Label() + " #" + strconv.Itoa(cd.Num) + " · live results\n")
 	if n := st.liveAt(cd.Num); n >= minStreakShown {
 		head.WriteString("🔥 Group streak: " + strconv.Itoa(n) + " days\n")
 	}
@@ -323,22 +316,22 @@ func (s *service) renderLive(ctx context.Context, cd chatDay) (string, error) {
 	for i, r := range results {
 		var b strings.Builder
 		b.WriteString(r.name + " ")
-		if r.p.finished() {
-			b.WriteString(resultLine(r.p))
+		if r.p.Finished() {
+			b.WriteString(d.ResultLine(r.p))
 		} else {
-			b.WriteString("playing " + strconv.Itoa(len(r.p.Guesses)) + "/" + strconv.Itoa(maxGuesses))
+			b.WriteString("playing " + strconv.Itoa(len(r.p.Guesses)) + "/" + strconv.Itoa(d.MaxGuesses()))
 		}
 		for _, g := range r.p.Guesses {
-			b.WriteString("\n" + emojiRow(g.Marks))
+			b.WriteString("\n" + EmojiRow(d.cfg.Rules, g.Marks))
 		}
 		blocks[i] = b.String()
 	}
-	return joinLimited(head.String()+"\n", blocks, "\n"), nil
+	return JoinLimited(head.String()+"\n", blocks, "\n"), nil
 }
 
-// joinLimited appends parts to head, separated by sep, while the text stays
+// JoinLimited appends parts to head, separated by sep, while the text stays
 // under maxTextUnits UTF-16 units, then says how many were left out.
-func joinLimited(head string, parts []string, sep string) string {
+func JoinLimited(head string, parts []string, sep string) string {
 	text := head
 	for i, p := range parts {
 		next := text
@@ -346,7 +339,7 @@ func joinLimited(head string, parts []string, sep string) string {
 			next += sep
 		}
 		next += p
-		if utf16Len(next) > maxTextUnits {
+		if UTF16Len(next) > maxTextUnits {
 			return text + sep + "+" + strconv.Itoa(len(parts)-i) + " more"
 		}
 		text = next
@@ -354,4 +347,5 @@ func joinLimited(head string, parts []string, sep string) string {
 	return text
 }
 
-func utf16Len(s string) int { return len(utf16.Encode([]rune(s))) }
+// UTF16Len counts s in UTF-16 units, the unit of Telegram's length limits.
+func UTF16Len(s string) int { return len(utf16.Encode([]rune(s))) }

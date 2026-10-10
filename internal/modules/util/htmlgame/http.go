@@ -41,13 +41,18 @@ func ParseBaseURL(raw, game string) string {
 // SecurityHeaders applies to every response under a game's route prefix. The
 // token travels in the page URL, so no referrer may leak it. Telegram Web
 // embeds games in an iframe, so framing is deliberately not restricted. API
-// answers under prefix+"api/" are never cached.
-func SecurityHeaders(prefix string, next http.Handler) http.Handler {
+// answers under prefix+"api/" are never cached. imgSrc adds image origins to
+// the policy, for a page that shows pictures from a CDN; images still come
+// from nowhere else.
+func SecurityHeaders(prefix string, next http.Handler, imgSrc ...string) http.Handler {
+	img := strings.Join(append([]string{"'self'", "data:"}, imgSrc...), " ")
+	csp := "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self'; img-src " + img +
+		"; connect-src 'self'; base-uri 'none'; form-action 'none'"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'")
+		h.Set("Content-Security-Policy", csp)
 		if strings.HasPrefix(r.URL.Path, prefix+"api/") {
 			h.Set("Cache-Control", "no-store")
 		}

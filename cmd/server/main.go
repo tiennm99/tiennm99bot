@@ -41,7 +41,6 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/modules/stock"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util"
 	"github.com/tiennm99/tiennm99bot/internal/modules/weather"
-	"github.com/tiennm99/tiennm99bot/internal/modules/wordle"
 	"github.com/tiennm99/tiennm99bot/internal/modules/wordledaily"
 	"github.com/tiennm99/tiennm99bot/internal/server"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
@@ -101,10 +100,9 @@ func factories() map[string]modules.Factory {
 		"random":               random.New,
 		"amlich":               amlich.New,
 		"monkeyd":              monkeyd.New,
-		"wordle":               wordle.New,
 		wordledaily.ShortName:  wordledaily.New,
 		noitu.ShortName:        noitu.New,
-		"loldle":               loldle.New,
+		loldle.ShortName:       loldle.New,
 		lol.CollectionName:     lol.New,
 		coin.CollectionName:    coin.New,
 		"gold":                 gold.New,
@@ -151,6 +149,15 @@ func main() {
 	}
 	if err := lol.InitStore(rootCtx, provider.Collection(lol.CollectionName)); err != nil {
 		log.Fatal("lol storage init failed", "err", err)
+	}
+	// The game migrations run whatever MODULES says, like the stats one, so
+	// a module enabled later still finds its players carried over.
+	if err := wordledaily.InitStore(rootCtx, provider.Collection(wordledaily.LegacyShortName),
+		provider.Collection(wordledaily.ShortName), provider.Collection(systemstate.CollectionName)); err != nil {
+		log.Fatal("wordledaily storage init failed", "err", err)
+	}
+	if err := loldle.InitStore(rootCtx, provider.Collection(loldle.ShortName), provider.Collection(systemstate.CollectionName)); err != nil {
+		log.Fatal("loldle storage init failed", "err", err)
 	}
 
 	b, err := telegram.NewBot(cfg.TelegramBotToken)
@@ -384,7 +391,7 @@ func loadConfig() config {
 		TelegramBotToken: envMap["TELEGRAM_BOT_TOKEN"],
 		SourceCommit:     envMap["SOURCE_COMMIT"],
 		BotUsername:      strings.TrimPrefix(strings.TrimSpace(envMap["BOT_USERNAME"]), "@"),
-		Modules:          splitCSV(envMap["MODULES"]),
+		Modules:          normalizeModules(splitCSV(envMap["MODULES"])),
 		BotOwnerID:       parseInt64(envMap["OWNER_ID"]),
 		AdminUserIDs:     parseInt64Set(envMap["ADMIN_IDS"]),
 		KVProvider:       envMap["KV_PROVIDER"],
@@ -404,6 +411,34 @@ func splitCSV(s string) []string {
 		if t := strings.TrimSpace(p); t != "" {
 			out = append(out, t)
 		}
+	}
+	return out
+}
+
+// moduleAliases maps retired catalog keys to the module that took over
+// their commands, so a MODULES value written before the change keeps
+// loading them.
+var moduleAliases = map[string]string{
+	wordledaily.LegacyShortName: wordledaily.ShortName,
+}
+
+// normalizeModules replaces retired module names in a MODULES list with
+// their successors, dropping duplicates that creates.
+func normalizeModules(names []string) []string {
+	out := make([]string, 0, len(names))
+	seen := map[string]bool{}
+	for _, name := range names {
+		if to, ok := moduleAliases[name]; ok {
+			log.Warn("MODULES names a retired module; loading its successor", "module", name, "successor", to)
+			name = to
+		}
+		if !seen[name] {
+			seen[name] = true
+			out = append(out, name)
+		}
+	}
+	if len(out) == 0 {
+		return nil
 	}
 	return out
 }

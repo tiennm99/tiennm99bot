@@ -71,6 +71,8 @@ func TestCommandDiscovery_AllPublicCommandsHaveSafeMetadata(t *testing.T) {
 		"gacha":                "<option,...>",
 		"lol":                  "[date]",
 		"loldle":               "[champion]",
+		"loldle_giveup":        "",
+		"loldle_stats":         "",
 		"monkeyd_crawl":        "<url> [font_size]",
 		"monkeyd_tags":         "<url>",
 		"noitu":                "",
@@ -107,10 +109,17 @@ func TestCommandDiscovery_AllPublicCommandsHaveSafeMetadata(t *testing.T) {
 		"tth":                  "[target...]",
 		"wheelofnames":         "<option,...>",
 		"wordle":               "[word]",
+		"wordle_new":           "",
+		"wordle_giveup":        "",
+		"wordle_stats":         "",
 
 		"wordledaily":             "",
 		"wordledaily_subscribe":   "",
 		"wordledaily_unsubscribe": "",
+
+		"loldledaily":             "",
+		"loldledaily_subscribe":   "",
+		"loldledaily_unsubscribe": "",
 	}
 
 	menu := botCommandMenu(reg)

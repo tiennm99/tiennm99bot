@@ -1,5 +1,3 @@
-// Package loldle implements the loldle classic mode — guess the League
-// champion from attribute hints (gender, species, regions, etc.).
 package loldle
 
 import (
@@ -8,11 +6,15 @@ import (
 	"fmt"
 )
 
-// Champion is one row of champions.json. Field tags match loldle.net's
-// scraped schema verbatim so the embedded JSON file can be regenerated from
-// the upstream scrape without a transform step.
+// Champion is one row of champions.json. The attribute tags match
+// loldle.net's scraped schema verbatim so the embedded JSON file can be
+// regenerated from the upstream scrape without a transform step. ID (the
+// Data Dragon key, which names the champion's icon) and Title come from
+// Riot's Data Dragon by name; see docs/loldle.md.
 type Champion struct {
 	ChampionName string   `json:"championName"`
+	ID           string   `json:"id"`
+	Title        string   `json:"title"`
 	Gender       string   `json:"gender"`
 	Positions    []string `json:"positions"`
 	Species      []string `json:"species"`
@@ -28,7 +30,13 @@ type Champion struct {
 //go:embed data/champions.json
 var rawChampions []byte
 
-// loadChampions parses the embedded JSON. Panics on malformed data —
+// tileIDs overrides the icon id of champions whose Data Dragon tile file is
+// spelled differently from their key. The CDN is case-sensitive: the tile is
+// FiddleSticks_0.jpg, while tiles/Fiddlesticks_0.jpg answers 403.
+var tileIDs = map[string]string{"Fiddlesticks": "FiddleSticks"}
+
+// loadChampions parses the embedded JSON and applies tileIDs, so every ID
+// names a tile that loads. Panics on malformed data —
 // a corrupt regen of champions.json is a build-time bug, not a runtime
 // concern worth recovering from.
 func loadChampions() []Champion {
@@ -38,6 +46,11 @@ func loadChampions() []Champion {
 	}
 	if len(cs) == 0 {
 		panic("loldle: champions.json contained no records")
+	}
+	for i := range cs {
+		if id, ok := tileIDs[cs[i].ID]; ok {
+			cs[i].ID = id
+		}
 	}
 	return cs
 }

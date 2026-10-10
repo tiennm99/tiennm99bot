@@ -5,7 +5,11 @@ Activity. Everyone plays the same English five-letter word each day. A new
 puzzle starts at 07:00 ICT (00:00 UTC), and the puzzle number goes up by one
 each day.
 
-It has three commands:
+The same module and BotFather game also run [unlimited Wordle](wordle.md):
+`/wordle` sends a card that opens the player's own random rounds. Play
+decides the mode from the card; see [Card modes](#card-modes).
+
+The daily game has three commands:
 
 - `/wordledaily` sends the game card in any chat, private or group, and in a
   forum topic it stays in that topic. Pressing **Play** opens a board page that
@@ -23,8 +27,28 @@ Anyone in a chat may subscribe or unsubscribe, the same as `/lol_subscribe` and
 `/thuyvan_subscribe`. Channels are refused, because Telegram does not allow
 games in channels.
 
-The classic `/wordle` text game is a separate module. The two share their word
-data and scoring through `internal/modules/wordle/wordlist`.
+The word data and scoring live in `internal/modules/wordle/wordlist`. The
+daily engine described here (puzzles, progress, stats, live results, recap
+and push) lives in `internal/modules/util/guessgame` and is shared with
+[LoLdle Daily](loldle.md).
+
+## Card modes
+
+Both modes use the one BotFather game `wordle`, so a card does not say which
+mode it is. `/wordle` and `/wordle_new` record each card they send; Play on a
+recorded card opens unlimited mode, and every other card opens today's
+puzzle:
+
+- `/wordledaily` cards and the 07:00 push,
+- every card sent before unlimited mode existed,
+- inline shares (`t.me/<bot>?game=wordle`), which have no chat message to
+  record,
+- `/wordle` cards nobody played for 30 days, whose record expired,
+- forwarded copies of a `/wordle` card, which the bot cannot trace back to
+  their record.
+
+A failed lookup answers Play with an alert rather than opening the wrong
+mode. See [unlimited Wordle](wordle.md#which-card-opens-which-mode).
 
 ## Setup
 
@@ -42,7 +66,8 @@ data and scoring through `internal/modules/wordle/wordlist`.
 
    When the secret is unset, the bot token is the root key. Because the labels
    are separate, a noitu link never opens this game.
-4. Keep `wordledaily` in `MODULES`, or leave `MODULES` empty.
+4. Keep `wordledaily` in `MODULES`, or leave `MODULES` empty. A `MODULES`
+   value that still names the retired `wordle` module loads `wordledaily`.
 
 The game is disabled when any of these holds:
 
@@ -55,6 +80,8 @@ A disabled game behaves like this:
 - `/wordledaily` and `/wordledaily_subscribe` answer "Wordle Daily isn't
   configured on this server." `/wordledaily_unsubscribe` still removes a
   subscription.
+- `/wordle` shows the unlimited round's board in the chat instead of a card;
+  the other `/wordle` commands keep working in the chat.
 - Play shows the same text as an alert.
 - No `/games/wordledaily/` route exists and the daily push is not registered.
 
@@ -89,7 +116,8 @@ A disabled game behaves like this:
   handles duplicate letters the NYT way. The page never receives a word list,
   and it never receives the answer until that player's game is over.
 - **Progress:** each player's board is saved after every guess, per puzzle. A
-  restart, a reload, or opening any other card shows the same board.
+  restart, a reload, or opening any other daily card (see
+  [Card modes](#card-modes)) shows the same board.
 - **One game a day:** each player gets one game per day across all chats. A
   finished puzzle can't be replayed.
 - **Stats:** each player's stats cover every chat. They are played, win %,
@@ -230,9 +258,7 @@ What else the push sends depends on the day before:
 - **Nobody played:** the recap is just the title and the answer.
 - **Private chats:** a private chat always gets just the card.
 
-**Group streak:** the number of consecutive puzzles on which at least one
-player listed in that group topic finished, win or lose. Streak lines appear
-only from 2 days up.
+Streak lines appear only from 2 days up.
 
 Nothing else is posted. There is no separate "X is playing" message and no
 message per guess; the live results message covers both.
@@ -252,10 +278,11 @@ through `internal/modules/util/htmlgame`.
 |---|---|---|
 | `api/state` | `{"token"}` | view |
 | `api/guess` | `{"token","num","word"}` | view |
+| `api/new` | `{"token","seq"}` | unlimited cards only; see [unlimited Wordle](wordle.md#http-api) |
 
-The view has these fields:
+The token decides the mode. The daily view has these fields:
 
-- `num`, `date`, `player`, `max` (6), `len` (5)
+- `mode` (`daily`), `num`, `date`, `player`, `max` (6), `len` (5)
 - `guesses`: a list of `{word, marks}`. `marks` has one letter per position:
   `c` correct, `p` present elsewhere, `w` wrong.
 - `status`: `playing`, `won` or `lost`
@@ -269,9 +296,10 @@ Errors are `{"error","message"}`:
 |---|---|
 | 400 | `bad_request` |
 | 401 | `bad_token`, `expired` |
-| 409 | `new_puzzle` |
+| 403 | `bad_mode` (`api/new` on a daily card) |
+| 409 | `new_puzzle`, `new_round` (unlimited) |
 | 422 | `length`, `unknown`, `finished` |
-| 429 | `rate_limited`: 60 requests a minute per player, both routes together |
+| 429 | `rate_limited`: 60 requests a minute per player, every route together |
 
 A Play token expires after 6 hours and is not tied to a day.
 
@@ -288,6 +316,7 @@ Everything is in the module's collection, under separate key prefixes.
 | `cstreak:<chat>:<thread>:` | the group topic's streak and the last puzzle it counted |
 | `subscribers` | the subscribed chats and topics |
 | `daily_push:last_date` | the last puzzle number pushed |
+| `uround:`, `ustats:`, `ucard:` | unlimited mode; see [unlimited Wordle](wordle.md#storage) |
 
 Each player's board and stats are written under a per-player lock. The board
 is the record and is written first. A stats update is skipped for a puzzle

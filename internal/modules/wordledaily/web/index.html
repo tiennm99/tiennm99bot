@@ -5,17 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
-<title>Wordle Daily</title>
+<title>Wordle</title>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 <main class="app">
   <header class="top">
     <div class="title">
-      <h1>Wordle Daily <span id="num"></span></h1>
+      <h1><span id="title">Wordle</span> <span id="num"></span></h1>
       <p id="subtitle" class="muted"></p>
     </div>
     <div class="top-actions">
+      <button type="button" id="new-top" class="new-top" hidden>New game</button>
       <button type="button" id="contrast-btn" class="icon" aria-pressed="false" aria-label="High contrast colours" title="High contrast colours"><span aria-hidden="true">◐</span></button>
       <button type="button" id="stats-btn" class="icon" aria-label="Results" title="Results" hidden><span aria-hidden="true">▤</span></button>
     </div>
@@ -23,7 +24,7 @@
 
   <section id="screen-missing" class="card" hidden>
     <p class="lead">Open the game from Telegram.</p>
-    <p class="muted">Send <code>/wordledaily</code> in a chat with the bot, then press Play.</p>
+    <p class="muted">Send <code>/wordle</code> or <code>/wordledaily</code> in a chat with the bot, then press Play.</p>
   </section>
 
   <section id="screen-game" hidden>
@@ -50,11 +51,19 @@
       </div>
       <h3>Guess Distribution</h3>
       <ol id="dist" class="dist"></ol>
-      <p class="next">Next puzzle in <strong id="countdown">--:--:--</strong></p>
-      <button type="button" id="next-btn" class="primary" hidden>Play the new puzzle</button>
-      <div class="actions">
-        <button type="button" id="share-btn" class="primary" hidden>Share</button>
-        <button type="button" id="copy-btn">Copy result</button>
+      <div id="end-daily">
+        <p class="next">Next puzzle in <strong id="countdown">--:--:--</strong></p>
+        <button type="button" id="next-btn" class="primary" hidden>Play the new puzzle</button>
+        <div class="actions">
+          <button type="button" id="share-btn" class="primary" hidden>Share</button>
+          <button type="button" id="copy-btn">Copy result</button>
+        </div>
+      </div>
+      <div id="end-unlimited" hidden>
+        <div class="actions">
+          <button type="button" id="new-end" class="primary">New game</button>
+        </div>
+        <p class="hint muted">Want the same word as everyone today? Send <code>/wordledaily</code>.</p>
       </div>
     </section>
   </div>

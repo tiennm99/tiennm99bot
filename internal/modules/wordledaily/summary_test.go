@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/guessgame"
 )
 
 func TestSummary_FirstJoinRepliesLaterGuessesEditOnce(t *testing.T) {
@@ -37,7 +39,7 @@ func TestSummary_FirstJoinRepliesLaterGuessesEditOnce(t *testing.T) {
 		h.guess(alice, 1, w)
 	}
 	h.guess(h.tokenFor(2, groupChat, 7, 77, "Bob"), 1, words[4])
-	if h.sched.pending() != 1 || h.sched.delays[0] != summaryInterval-time.Second {
+	if h.sched.pending() != 1 || h.sched.delays[0] != guessgame.SummaryInterval-time.Second {
 		t.Fatalf("coalesced: pending %d delays %v", h.sched.pending(), h.sched.delays)
 	}
 	h.sched.run()
@@ -58,7 +60,7 @@ func TestSummary_DeletedMessageIsResentAtMostEveryTenMinutes(t *testing.T) {
 	h.sched.run()
 
 	h.rb.FailMethodCode("editMessageText", 400, "Bad Request: message is not modified: specified new message content is the same")
-	h.clock.advance(summaryInterval)
+	h.clock.advance(guessgame.SummaryInterval)
 	h.guess(tok, 1, words[1])
 	h.sched.run()
 	if n := len(sentMethod(h.rb, "sendMessage")); n != 1 {
@@ -66,19 +68,19 @@ func TestSummary_DeletedMessageIsResentAtMostEveryTenMinutes(t *testing.T) {
 	}
 
 	h.rb.FailMethodCode("editMessageText", 400, "Bad Request: message to edit not found")
-	h.clock.advance(summaryInterval)
+	h.clock.advance(guessgame.SummaryInterval)
 	h.guess(tok, 1, words[2])
 	h.sched.run()
 	if n := len(sentMethod(h.rb, "sendMessage")); n != 1 {
 		t.Fatalf("resent within ten minutes: %d sends", n)
 	}
-	h.clock.advance(resendInterval)
+	h.clock.advance(guessgame.ResendInterval)
 	h.guess(tok, 1, words[3])
 	h.sched.run()
 	if n := len(sentMethod(h.rb, "sendMessage")); n != 2 {
 		t.Fatalf("not resent after ten minutes: %d sends", n)
 	}
-	cd, _, err := h.svc.chatDays.Get(context.Background(), chatDayKey(1, groupChat, 0))
+	cd, _, err := h.svc.ChatDays.Get(context.Background(), guessgame.ChatDayKey(1, groupChat, 0))
 	if err != nil || cd.MsgID != 2 {
 		t.Fatalf("stored summary id = %+v, %v", cd, err)
 	}
@@ -87,13 +89,13 @@ func TestSummary_DeletedMessageIsResentAtMostEveryTenMinutes(t *testing.T) {
 func TestSummary_NoneInPrivateChatsOrInline(t *testing.T) {
 	h := newHarness(t)
 	h.guess(h.dmToken(1), 1, h.wrong(1)[0])
-	inline, _ := h.svc.signToken(claims{UserID: 2, InlineID: "BAAA", Expiry: h.clock.now().Add(tokenTTL).Unix()})
+	inline, _ := h.svc.signToken(guessgame.Claims{UserID: 2, InlineID: "BAAA", Expiry: h.clock.now().Add(guessgame.TokenTTL).Unix()})
 	h.guess(inline, 1, h.wrong(1)[0])
 	h.sched.run()
 	if len(h.rb.Sent()) != 0 {
 		t.Fatalf("sent %+v", h.rb.Sent())
 	}
-	if keys, _ := h.svc.chatDays.List(context.Background(), "cday:"); len(keys) != 0 {
+	if keys, _ := h.svc.ChatDays.List(context.Background(), "cday:"); len(keys) != 0 {
 		t.Fatalf("chat days %v", keys)
 	}
 }
@@ -107,7 +109,7 @@ func TestSummary_PlayerFinishedElsewhereJoinsOnOpen(t *testing.T) {
 	if len(sends) != 1 || !strings.Contains(sends[0].Text(), "Alice 1/6\n🟩🟩🟩🟩🟩") {
 		t.Fatalf("sends = %+v", sends)
 	}
-	st, _ := h.svc.chatStreakAt(context.Background(), groupChat, 0)
+	st, _ := h.svc.ChatStreakAt(context.Background(), groupChat, 0)
 	if st.Streak != 1 || st.LastNum != 1 {
 		t.Fatalf("group streak = %+v", st)
 	}
@@ -119,28 +121,28 @@ func TestRenderLive_OrderGridsAndTruncation(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()
 	put := func(user int64, name, status string, finishedAt int64, marks ...string) {
-		p := progress{Num: 1, UserID: user, Name: name, Status: status, FinishedAt: finishedAt}
+		p := guessgame.Progress{Num: 1, UserID: user, Name: name, Status: status, FinishedAt: finishedAt}
 		for _, m := range marks {
-			p.Guesses = append(p.Guesses, guess{Word: "crane", Marks: m})
+			p.Guesses = append(p.Guesses, guessgame.Guess{Word: "crane", Marks: m})
 		}
-		if err := h.svc.plays.Put(ctx, playKey(1, user), p); err != nil {
+		if err := h.svc.Plays.Put(ctx, guessgame.PlayKey(1, user), p); err != nil {
 			t.Fatal(err)
 		}
 	}
-	put(1, "Carol", statusPlaying, 0, "wwpww", "wccww")
-	put(2, "Bob", statusLost, 50, "wwwww", "wwwww", "wwwww", "wwwww", "wwwww", "pwwww")
-	put(3, "Alice", statusWon, 90, "pwwpw", "ccccc")
-	put(4, "Dan", statusWon, 40, "wpwww", "wpcww", "ccccc")
-	put(5, "Eve", statusWon, 30, "wpwww", "wpcww", "ccccc")
-	put(6, "Frank", statusPlaying, 0, "wwwww")
-	if err := h.svc.streaks.Put(ctx, chatStreakKey(groupChat, 0), chatStreak{Streak: 5, LastNum: 1}); err != nil {
+	put(1, "Carol", guessgame.StatusPlaying, 0, "wwpww", "wccww")
+	put(2, "Bob", guessgame.StatusLost, 50, "wwwww", "wwwww", "wwwww", "wwwww", "wwwww", "pwwww")
+	put(3, "Alice", guessgame.StatusWon, 90, "pwwpw", "ccccc")
+	put(4, "Dan", guessgame.StatusWon, 40, "wpwww", "wpcww", "ccccc")
+	put(5, "Eve", guessgame.StatusWon, 30, "wpwww", "wpcww", "ccccc")
+	put(6, "Frank", guessgame.StatusPlaying, 0, "wwwww")
+	if err := h.svc.Streaks.Put(ctx, guessgame.ChatStreakKey(groupChat, 0), guessgame.ChatStreak{Streak: 5, LastNum: 1}); err != nil {
 		t.Fatal(err)
 	}
-	cd := chatDay{Num: 1, ChatID: groupChat}
+	cd := guessgame.ChatDay{Num: 1, ChatID: groupChat}
 	for _, u := range []int64{1, 2, 3, 4, 5, 6, 99} { // 99 never guessed
-		cd.Players = append(cd.Players, chatPlayer{UserID: u, Name: "p" + strconv.FormatInt(u, 10)})
+		cd.Players = append(cd.Players, guessgame.ChatPlayer{UserID: u, Name: "p" + strconv.FormatInt(u, 10)})
 	}
-	text, err := h.svc.renderLive(ctx, cd)
+	text, err := h.svc.RenderLive(ctx, cd)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,12 +165,12 @@ func TestRenderLive_OrderGridsAndTruncation(t *testing.T) {
 	// Many players: the message stops under Telegram's limit.
 	cd.Players = nil
 	for u := int64(100); u < 160; u++ {
-		put(u, strings.Repeat("N", 60), statusLost, u, "wwwww", "wwwww", "wwwww", "wwwww", "wwwww", "wwwww")
-		cd.Players = append(cd.Players, chatPlayer{UserID: u})
+		put(u, strings.Repeat("N", 60), guessgame.StatusLost, u, "wwwww", "wwwww", "wwwww", "wwwww", "wwwww", "wwwww")
+		cd.Players = append(cd.Players, guessgame.ChatPlayer{UserID: u})
 	}
-	text, _ = h.svc.renderLive(ctx, cd)
-	if utf16Len(text) > 4096 || !regexp.MustCompile(`\n\+\d+ more$`).MatchString(text) {
-		t.Fatalf("truncated text: %d units, tail %q", utf16Len(text), text[len(text)-20:])
+	text, _ = h.svc.RenderLive(ctx, cd)
+	if guessgame.UTF16Len(text) > 4096 || !regexp.MustCompile(`\n\+\d+ more$`).MatchString(text) {
+		t.Fatalf("truncated text: %d units, tail %q", guessgame.UTF16Len(text), text[len(text)-20:])
 	}
 }
 
@@ -182,7 +184,7 @@ func TestSummary_TransientFailureIsRetried(t *testing.T) {
 	h.sched.run()
 
 	h.rb.FailMethod("editMessageText", 429, `{"ok":false,"error_code":429,"description":"Too Many Requests: retry after 30","parameters":{"retry_after":30}}`)
-	h.clock.advance(summaryInterval)
+	h.clock.advance(guessgame.SummaryInterval)
 	h.guess(tok, 1, h.answer())
 	h.sched.run1()
 	if h.sched.pending() != 1 || h.sched.delays[0] != 30*time.Second {
@@ -190,7 +192,7 @@ func TestSummary_TransientFailureIsRetried(t *testing.T) {
 	}
 	h.rb.FailMethod("editMessageText", 502, "")
 	h.sched.run1()
-	if h.sched.pending() != 1 || h.sched.delays[0] != 2*summaryInterval {
+	if h.sched.pending() != 1 || h.sched.delays[0] != 2*guessgame.SummaryInterval {
 		t.Fatalf("after 5xx: pending %d delays %v", h.sched.pending(), h.sched.delays)
 	}
 	h.rb.ClearFailure("editMessageText")
@@ -202,16 +204,16 @@ func TestSummary_TransientFailureIsRetried(t *testing.T) {
 
 	// A refused request is not retried, and retries stop after a bound.
 	h.rb.FailMethodCode("editMessageText", 403, "Forbidden: bot was kicked from the supergroup chat")
-	h.svc.touchSummary(1, groupChat, 0)
+	h.svc.TouchSummary(1, groupChat, 0)
 	h.sched.run1()
 	if h.sched.pending() != 0 {
 		t.Fatalf("forbidden retried: %v", h.sched.delays)
 	}
 	h.rb.FailMethod("editMessageText", 500, "")
-	h.clock.advance(summaryInterval)
-	h.svc.touchSummary(1, groupChat, 0)
+	h.clock.advance(guessgame.SummaryInterval)
+	h.svc.TouchSummary(1, groupChat, 0)
 	h.sched.run()
-	if n := len(sentMethod(h.rb, "editMessageText")) - len(edits) - 1; n != 1+maxSummaryRetries {
+	if n := len(sentMethod(h.rb, "editMessageText")) - len(edits) - 1; n != 1+guessgame.MaxSummaryRetries {
 		t.Fatalf("bounded retries: %d edits", n)
 	}
 }
@@ -227,10 +229,10 @@ func TestSummary_DeletedMessageIsResentWhenTheIntervalEnds(t *testing.T) {
 	h.clock.advance(time.Minute)
 	h.guess(tok, 1, h.answer())
 	h.sched.run1()
-	if h.sched.pending() != 1 || h.sched.delays[0] != resendInterval-time.Minute {
+	if h.sched.pending() != 1 || h.sched.delays[0] != guessgame.ResendInterval-time.Minute {
 		t.Fatalf("deferred resend: pending %d delays %v", h.sched.pending(), h.sched.delays)
 	}
-	h.clock.advance(resendInterval)
+	h.clock.advance(guessgame.ResendInterval)
 	h.sched.run()
 	sends := sentMethod(h.rb, "sendMessage")
 	if len(sends) != 2 || !strings.Contains(sends[1].Text(), "Alice 2/6") {
@@ -248,7 +250,7 @@ func TestSummary_LockKeyIsPerTopicNotPerDay(t *testing.T) {
 		h.nextDay()
 	}
 	// One user lock and one summary lock, whatever the number of days.
-	if n := h.svc.locks.Len(); n != 2 {
+	if n := h.svc.Locks.Len(); n != 2 {
 		t.Fatalf("lock keys = %d, want 2", n)
 	}
 }

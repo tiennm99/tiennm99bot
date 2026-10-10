@@ -1,6 +1,8 @@
 [
     {
         "championName": "Aatrox",
+        "id": "Aatrox",
+        "title": "the Darkin Blade",
         "gender": "Male",
         "positions": [
             "Top"
@@ -20,6 +22,8 @@
     },
     {
         "championName": "Ahri",
+        "id": "Ahri",
+        "title": "the Nine-Tailed Fox",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -38,6 +42,8 @@
     },
     {
         "championName": "Akali",
+        "id": "Akali",
+        "title": "the Rogue Assassin",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -56,6 +62,8 @@
     },
     {
         "championName": "Akshan",
+        "id": "Akshan",
+        "title": "the Rogue Sentinel",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -74,6 +82,8 @@
     },
     {
         "championName": "Alistar",
+        "id": "Alistar",
+        "title": "the Minotaur",
         "gender": "Male",
         "positions": [
             "Support"
@@ -93,6 +103,8 @@
     },
     {
         "championName": "Ambessa",
+        "id": "Ambessa",
+        "title": "Matriarch of War",
         "gender": "Female",
         "positions": [
             "Top"
@@ -112,6 +124,8 @@
     },
     {
         "championName": "Amumu",
+        "id": "Amumu",
+        "title": "the Sad Mummy",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -131,6 +145,8 @@
     },
     {
         "championName": "Anivia",
+        "id": "Anivia",
+        "title": "the Cryophoenix",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -150,6 +166,8 @@
     },
     {
         "championName": "Annie",
+        "id": "Annie",
+        "title": "the Dark Child",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -170,6 +188,8 @@
     },
     {
         "championName": "Aphelios",
+        "id": "Aphelios",
+        "title": "the Weapon of the Faithful",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -189,6 +209,8 @@
     },
     {
         "championName": "Ashe",
+        "id": "Ashe",
+        "title": "the Frost Archer",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -208,6 +230,8 @@
     },
     {
         "championName": "Aurelion Sol",
+        "id": "AurelionSol",
+        "title": "The Star Forger",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -228,6 +252,8 @@
     },
     {
         "championName": "Aurora",
+        "id": "Aurora",
+        "title": "the Witch Between Worlds",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -246,6 +272,8 @@
     },
     {
         "championName": "Azir",
+        "id": "Azir",
+        "title": "the Emperor of the Sands",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -264,6 +292,8 @@
     },
     {
         "championName": "Bard",
+        "id": "Bard",
+        "title": "the Wandering Caretaker",
         "gender": "Male",
         "positions": [
             "Support"
@@ -282,6 +312,8 @@
     },
     {
         "championName": "Bel'Veth",
+        "id": "Belveth",
+        "title": "the Empress of the Void",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -300,6 +332,8 @@
     },
     {
         "championName": "Blitzcrank",
+        "id": "Blitzcrank",
+        "title": "the Great Steam Golem",
         "gender": "Other",
         "positions": [
             "Support"
@@ -318,6 +352,8 @@
     },
     {
         "championName": "Brand",
+        "id": "Brand",
+        "title": "the Burning Vengeance",
         "gender": "Male",
         "positions": [
             "Support"
@@ -338,6 +374,8 @@
     },
     {
         "championName": "Braum",
+        "id": "Braum",
+        "title": "the Heart of the Freljord",
         "gender": "Male",
         "positions": [
             "Support"
@@ -357,6 +395,8 @@
     },
     {
         "championName": "Briar",
+        "id": "Briar",
+        "title": "the Restrained Hunger",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -375,6 +415,8 @@
     },
     {
         "championName": "Caitlyn",
+        "id": "Caitlyn",
+        "title": "the Sheriff of Piltover",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -393,6 +435,8 @@
     },
     {
         "championName": "Camille",
+        "id": "Camille",
+        "title": "the Steel Shadow",
         "gender": "Female",
         "positions": [
             "Top"
@@ -412,6 +456,8 @@
     },
     {
         "championName": "Cassiopeia",
+        "id": "Cassiopeia",
+        "title": "the Serpent's Embrace",
         "gender": "Female",
         "positions": [
             "Top",
@@ -433,6 +479,8 @@
     },
     {
         "championName": "Cho'Gath",
+        "id": "Chogath",
+        "title": "the Terror of the Void",
         "gender": "Male",
         "positions": [
             "Top"
@@ -451,6 +499,8 @@
     },
     {
         "championName": "Corki",
+        "id": "Corki",
+        "title": "the Daring Bombardier",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -470,6 +520,8 @@
     },
     {
         "championName": "Darius",
+        "id": "Darius",
+        "title": "the Hand of Noxus",
         "gender": "Male",
         "positions": [
             "Top"
@@ -488,6 +540,8 @@
     },
     {
         "championName": "Diana",
+        "id": "Diana",
+        "title": "Scorn of the Moon",
         "gender": "Female",
         "positions": [
             "Jungle",
@@ -508,6 +562,8 @@
     },
     {
         "championName": "Dr. Mundo",
+        "id": "DrMundo",
+        "title": "the Madman of Zaun",
         "gender": "Male",
         "positions": [
             "Top",
@@ -528,6 +584,8 @@
     },
     {
         "championName": "Draven",
+        "id": "Draven",
+        "title": "the Glorious Executioner",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -546,6 +604,8 @@
     },
     {
         "championName": "Ekko",
+        "id": "Ekko",
+        "title": "the Boy Who Shattered Time",
         "gender": "Male",
         "positions": [
             "Jungle",
@@ -565,6 +625,8 @@
     },
     {
         "championName": "Elise",
+        "id": "Elise",
+        "title": "the Spider Queen",
         "gender": "Female",
         "positions": [
             "Jungle",
@@ -587,6 +649,8 @@
     },
     {
         "championName": "Evelynn",
+        "id": "Evelynn",
+        "title": "Agony's Embrace",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -606,6 +670,8 @@
     },
     {
         "championName": "Ezreal",
+        "id": "Ezreal",
+        "title": "the Prodigal Explorer",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -625,6 +691,8 @@
     },
     {
         "championName": "Fiddlesticks",
+        "id": "Fiddlesticks",
+        "title": "the Ancient Fear",
         "gender": "Other",
         "positions": [
             "Jungle"
@@ -644,6 +712,8 @@
     },
     {
         "championName": "Fiora",
+        "id": "Fiora",
+        "title": "the Grand Duelist",
         "gender": "Female",
         "positions": [
             "Top"
@@ -662,6 +732,8 @@
     },
     {
         "championName": "Fizz",
+        "id": "Fizz",
+        "title": "the Tidal Trickster",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -680,6 +752,8 @@
     },
     {
         "championName": "Galio",
+        "id": "Galio",
+        "title": "the Colossus",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -698,6 +772,8 @@
     },
     {
         "championName": "Gangplank",
+        "id": "Gangplank",
+        "title": "the Saltwater Scourge",
         "gender": "Male",
         "positions": [
             "Top"
@@ -716,6 +792,8 @@
     },
     {
         "championName": "Garen",
+        "id": "Garen",
+        "title": "The Might of Demacia",
         "gender": "Male",
         "positions": [
             "Top"
@@ -734,6 +812,8 @@
     },
     {
         "championName": "Gnar",
+        "id": "Gnar",
+        "title": "the Missing Link",
         "gender": "Male",
         "positions": [
             "Top"
@@ -753,6 +833,8 @@
     },
     {
         "championName": "Gragas",
+        "id": "Gragas",
+        "title": "the Rabble Rouser",
         "gender": "Male",
         "positions": [
             "Top",
@@ -773,6 +855,8 @@
     },
     {
         "championName": "Graves",
+        "id": "Graves",
+        "title": "the Outlaw",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -791,6 +875,8 @@
     },
     {
         "championName": "Gwen",
+        "id": "Gwen",
+        "title": "The Hallowed Seamstress",
         "gender": "Female",
         "positions": [
             "Top",
@@ -812,6 +898,8 @@
     },
     {
         "championName": "Hecarim",
+        "id": "Hecarim",
+        "title": "the Shadow of War",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -831,6 +919,8 @@
     },
     {
         "championName": "Heimerdinger",
+        "id": "Heimerdinger",
+        "title": "the Revered Inventor",
         "gender": "Male",
         "positions": [
             "Top",
@@ -850,6 +940,8 @@
     },
     {
         "championName": "Hwei",
+        "id": "Hwei",
+        "title": "the Visionary",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -869,6 +961,8 @@
     },
     {
         "championName": "Illaoi",
+        "id": "Illaoi",
+        "title": "the Kraken Priestess",
         "gender": "Female",
         "positions": [
             "Top"
@@ -888,6 +982,8 @@
     },
     {
         "championName": "Irelia",
+        "id": "Irelia",
+        "title": "the Blade Dancer",
         "gender": "Female",
         "positions": [
             "Top",
@@ -908,6 +1004,8 @@
     },
     {
         "championName": "Ivern",
+        "id": "Ivern",
+        "title": "the Green Father",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -928,6 +1026,8 @@
     },
     {
         "championName": "Janna",
+        "id": "Janna",
+        "title": "the Storm's Fury",
         "gender": "Female",
         "positions": [
             "Support"
@@ -948,6 +1048,8 @@
     },
     {
         "championName": "Jarvan IV",
+        "id": "JarvanIV",
+        "title": "the Exemplar of Demacia",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -966,6 +1068,8 @@
     },
     {
         "championName": "Jax",
+        "id": "Jax",
+        "title": "Grandmaster at Arms",
         "gender": "Male",
         "positions": [
             "Top",
@@ -987,6 +1091,8 @@
     },
     {
         "championName": "Jayce",
+        "id": "Jayce",
+        "title": "the Defender of Tomorrow",
         "gender": "Male",
         "positions": [
             "Top",
@@ -1007,6 +1113,8 @@
     },
     {
         "championName": "Jhin",
+        "id": "Jhin",
+        "title": "the Virtuoso",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -1026,6 +1134,8 @@
     },
     {
         "championName": "Jinx",
+        "id": "Jinx",
+        "title": "the Loose Cannon",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -1045,6 +1155,8 @@
     },
     {
         "championName": "K'Sante",
+        "id": "KSante",
+        "title": "the Pride of Nazumah",
         "gender": "Male",
         "positions": [
             "Top"
@@ -1063,6 +1175,8 @@
     },
     {
         "championName": "Kai'Sa",
+        "id": "Kaisa",
+        "title": "Daughter of the Void",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -1083,6 +1197,8 @@
     },
     {
         "championName": "Kalista",
+        "id": "Kalista",
+        "title": "the Spear of Vengeance",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -1102,6 +1218,8 @@
     },
     {
         "championName": "Karma",
+        "id": "Karma",
+        "title": "the Enlightened One",
         "gender": "Female",
         "positions": [
             "Support"
@@ -1121,6 +1239,8 @@
     },
     {
         "championName": "Karthus",
+        "id": "Karthus",
+        "title": "the Deathsinger",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1140,6 +1260,8 @@
     },
     {
         "championName": "Kassadin",
+        "id": "Kassadin",
+        "title": "the Void Walker",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -1160,6 +1282,8 @@
     },
     {
         "championName": "Katarina",
+        "id": "Katarina",
+        "title": "the Sinister Blade",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -1178,6 +1302,8 @@
     },
     {
         "championName": "Kayle",
+        "id": "Kayle",
+        "title": "the Righteous",
         "gender": "Female",
         "positions": [
             "Top"
@@ -1200,6 +1326,8 @@
     },
     {
         "championName": "Kayn",
+        "id": "Kayn",
+        "title": "the Shadow Reaper",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1223,6 +1351,8 @@
     },
     {
         "championName": "Kennen",
+        "id": "Kennen",
+        "title": "the Heart of the Tempest",
         "gender": "Male",
         "positions": [
             "Top",
@@ -1242,6 +1372,8 @@
     },
     {
         "championName": "Kha'Zix",
+        "id": "Khazix",
+        "title": "the Voidreaver",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1260,6 +1392,8 @@
     },
     {
         "championName": "Kindred",
+        "id": "Kindred",
+        "title": "The Eternal Hunters",
         "gender": "Other",
         "positions": [
             "Jungle"
@@ -1279,6 +1413,8 @@
     },
     {
         "championName": "Kled",
+        "id": "Kled",
+        "title": "the Cantankerous Cavalier",
         "gender": "Male",
         "positions": [
             "Top"
@@ -1297,6 +1433,8 @@
     },
     {
         "championName": "Kog'Maw",
+        "id": "KogMaw",
+        "title": "the Mouth of the Abyss",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -1315,6 +1453,8 @@
     },
     {
         "championName": "LeBlanc",
+        "id": "Leblanc",
+        "title": "the Deceiver",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -1334,6 +1474,8 @@
     },
     {
         "championName": "Lee Sin",
+        "id": "LeeSin",
+        "title": "the Blind Monk",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1353,6 +1495,8 @@
     },
     {
         "championName": "Leona",
+        "id": "Leona",
+        "title": "the Radiant Dawn",
         "gender": "Female",
         "positions": [
             "Support"
@@ -1372,6 +1516,8 @@
     },
     {
         "championName": "Lillia",
+        "id": "Lillia",
+        "title": "the Bashful Bloom",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -1390,6 +1536,8 @@
     },
     {
         "championName": "Lissandra",
+        "id": "Lissandra",
+        "title": "the Ice Witch",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -1409,6 +1557,8 @@
     },
     {
         "championName": "Lucian",
+        "id": "Lucian",
+        "title": "the Purifier",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -1428,6 +1578,8 @@
     },
     {
         "championName": "Lulu",
+        "id": "Lulu",
+        "title": "the Fae Sorceress",
         "gender": "Female",
         "positions": [
             "Support"
@@ -1446,6 +1598,8 @@
     },
     {
         "championName": "Lux",
+        "id": "Lux",
+        "title": "the Lady of Luminosity",
         "gender": "Female",
         "positions": [
             "Middle",
@@ -1466,6 +1620,8 @@
     },
     {
         "championName": "Malphite",
+        "id": "Malphite",
+        "title": "Shard of the Monolith",
         "gender": "Male",
         "positions": [
             "Top"
@@ -1485,6 +1641,8 @@
     },
     {
         "championName": "Malzahar",
+        "id": "Malzahar",
+        "title": "the Prophet of the Void",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -1505,6 +1663,8 @@
     },
     {
         "championName": "Maokai",
+        "id": "Maokai",
+        "title": "the Twisted Treant",
         "gender": "Male",
         "positions": [
             "Support"
@@ -1523,6 +1683,8 @@
     },
     {
         "championName": "Master Yi",
+        "id": "MasterYi",
+        "title": "the Wuju Bladesman",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1542,6 +1704,8 @@
     },
     {
         "championName": "Mel",
+        "id": "Mel",
+        "title": "the Soul's Reflection",
         "gender": "Female",
         "positions": [
             "Middle",
@@ -1563,6 +1727,8 @@
     },
     {
         "championName": "Milio",
+        "id": "Milio",
+        "title": "The Gentle Flame",
         "gender": "Male",
         "positions": [
             "Support"
@@ -1582,6 +1748,8 @@
     },
     {
         "championName": "Miss Fortune",
+        "id": "MissFortune",
+        "title": "the Bounty Hunter",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -1600,6 +1768,8 @@
     },
     {
         "championName": "Mordekaiser",
+        "id": "Mordekaiser",
+        "title": "the Iron Revenant",
         "gender": "Male",
         "positions": [
             "Top"
@@ -1619,6 +1789,8 @@
     },
     {
         "championName": "Morgana",
+        "id": "Morgana",
+        "title": "the Fallen",
         "gender": "Female",
         "positions": [
             "Middle",
@@ -1641,6 +1813,8 @@
     },
     {
         "championName": "Naafiri",
+        "id": "Naafiri",
+        "title": "the Hound of a Hundred Bites",
         "gender": "Female",
         "positions": [
             "Jungle",
@@ -1661,6 +1835,8 @@
     },
     {
         "championName": "Nami",
+        "id": "Nami",
+        "title": "the Tidecaller",
         "gender": "Female",
         "positions": [
             "Support"
@@ -1680,6 +1856,8 @@
     },
     {
         "championName": "Nasus",
+        "id": "Nasus",
+        "title": "the Curator of the Sands",
         "gender": "Male",
         "positions": [
             "Top"
@@ -1698,6 +1876,8 @@
     },
     {
         "championName": "Nautilus",
+        "id": "Nautilus",
+        "title": "the Titan of the Depths",
         "gender": "Male",
         "positions": [
             "Support"
@@ -1716,6 +1896,8 @@
     },
     {
         "championName": "Neeko",
+        "id": "Neeko",
+        "title": "the Curious Chameleon",
         "gender": "Female",
         "positions": [
             "Support"
@@ -1734,6 +1916,8 @@
     },
     {
         "championName": "Nidalee",
+        "id": "Nidalee",
+        "title": "the Bestial Huntress",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -1754,6 +1938,8 @@
     },
     {
         "championName": "Nilah",
+        "id": "Nilah",
+        "title": "the Joy Unbound",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -1773,6 +1959,8 @@
     },
     {
         "championName": "Nocturne",
+        "id": "Nocturne",
+        "title": "the Eternal Nightmare",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1792,6 +1980,8 @@
     },
     {
         "championName": "Nunu & Willump",
+        "id": "Nunu",
+        "title": "the Boy and His Yeti",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1811,6 +2001,8 @@
     },
     {
         "championName": "Olaf",
+        "id": "Olaf",
+        "title": "the Berserker",
         "gender": "Male",
         "positions": [
             "Top"
@@ -1830,6 +2022,8 @@
     },
     {
         "championName": "Orianna",
+        "id": "Orianna",
+        "title": "the Lady of Clockwork",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -1848,6 +2042,8 @@
     },
     {
         "championName": "Ornn",
+        "id": "Ornn",
+        "title": "The Fire below the Mountain",
         "gender": "Male",
         "positions": [
             "Top"
@@ -1867,6 +2063,8 @@
     },
     {
         "championName": "Pantheon",
+        "id": "Pantheon",
+        "title": "the Unbreakable Spear",
         "gender": "Male",
         "positions": [
             "Top",
@@ -1888,6 +2086,8 @@
     },
     {
         "championName": "Poppy",
+        "id": "Poppy",
+        "title": "Keeper of the Hammer",
         "gender": "Female",
         "positions": [
             "Top",
@@ -1907,6 +2107,8 @@
     },
     {
         "championName": "Pyke",
+        "id": "Pyke",
+        "title": "the Bloodharbor Ripper",
         "gender": "Male",
         "positions": [
             "Support"
@@ -1925,6 +2127,8 @@
     },
     {
         "championName": "Qiyana",
+        "id": "Qiyana",
+        "title": "Empress of the Elements",
         "gender": "Female",
         "positions": [
             "Jungle",
@@ -1945,6 +2149,8 @@
     },
     {
         "championName": "Quinn",
+        "id": "Quinn",
+        "title": "Demacia's Wings",
         "gender": "Female",
         "positions": [
             "Top"
@@ -1963,6 +2169,8 @@
     },
     {
         "championName": "Rakan",
+        "id": "Rakan",
+        "title": "The Charmer",
         "gender": "Male",
         "positions": [
             "Support"
@@ -1981,6 +2189,8 @@
     },
     {
         "championName": "Rammus",
+        "id": "Rammus",
+        "title": "the Armordillo",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -1999,6 +2209,8 @@
     },
     {
         "championName": "Rek'Sai",
+        "id": "RekSai",
+        "title": "the Void Burrower",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -2018,6 +2230,8 @@
     },
     {
         "championName": "Rell",
+        "id": "Rell",
+        "title": "the Iron Maiden",
         "gender": "Female",
         "positions": [
             "Support"
@@ -2038,6 +2252,8 @@
     },
     {
         "championName": "Renata Glasc",
+        "id": "Renata",
+        "title": "the Chem-Baroness",
         "gender": "Female",
         "positions": [
             "Support"
@@ -2057,6 +2273,8 @@
     },
     {
         "championName": "Renekton",
+        "id": "Renekton",
+        "title": "the Butcher of the Sands",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2075,6 +2293,8 @@
     },
     {
         "championName": "Rengar",
+        "id": "Rengar",
+        "title": "the Pridestalker",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -2094,6 +2314,8 @@
     },
     {
         "championName": "Riven",
+        "id": "Riven",
+        "title": "the Exile",
         "gender": "Female",
         "positions": [
             "Top"
@@ -2113,6 +2335,8 @@
     },
     {
         "championName": "Rumble",
+        "id": "Rumble",
+        "title": "the Mechanized Menace",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2131,6 +2355,8 @@
     },
     {
         "championName": "Ryze",
+        "id": "Ryze",
+        "title": "the Rune Mage",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -2150,6 +2376,8 @@
     },
     {
         "championName": "Samira",
+        "id": "Samira",
+        "title": "the Desert Rose",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -2169,6 +2397,8 @@
     },
     {
         "championName": "Sejuani",
+        "id": "Sejuani",
+        "title": "Fury of the North",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -2188,6 +2418,8 @@
     },
     {
         "championName": "Senna",
+        "id": "Senna",
+        "title": "the Redeemer",
         "gender": "Female",
         "positions": [
             "Support"
@@ -2207,6 +2439,8 @@
     },
     {
         "championName": "Seraphine",
+        "id": "Seraphine",
+        "title": "the Starry-Eyed Songstress",
         "gender": "Female",
         "positions": [
             "Support"
@@ -2227,6 +2461,8 @@
     },
     {
         "championName": "Sett",
+        "id": "Sett",
+        "title": "the Boss",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2246,6 +2482,8 @@
     },
     {
         "championName": "Shaco",
+        "id": "Shaco",
+        "title": "the Demon Jester",
         "gender": "Male",
         "positions": [
             "Jungle",
@@ -2265,6 +2503,8 @@
     },
     {
         "championName": "Shen",
+        "id": "Shen",
+        "title": "the Eye of Twilight",
         "gender": "Male",
         "positions": [
             "Top",
@@ -2285,6 +2525,8 @@
     },
     {
         "championName": "Shyvana",
+        "id": "Shyvana",
+        "title": "the Half-Dragon",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -2304,6 +2546,8 @@
     },
     {
         "championName": "Singed",
+        "id": "Singed",
+        "title": "the Mad Chemist",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2324,6 +2568,8 @@
     },
     {
         "championName": "Sion",
+        "id": "Sion",
+        "title": "The Undead Juggernaut",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2342,6 +2588,8 @@
     },
     {
         "championName": "Sivir",
+        "id": "Sivir",
+        "title": "the Battle Mistress",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -2360,6 +2608,8 @@
     },
     {
         "championName": "Skarner",
+        "id": "Skarner",
+        "title": "the Primordial Sovereign",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -2378,6 +2628,8 @@
     },
     {
         "championName": "Smolder",
+        "id": "Smolder",
+        "title": "the Fiery Fledgling",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -2397,6 +2649,8 @@
     },
     {
         "championName": "Sona",
+        "id": "Sona",
+        "title": "Maven of the Strings",
         "gender": "Female",
         "positions": [
             "Support"
@@ -2417,6 +2671,8 @@
     },
     {
         "championName": "Soraka",
+        "id": "Soraka",
+        "title": "the Starchild",
         "gender": "Female",
         "positions": [
             "Support"
@@ -2436,6 +2692,8 @@
     },
     {
         "championName": "Swain",
+        "id": "Swain",
+        "title": "the Noxian Grand General",
         "gender": "Male",
         "positions": [
             "Support"
@@ -2455,6 +2713,8 @@
     },
     {
         "championName": "Sylas",
+        "id": "Sylas",
+        "title": "the Unshackled",
         "gender": "Male",
         "positions": [
             "Jungle",
@@ -2476,6 +2736,8 @@
     },
     {
         "championName": "Syndra",
+        "id": "Syndra",
+        "title": "the Dark Sovereign",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -2495,6 +2757,8 @@
     },
     {
         "championName": "Tahm Kench",
+        "id": "TahmKench",
+        "title": "The River King",
         "gender": "Male",
         "positions": [
             "Top",
@@ -2516,6 +2780,8 @@
     },
     {
         "championName": "Taliyah",
+        "id": "Taliyah",
+        "title": "the Stoneweaver",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -2535,6 +2801,8 @@
     },
     {
         "championName": "Talon",
+        "id": "Talon",
+        "title": "the Blade's Shadow",
         "gender": "Male",
         "positions": [
             "Jungle",
@@ -2554,6 +2822,8 @@
     },
     {
         "championName": "Taric",
+        "id": "Taric",
+        "title": "the Shield of Valoran",
         "gender": "Male",
         "positions": [
             "Support"
@@ -2574,6 +2844,8 @@
     },
     {
         "championName": "Teemo",
+        "id": "Teemo",
+        "title": "the Swift Scout",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2592,6 +2864,8 @@
     },
     {
         "championName": "Thresh",
+        "id": "Thresh",
+        "title": "the Chain Warden",
         "gender": "Male",
         "positions": [
             "Support"
@@ -2610,6 +2884,8 @@
     },
     {
         "championName": "Tristana",
+        "id": "Tristana",
+        "title": "the Yordle Gunner",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -2628,6 +2904,8 @@
     },
     {
         "championName": "Trundle",
+        "id": "Trundle",
+        "title": "the Troll King",
         "gender": "Male",
         "positions": [
             "Top",
@@ -2648,6 +2926,8 @@
     },
     {
         "championName": "Tryndamere",
+        "id": "Tryndamere",
+        "title": "the Barbarian King",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2667,6 +2947,8 @@
     },
     {
         "championName": "Twisted Fate",
+        "id": "TwistedFate",
+        "title": "the Card Master",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -2686,6 +2968,8 @@
     },
     {
         "championName": "Twitch",
+        "id": "Twitch",
+        "title": "the Plague Rat",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -2705,6 +2989,8 @@
     },
     {
         "championName": "Udyr",
+        "id": "Udyr",
+        "title": "the Spirit Walker",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -2725,6 +3011,8 @@
     },
     {
         "championName": "Urgot",
+        "id": "Urgot",
+        "title": "the Dreadnought",
         "gender": "Male",
         "positions": [
             "Top"
@@ -2746,6 +3034,8 @@
     },
     {
         "championName": "Varus",
+        "id": "Varus",
+        "title": "the Arrow of Retribution",
         "gender": "Male",
         "positions": [
             "Bottom"
@@ -2767,6 +3057,8 @@
     },
     {
         "championName": "Vayne",
+        "id": "Vayne",
+        "title": "the Night Hunter",
         "gender": "Female",
         "positions": [
             "Top",
@@ -2786,6 +3078,8 @@
     },
     {
         "championName": "Veigar",
+        "id": "Veigar",
+        "title": "the Tiny Master of Evil",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -2806,6 +3100,8 @@
     },
     {
         "championName": "Vel'Koz",
+        "id": "Velkoz",
+        "title": "the Eye of the Void",
         "gender": "Male",
         "positions": [
             "Middle",
@@ -2825,6 +3121,8 @@
     },
     {
         "championName": "Vex",
+        "id": "Vex",
+        "title": "the Gloomist",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -2844,6 +3142,8 @@
     },
     {
         "championName": "Vi",
+        "id": "Vi",
+        "title": "the Piltover Enforcer",
         "gender": "Female",
         "positions": [
             "Jungle"
@@ -2863,6 +3163,8 @@
     },
     {
         "championName": "Viego",
+        "id": "Viego",
+        "title": "The Ruined King",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -2882,6 +3184,8 @@
     },
     {
         "championName": "Viktor",
+        "id": "Viktor",
+        "title": "the Herald of the Arcane",
         "gender": "Male",
         "positions": [
             "Middle"
@@ -2902,6 +3206,8 @@
     },
     {
         "championName": "Vladimir",
+        "id": "Vladimir",
+        "title": "the Crimson Reaper",
         "gender": "Male",
         "positions": [
             "Top",
@@ -2924,6 +3230,8 @@
     },
     {
         "championName": "Volibear",
+        "id": "Volibear",
+        "title": "the Relentless Storm",
         "gender": "Male",
         "positions": [
             "Top",
@@ -2944,6 +3252,8 @@
     },
     {
         "championName": "Warwick",
+        "id": "Warwick",
+        "title": "the Uncaged Wrath of Zaun",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -2964,6 +3274,8 @@
     },
     {
         "championName": "Wukong",
+        "id": "MonkeyKing",
+        "title": "the Monkey King",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -2982,6 +3294,8 @@
     },
     {
         "championName": "Xayah",
+        "id": "Xayah",
+        "title": "the Rebel",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -3000,6 +3314,8 @@
     },
     {
         "championName": "Xerath",
+        "id": "Xerath",
+        "title": "the Magus Ascendant",
         "gender": "Male",
         "positions": [
             "Middle",
@@ -3019,6 +3335,8 @@
     },
     {
         "championName": "Xin Zhao",
+        "id": "XinZhao",
+        "title": "the Seneschal of Demacia",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -3039,6 +3357,8 @@
     },
     {
         "championName": "Yasuo",
+        "id": "Yasuo",
+        "title": "the Unforgiven",
         "gender": "Male",
         "positions": [
             "Top",
@@ -3059,6 +3379,8 @@
     },
     {
         "championName": "Yone",
+        "id": "Yone",
+        "title": "the Unforgotten",
         "gender": "Male",
         "positions": [
             "Top",
@@ -3079,6 +3401,8 @@
     },
     {
         "championName": "Yorick",
+        "id": "Yorick",
+        "title": "Shepherd of Souls",
         "gender": "Male",
         "positions": [
             "Top"
@@ -3098,6 +3422,8 @@
     },
     {
         "championName": "Yunara",
+        "id": "Yunara",
+        "title": "the Unbroken Faith",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -3117,6 +3443,8 @@
     },
     {
         "championName": "Yuumi",
+        "id": "Yuumi",
+        "title": "the Magical Cat",
         "gender": "Female",
         "positions": [
             "Support"
@@ -3136,6 +3464,8 @@
     },
     {
         "championName": "Zaahen",
+        "id": "Zaahen",
+        "title": "The Unsundered",
         "gender": "Male",
         "positions": [
             "Top"
@@ -3156,6 +3486,8 @@
     },
     {
         "championName": "Zac",
+        "id": "Zac",
+        "title": "the Secret Weapon",
         "gender": "Male",
         "positions": [
             "Jungle"
@@ -3174,6 +3506,8 @@
     },
     {
         "championName": "Zed",
+        "id": "Zed",
+        "title": "the Master of Shadows",
         "gender": "Male",
         "positions": [
             "Jungle",
@@ -3194,6 +3528,8 @@
     },
     {
         "championName": "Zeri",
+        "id": "Zeri",
+        "title": "The Spark of Zaun",
         "gender": "Female",
         "positions": [
             "Bottom"
@@ -3213,6 +3549,8 @@
     },
     {
         "championName": "Ziggs",
+        "id": "Ziggs",
+        "title": "the Hexplosives Expert",
         "gender": "Male",
         "positions": [
             "Middle",
@@ -3232,6 +3570,8 @@
     },
     {
         "championName": "Zilean",
+        "id": "Zilean",
+        "title": "the Chronokeeper",
         "gender": "Male",
         "positions": [
             "Support"
@@ -3253,6 +3593,8 @@
     },
     {
         "championName": "Zoe",
+        "id": "Zoe",
+        "title": "the Aspect of Twilight",
         "gender": "Female",
         "positions": [
             "Middle"
@@ -3272,6 +3614,8 @@
     },
     {
         "championName": "Zyra",
+        "id": "Zyra",
+        "title": "Rise of the Thorns",
         "gender": "Female",
         "positions": [
             "Support"

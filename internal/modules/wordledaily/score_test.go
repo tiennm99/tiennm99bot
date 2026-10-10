@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/tiennm99/tiennm99bot/internal/modules/util/guessgame"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util/htmlgame"
 )
 
@@ -26,7 +27,7 @@ func TestScore_WinReportsSevenMinusGuessesOncePerCard(t *testing.T) {
 	other := h.tokenFor(1, -200, 9, 0, "Alice")
 	h.state(other)
 	h.state(other)
-	inline, _ := h.svc.signToken(claims{UserID: 1, InlineID: "BAAAInline", Expiry: h.clock.now().Add(tokenTTL).Unix()})
+	inline, _ := h.svc.signToken(guessgame.Claims{UserID: 1, InlineID: "BAAAInline", Expiry: h.clock.now().Add(guessgame.TokenTTL).Unix()})
 	h.state(inline)
 	calls = h.rep.snapshot()
 	if len(calls) != 3 || calls[1].addr != (htmlgame.Address{ChatID: -200, MessageID: 9}) || calls[1].score != 4 ||

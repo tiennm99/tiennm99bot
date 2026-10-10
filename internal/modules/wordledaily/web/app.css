@@ -104,6 +104,8 @@ button:disabled { opacity: .6; cursor: default; }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
 button.icon { min-width: 40px; min-height: 40px; padding: 4px 8px; font-size: 1.15rem; line-height: 1; }
 button.icon[aria-pressed="true"] { background: var(--key); }
+button.new-top { min-height: 40px; padding: 4px 10px; font-size: .85rem; }
+button.new-top.confirm { border-color: var(--absent); background: var(--key); }
 
 #screen-game { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 .board-wrap { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -217,6 +219,7 @@ button.icon[aria-pressed="true"] { background: var(--key); }
 .next strong { font-variant-numeric: tabular-nums; }
 #next-btn { display: block; margin: 0 auto 8px; }
 .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.hint { text-align: center; font-size: .85rem; margin: 12px 0 0; }
 .offscreen { position: fixed; top: -1000px; left: 0; opacity: 0; }
 .sr-only {
   position: absolute;
