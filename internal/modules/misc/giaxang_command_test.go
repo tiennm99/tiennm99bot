@@ -20,7 +20,7 @@ const petrolimexFixture = `{"Objects":[
 ]}`
 
 const giaxangFixtureReply = "⛽ Giá bán lẻ xăng dầu Petrolimex (đ/lít)\n" +
-	"Cập nhật: 14:48 24/09/2026\n" +
+	"Giá áp dụng từ 14:48 24/09/2026\n" +
 	"\n<pre>" +
 	"Mặt hàng             Vùng 1  Vùng 2\n" +
 	"Xăng E10 RON 95-III  27.080  27.620\n" +

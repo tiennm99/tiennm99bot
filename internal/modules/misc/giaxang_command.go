@@ -129,7 +129,7 @@ func formatFuelPrices(prices []fuelPrice) string {
 	var sb strings.Builder
 	sb.WriteString("⛽ Giá bán lẻ xăng dầu Petrolimex (đ/lít)\n")
 	if updated, ok := latestUpdate(prices); ok {
-		sb.WriteString("Cập nhật: " + updated.In(giaxangLocation).Format("15:04 02/01/2006") + "\n")
+		sb.WriteString("Giá áp dụng từ " + updated.In(giaxangLocation).Format("15:04 02/01/2006") + "\n")
 	}
 	sb.WriteString("\n<pre>" + html.EscapeString(strings.TrimRight(table.String(), "\n")) + "</pre>")
 	return sb.String()
