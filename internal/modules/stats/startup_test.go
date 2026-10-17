@@ -146,3 +146,93 @@ func TestMigrateCommandRename_MergesAndKeepsDeletedFlag(t *testing.T) {
 		t.Errorf("user = %+v", got)
 	}
 }
+
+func TestInitStore_RetiresMonkeydCommandStats(t *testing.T) {
+	assertMonkeydCommandsRetired(t, storage.NewMemoryProvider())
+}
+
+// assertMonkeydCommandsRetired seeds history for the removed monkeyd commands,
+// runs the startup migration twice, and checks that their rows are kept with
+// deleted: true, hidden from every view, and never counted again, while a
+// command that only shares the prefix is untouched. A row written after the
+// marker exists is left alone, which shows the marker guards the step.
+func assertMonkeydCommandsRetired(t *testing.T, provider storage.Provider) {
+	t.Helper()
+	ctx := context.Background()
+	statsColl := provider.Collection("stats")
+	systemColl := provider.Collection(systemstate.CollectionName)
+	docs := storage.Typed[usageEntry](statsColl)
+
+	seeds := map[string]usageEntry{
+		usageKey("monkeyd_crawl", 0):       {Cmd: "monkeyd_crawl", N: 4},
+		usageKey("monkeyd_crawl", 7):       {Cmd: "monkeyd_crawl", UserID: 7, Username: "alice", N: 3},
+		usageKey("monkeyd_tags", 8):        {Cmd: "monkeyd_tags", UserID: 8, Username: "bob", N: 2, Deleted: true},
+		usageKey("monkeyd_crawl_extra", 7): {Cmd: "monkeyd_crawl_extra", UserID: 7, Username: "alice", N: 1},
+		usageKey("ping", 7):                {Cmd: "ping", UserID: 7, Username: "alice", N: 5},
+	}
+	for key, entry := range seeds {
+		if err := docs.Put(ctx, key, entry); err != nil {
+			t.Fatalf("seed %s: %v", key, err)
+		}
+	}
+
+	for run := range 2 {
+		if err := InitStore(ctx, statsColl, systemColl); err != nil {
+			t.Fatalf("InitStore run %d: %v", run+1, err)
+		}
+	}
+
+	for key, seed := range seeds {
+		got, _, err := docs.Get(ctx, key)
+		if err != nil {
+			t.Fatalf("get %s: %v", key, err)
+		}
+		want := seed
+		want.Deleted = isRetiredCommand(seed.Cmd)
+		if got != want {
+			t.Errorf("%s = %+v, want %+v", key, got, want)
+		}
+	}
+	rec, ok, err := systemstate.New(systemColl).Get(ctx, "migration:stats-delete-monkeyd-v1")
+	if err != nil || !ok || rec.Status != "complete" || rec.Count != 2 {
+		t.Fatalf("marker = %+v ok=%v err=%v, want complete count 2", rec, ok, err)
+	}
+
+	store := newUsageStore(statsColl)
+	if err := store.Increment(ctx, "monkeyd_crawl", usageUser{ID: 7, Username: "alice"}, true); err != nil {
+		t.Fatalf("retired Increment: %v", err)
+	}
+	if got, _, err := docs.Get(ctx, usageKey("monkeyd_crawl", 7)); err != nil || got.N != 3 {
+		t.Fatalf("retired row after Increment = %+v err=%v, want n 3", got, err)
+	}
+	if rows, err := store.TopCommands(ctx, 10); err != nil || len(rows) != 2 || rows[0].display != "/ping" || rows[1].display != "/monkeyd_crawl_extra" {
+		t.Fatalf("top commands = %+v err=%v", rows, err)
+	}
+	if rows, err := store.TopUsers(ctx, 10); err != nil || len(rows) != 1 || rows[0].display != "@alice" || rows[0].n != 6 {
+		t.Fatalf("top users = %+v err=%v", rows, err)
+	}
+	if rows, found, err := store.CommandsByUser(ctx, "bob", 10); err != nil || found || len(rows) != 0 {
+		t.Fatalf("commands by retired-only user = %+v found=%v err=%v", rows, found, err)
+	}
+	for _, cmd := range []string{"monkeyd_crawl", "monkeyd_tags"} {
+		if rows, err := store.UsersByCommand(ctx, cmd, 10); err != nil || len(rows) != 0 {
+			t.Fatalf("users by %s = %+v err=%v", cmd, rows, err)
+		}
+	}
+
+	// A row that appears after the marker, say from the previous release
+	// still draining during a deploy, is not migrated again but stays hidden.
+	late := usageEntry{Cmd: "monkeyd_tags", UserID: 9, Username: "carol", N: 1}
+	if err := docs.Put(ctx, usageKey("monkeyd_tags", 9), late); err != nil {
+		t.Fatalf("seed late row: %v", err)
+	}
+	if err := InitStore(ctx, statsColl, systemColl); err != nil {
+		t.Fatalf("InitStore after marker: %v", err)
+	}
+	if got, _, err := docs.Get(ctx, usageKey("monkeyd_tags", 9)); err != nil || got != late {
+		t.Fatalf("late row = %+v err=%v, want untouched %+v", got, err, late)
+	}
+	if rows, err := store.TopUsers(ctx, 10); err != nil || len(rows) != 1 || rows[0].display != "@alice" {
+		t.Fatalf("top users with late retired row = %+v err=%v", rows, err)
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"sync"
 
@@ -336,7 +337,7 @@ func (s *mongoUsageStore) Increment(ctx context.Context, cmd string, user usageU
 func (s *mongoUsageStore) TopCommands(ctx context.Context, limit int) ([]row, error) {
 	pipeline := mongo.Pipeline{
 		bson.D{bsonField("$match", bson.D{
-			bsonField("cmd", bson.D{bsonField("$type", "string"), bsonField("$ne", deletedStockDividendCommand)}),
+			bsonField("cmd", bson.D{bsonField("$type", "string"), bsonField("$nin", retiredCommands)}),
 			bsonField("deleted", bson.D{bsonField("$ne", true)}),
 		})},
 		bson.D{bsonField("$group", bson.D{bsonField("_id", "$cmd"), bsonField("n", bson.D{bsonField("$sum", "$n")})})},
@@ -370,7 +371,7 @@ func (s *mongoUsageStore) TopCommands(ctx context.Context, limit int) ([]row, er
 func (s *mongoUsageStore) TopUsers(ctx context.Context, limit int) ([]row, error) {
 	pipeline := mongo.Pipeline{
 		bson.D{bsonField("$match", bson.D{
-			bsonField("cmd", bson.D{bsonField("$ne", deletedStockDividendCommand)}),
+			bsonField("cmd", bson.D{bsonField("$nin", retiredCommands)}),
 			bsonField("uid", bson.D{bsonField("$gt", int64(0))}),
 			bsonField("user", bson.D{bsonField("$type", "string"), bsonField("$ne", "")}),
 			bsonField("deleted", bson.D{bsonField("$ne", true)}),
@@ -424,7 +425,7 @@ func (s *mongoUsageStore) CommandsByUser(ctx context.Context, username string, l
 	}
 	cur, err := s.coll.Find(ctx, bson.M{
 		"uid":     userID,
-		"cmd":     bson.M{"$type": "string", "$ne": deletedStockDividendCommand},
+		"cmd":     bson.M{"$type": "string", "$nin": retiredCommands},
 		"deleted": bson.M{"$ne": true},
 	}, opts)
 	if err != nil {
@@ -487,7 +488,7 @@ func (s *mongoUsageStore) userIDByUsername(ctx context.Context, username string)
 	}
 	err := s.coll.FindOne(ctx,
 		bson.M{
-			"cmd":     bson.M{"$ne": deletedStockDividendCommand},
+			"cmd":     bson.M{"$nin": retiredCommands},
 			"uid":     bson.M{"$gt": int64(0)},
 			"user":    username,
 			"deleted": bson.M{"$ne": true},
@@ -504,14 +505,19 @@ func (s *mongoUsageStore) userIDByUsername(ctx context.Context, username string)
 	return doc.UserID, true, nil
 }
 
-// deletedStockDividendCommand names the retired /stock_dividend command. Its
-// rows are kept with deleted: true as history.
-const deletedStockDividendCommand = "stock_dividend"
+// retiredCommands names commands removed from the bot. Their rows are kept
+// with deleted: true as history: /stock_dividend was split into the cash and
+// share dividend commands, and the monkeyd commands left with their module.
+var retiredCommands = []string{
+	"stock_dividend",
+	"monkeyd_crawl",
+	"monkeyd_tags",
+}
 
 // isRetiredCommand reports whether cmd has been removed from the bot. Its rows
 // are never incremented or shown, even ones missing the deleted flag.
 func isRetiredCommand(cmd string) bool {
-	return cmd == deletedStockDividendCommand
+	return slices.Contains(retiredCommands, cmd)
 }
 
 func withLimit(pipeline mongo.Pipeline, limit int) mongo.Pipeline {

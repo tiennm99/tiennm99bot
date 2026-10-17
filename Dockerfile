@@ -26,8 +26,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # ffmpeg comes from Alpine's own package rather than a third-party static-ffmpeg
 # image, keeping the supply chain to bases already trusted by this build.
 FROM alpine:3.22
-# No fonts are installed here: the monkeyd module's PDF renderer falls back to a
-# font compiled into the binary when the host has none.
 RUN apk add --no-cache ffmpeg ca-certificates \
     && addgroup -g 65532 -S nonroot \
     && adduser -u 65532 -S -G nonroot nonroot

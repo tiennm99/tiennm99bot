@@ -22,7 +22,6 @@ Atlas via long polling and an in-process cron scheduler.
 | `sticker` | `/addsticker` — append a replied sticker, image, video or GIF to one shared pack. See [docs/sticker-packs.md](docs/sticker-packs.md) |
 | `alias` | `/alias <name>` save a replied message under a name, then send it back with `/insert <name>`, bare `/<name>`, or inline `@botname <prefix>`; `/aliases` lists, `/unalias` deletes. See [docs/aliases.md](docs/aliases.md) |
 | `blacklist` | Per-topic text deny-list with whitelist exceptions: `/blacklist_add`, `/blacklist_del`, `/whitelist_add`, `/whitelist_del`, `/blacklist_rules` lists both, `/blacklist_check` judges a text, `/blacklist` does either, `/whitelist_rnd` picks a random exception. Passive — the bot never scans chat. See [docs/blacklist.md](docs/blacklist.md) |
-| `monkeyd` | `/monkeyd_crawl <url> [font_size]` export a monkeydd.com novel as a PDF, `/monkeyd_tags <url>` list its tags as hashtags |
 | `weather` | Weather from Open-Meteo: `/thoitiet` for the next 6 hours hour by hour, `/thoitiethomnay` for current conditions and today, `/thoitietngaymai` for tomorrow, `/thoitiettuannay` for the next 7 days. Each takes `[location... | lat,long]` (Vietnamese with or without diacritics, shorthand like `hcm`/`hn`, a foreign city, or decimal coordinates such as `10.74,106.72`); the default is Tân Thuận (formerly Q.7). Flood alerts for Tân Thuận (Q.7): `/thuyvan` shows the 5-day tide-peak forecast at Phú An and Nhà Bè (Đài KTTV Nam Bộ bulletin), the rain forecast, and live VNDMS river gauges within 30 km; `/thuyvan_subscribe` / `/thuyvan_unsubscribe` toggle a 10:30 ICT push (retried at 12:30 if that run fails) sent only when a forecast peak reaches báo động I (1.40 m) or rain reaches 50 mm |
 
 Commands marked (admin) require a user ID in `ADMIN_IDS` or the owner; commands
@@ -159,75 +158,6 @@ Per-user event history provides notification state and processing idempotency.
 The stock-only `assets.<ticker>.openedAt` marker identifies the current position
 lifecycle, invalidates buttons after a full sale and later repurchase, and
 prevents a position opened after Record date from applying an older event.
-
-### Novel PDF export
-
-`/monkeyd_crawl <url> [font_size]` downloads every chapter of a monkeydd.com
-novel and sends it back as a single PDF document, sized for reading on a phone.
-The crawler, the PDF renderer, and the export flow live in
-`internal/modules/monkeyd/{crawler,pdf,export}`, ported from
-[mttools/monkeyd-crawler](https://github.com/tiennm99/mttools/tree/main/monkeyd-crawler)
-and trimmed to what the bot uses: a fixed phone page and the bundled DejaVu
-Sans font.
-
-`font_size` is the body text size in points and accepts half points. It ranges
-from 6 to 24 and defaults to the crawler's own default of 10, which fits roughly
-43 characters per line across 26 lines on the 90×160 mm page. Larger values
-trade characters per line for legibility: 12 gives about 36. Headings and the
-title page scale with it. Omitting the argument passes no size at all, so the
-crawler's default applies rather than a second one defined here. The document
-caption reports the size that was used.
-
-The command is public, so any member of a chat can run it. One invocation makes
-hundreds of outbound requests spread over several minutes, so two things bound
-the cost and are deliberate: only `monkeydd.com` URLs are accepted, and exactly
-one export runs at a time across the whole bot. A missing scheme is filled in,
-so a pasted bare hostname works.
-
-The host allowlist is not only about the parser — the extractor is written
-against that site's markup and would find nothing elsewhere — it also stops the
-command being used to make the bot fetch arbitrary URLs.
-
-The bot replies immediately that the export started, then sends the PDF when it
-is ready; a second request while one is in flight is told which novel is
-currently running. Requests are spaced out by the crawler, so a run is
-deliberately slow rather than aggressive.
-
-Raw pages are cached under the system temp directory, so re-exporting the same
-novel costs no requests. The cache is not pruned and a container restart clears
-it. Finished PDFs are deleted after upload. Telegram caps bot uploads at 50 MB;
-a larger book is reported instead of being sent.
-
-The PDF embeds a font covering Vietnamese diacritics. The crawler prefers a
-system font and falls back to one compiled into the binary, so the runtime
-image needs no fonts installed.
-
-### Novel tags
-
-`/monkeyd_tags <url>` reports a novel's tags as a hashtag line, sent as a code
-block so it can be copied in one tap:
-
-```text
-#MonkeyD #CổĐại #GiaĐình
-
-https://monkeydd.com/truong-an-gwem.html
-```
-
-Each label becomes one hashtag with spaces and punctuation removed and every
-word capitalised, because Telegram ends a hashtag at the first character that is
-not a letter, digit, or underscore. Diacritics are kept. A label with no letters
-is dropped rather than emitted as a bare `#`.
-
-The tags are the novel's own genres, identified by their `itemprop="genre"`
-microdata. The same page also links every genre on the site as navigation — 69
-of them against one novel's 6 in a sampled page — so matching the category URL
-shape instead would return the whole menu.
-
-This command costs a single request and runs inline rather than in the
-background, bounded by a short timeout: handlers are dispatched one at a time, so
-a stalled fetch would hold up every other command. It shares the export page
-cache, so a lookup for a novel that was already exported costs no request at
-all.
 
 ## Layout
 

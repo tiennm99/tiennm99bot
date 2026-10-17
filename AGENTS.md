@@ -7,11 +7,6 @@
 in-memory otherwise, which is what tests and local no-database runs use. Read
 `README.md` before implementation work.
 
-The `monkeyd` module's crawler, PDF renderer, and export flow are an in-tree
-port of `tiennm99/mttools/monkeyd-crawler` under
-`internal/modules/monkeyd/{crawler,pdf,export}`. Change them here; they no
-longer track the mttools copy.
-
 `renderer/` is a separate Node 24 service (JavaScript + JSDoc, Remotion) that
 draws the `random` module's animations. It has its own `package.json`, tests,
 and `renderer/AGENTS.md`; run its npm commands from that folder. `compose.yml`

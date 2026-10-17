@@ -33,7 +33,6 @@ import (
 	"github.com/tiennm99/tiennm99bot/internal/modules/lol"
 	"github.com/tiennm99/tiennm99bot/internal/modules/loldle"
 	"github.com/tiennm99/tiennm99bot/internal/modules/misc"
-	"github.com/tiennm99/tiennm99bot/internal/modules/monkeyd"
 	"github.com/tiennm99/tiennm99bot/internal/modules/noitu"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random"
 	"github.com/tiennm99/tiennm99bot/internal/modules/stats"
@@ -99,7 +98,6 @@ func factories() map[string]modules.Factory {
 		"misc":                 misc.New,
 		"random":               random.New,
 		"amlich":               amlich.New,
-		"monkeyd":              monkeyd.New,
 		wordledaily.ShortName:  wordledaily.New,
 		noitu.ShortName:        noitu.New,
 		loldle.ShortName:       loldle.New,
@@ -422,12 +420,25 @@ var moduleAliases = map[string]string{
 	wordledaily.LegacyShortName: wordledaily.ShortName,
 }
 
+// removedModules names catalog keys that were deleted without a successor.
+// A MODULES value written before the removal skips them with a warning
+// instead of failing startup on an unknown module.
+var removedModules = map[string]bool{
+	"monkeyd": true,
+}
+
 // normalizeModules replaces retired module names in a MODULES list with
-// their successors, dropping duplicates that creates.
+// their successors, drops removed modules, and drops duplicates that creates.
+// A list naming only removed modules comes back empty and so loads every
+// module, the same as an unset MODULES.
 func normalizeModules(names []string) []string {
 	out := make([]string, 0, len(names))
 	seen := map[string]bool{}
 	for _, name := range names {
+		if removedModules[name] {
+			log.Warn("MODULES names a removed module; skipping it", "module", name)
+			continue
+		}
 		if to, ok := moduleAliases[name]; ok {
 			log.Warn("MODULES names a retired module; loading its successor", "module", name, "successor", to)
 			name = to

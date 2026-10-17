@@ -122,3 +122,8 @@ func TestInitStore_MongoSwapsNoituCommandStats(t *testing.T) {
 	_, provider := setupMongoStatsProvider(t)
 	assertNoituCommandSwap(t, provider)
 }
+
+func TestInitStore_MongoRetiresMonkeydCommandStats(t *testing.T) {
+	_, provider := setupMongoStatsProvider(t)
+	assertMonkeydCommandsRetired(t, provider)
+}

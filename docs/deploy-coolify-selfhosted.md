@@ -39,7 +39,7 @@ Copy [`.env.example`](../.env.example) → `.env` (gitignored) and fill in.
 | `TELEGRAM_BOT_TOKEN` | ✅ | from @BotFather; startup fails without it |
 | `MONGO_URL` | ✅ | Atlas SRV string **incl. credentials** — secret, never logged |
 | `MONGO_DATABASE` | ✅ | e.g. `tiennm99bot` |
-| `MODULES` | optional | CSV; empty = all modules, including any added later. The retired `wordle` name loads `wordledaily`, which now serves `/wordle` |
+| `MODULES` | optional | CSV; empty = all modules, including any added later. The retired `wordle` name loads `wordledaily`, which now serves `/wordle`; the removed `monkeyd` name is skipped with a warning |
 | `OWNER_ID` | optional | Telegram user id for owner-only commands, the deploy DM, and the `/addsticker` pack owner. Unset = owner-only commands are denied and `/addsticker` refuses |
 | `ADMIN_IDS` | optional | CSV of Telegram user ids for admin-only commands |
 | `BOT_USERNAME` | optional | the bot's Telegram username, without `@`; unset = asked from Telegram (`getMe`) once at startup. Used for the default sticker pack name and the lol User-Agent |
@@ -161,9 +161,10 @@ MP4, with the same text fallback.
 - **`coin`** stores cash as `usd` and embeds positions as
   `assets.<symbol>.{quantity,base}`.
 - **`system`** holds one marker per completed one-time startup migration. Keep
-  those records as audit history. No one-time migration runs at startup now;
-  the completed ones were removed from the code once production data was
-  verified migrated.
+  those records as audit history. The stats command renames and the
+  retirement of the removed `monkeyd` commands still run at startup and skip
+  once their marker is complete; earlier completed migrations were removed
+  from the code once production data was verified migrated.
 
 ## 2. Coolify
 

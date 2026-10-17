@@ -201,6 +201,25 @@ func TestNormalizeModules_MapsRetiredWordleToWordleDaily(t *testing.T) {
 	}
 }
 
+// The monkeyd module was deleted: a MODULES value still naming it loads the
+// rest of the list instead of failing on an unknown module.
+func TestNormalizeModules_DropsRemovedMonkeyd(t *testing.T) {
+	for in, want := range map[string]string{
+		"util,monkeyd,stats": "util stats",
+		"monkeyd,misc":       "misc",
+	} {
+		if got := strings.Join(normalizeModules(splitCSV(in)), " "); got != want {
+			t.Errorf("normalizeModules(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if _, ok := factories()["monkeyd"]; ok {
+		t.Fatal("the removed monkeyd module is still in the catalog")
+	}
+	if _, err := modules.Build(normalizeModules(splitCSV("util,monkeyd,stats")), factories(), storage.NewMemoryProvider(), modules.BuildOptions{}); err != nil {
+		t.Fatalf("Build with removed module: %v", err)
+	}
+}
+
 // An empty MODULES loads every module, so a command name that collides with an
 // existing module surfaces here as a test failure rather than as a startup
 // crash on deploy.
