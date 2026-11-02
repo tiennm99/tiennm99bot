@@ -73,6 +73,7 @@ func TestCommandDiscovery_AllPublicCommandsHaveSafeMetadata(t *testing.T) {
 		"loldle":               "[champion]",
 		"loldle_giveup":        "",
 		"loldle_stats":         "",
+		"namthang":             "[salary...]",
 		"noitu":                "",
 		"noitubot":             "",
 		"noitutop":             "",

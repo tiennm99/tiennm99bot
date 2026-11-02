@@ -2,8 +2,8 @@
 // /ping (public, exercises a store write), /ping_stats (protected, exercises a
 // store read), /ff (protected give-up-on-T1 rant), /xlt1 (public
 // apologise-to-T1 petition, the sequel to /ff), /giaxang (public Petrolimex
-// retail fuel prices), /the_answer (private easter egg), and the public
-// disclaimer commands /trongtruonghop, /tth, /trongtruonghopvng, and /tthvng.
+// retail fuel prices), /namthang (public "nằm thẳng" rant), /the_answer (private
+// easter egg), and the public disclaimer commands /trongtruonghop, /tth, /trongtruonghopvng, and /tthvng.
 package misc
 
 import (
@@ -56,6 +56,7 @@ func New(deps modules.Deps) modules.Module {
 			ffCommand(),
 			xlt1Command(),
 			giaxangCommand(),
+			namThangCommand(),
 			theAnswerCommand(),
 			disclaimerCommand("trongtruonghop", "Phát biểu disclaimer mặc định", defaultTarget, true),
 			disclaimerCommand("tth", "Phát biểu disclaimer mặc định", defaultTarget, true),

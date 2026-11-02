@@ -26,6 +26,7 @@ func TestNew_RegistersExpectedCommands(t *testing.T) {
 		"ff":                modules.VisibilityProtected,
 		"xlt1":              modules.VisibilityPublic,
 		"giaxang":           modules.VisibilityPublic,
+		"namthang":          modules.VisibilityPublic,
 		"the_answer":        modules.VisibilityPrivate,
 		"trongtruonghop":    modules.VisibilityPublic,
 		"tth":               modules.VisibilityPublic,
