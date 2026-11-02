@@ -16,7 +16,9 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/mongodb"
 )
 
-const mongoImage = "mongo:8"
+// mongoImage stays on the 8.2 line because mongo:8 (8.3) and mongo:8.0 refuse to
+// start on Linux kernel 6.19 and newer (SERVER-121912), which CI runners use.
+const mongoImage = "mongo:8.2"
 
 // Manager lazily starts one MongoDB container for a test package and stops it
 // after that package's tests finish. MONGODB_TEST_URL bypasses Testcontainers.
@@ -33,7 +35,7 @@ type Manager struct {
 }
 
 // URI returns the configured external MongoDB URL or lazily provisions a
-// MongoDB 8 container. Tests are skipped with a warning when Docker is absent.
+// MongoDB 8.2 container. Tests are skipped with a warning when Docker is absent.
 func (m *Manager) URI(t *testing.T) string {
 	t.Helper()
 	if uri := strings.TrimSpace(os.Getenv("MONGODB_TEST_URL")); uri != "" {

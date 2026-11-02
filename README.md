@@ -221,15 +221,18 @@ variable, and [`.env.example`](.env.example) for a template.
 Persistent MongoDB locally (auto-selected when `MONGO_URL` is set):
 
 ```sh
-docker run -d --rm --name tiennm99bot-mongo -p 27017:27017 mongo:8
+docker run -d --rm --name tiennm99bot-mongo -p 27017:27017 mongo:8.2
 ```
+
+Use the 8.2 line: `mongo:8` and `mongo:8.0` refuse to start on Linux kernel 6.19
+and newer ([SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912)).
 
 Then set `MONGO_URL=mongodb://127.0.0.1:27017` and
 `MONGO_DATABASE=tiennm99bot_dev` using the shell syntax above before running
 `go run ./cmd/server`. Stop the local database with
 `docker stop tiennm99bot-mongo`.
 
-MongoDB integration tests use Testcontainers to start MongoDB 8 automatically.
+MongoDB integration tests use Testcontainers to start MongoDB 8.2 automatically.
 Keep Docker Desktop or another compatible Docker daemon running, then use the
 normal Go test command. `MONGODB_TEST_URL` remains available as an optional
 override when testing against an already-running MongoDB instance. If Docker is
