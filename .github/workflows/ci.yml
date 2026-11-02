@@ -14,20 +14,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ['1.26.5']
+        go: ['1.27']
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
+          check-latest: true
           cache: true
 
       - name: go vet
         run: go vet ./...
 
-      # Pinning the lint binary to v2.12.x because our .golangci.yml targets
-      # Go 1.26 and earlier v2.x releases were built against older Go versions,
+      # Pinning the lint binary to v2.15.x because our .golangci.yml targets
+      # Go 1.27 and earlier v2.x releases were built against older Go versions,
       # which the lint config rejects with "Go language version used to build
       # golangci-lint is lower than the targeted Go version".
       # Action v9 is the first Node 24-native release; still accepts any
@@ -35,7 +36,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.12.2
+          version: v2.15
 
       # govulncheck is informational — failures don't block the build because
       # stdlib CVEs surface routinely until the runner image catches up to

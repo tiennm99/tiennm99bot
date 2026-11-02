@@ -1,4 +1,4 @@
-FROM golang:1.26.5-alpine AS builder
+FROM golang:1.27-alpine AS builder
 WORKDIR /src
 
 # Only the module files are copied first, keeping the download layer cached
