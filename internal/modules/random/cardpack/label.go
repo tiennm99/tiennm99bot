@@ -129,10 +129,15 @@ func (o *overlay) drawLabel(dst *image.RGBA, f trackFrame) {
 	area := image.Rect(int(minX)-1, int(minY)-1, int(maxX)+2, int(maxY)+2).Intersect(dst.Bounds())
 
 	light := 0.72 + 0.28*f.Facing
+	parallelRows(area, func(y0, y1 int) { o.warpRows(dst, f, toBox, light, opacity, area.Min.X, area.Max.X, y0, y1) })
+}
+
+// warpRows draws rows y0 to y1 of the warped label, between x0 and x1.
+func (o *overlay) warpRows(dst *image.RGBA, f trackFrame, toBox homography, light, opacity float64, x0, x1, y0, y1 int) {
 	uv := o.track.LabelUV
 	tex := o.label
-	for y := area.Min.Y; y < area.Max.Y; y++ {
-		for x := area.Min.X; x < area.Max.X; x++ {
+	for y := y0; y < y1; y++ {
+		for x := x0; x < x1; x++ {
 			// Four samples per pixel: the texture is about twice the size it
 			// covers, and one bilinear tap would alias.
 			var r, g, b, a, glyph float64

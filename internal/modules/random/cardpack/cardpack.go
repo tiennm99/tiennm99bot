@@ -149,18 +149,21 @@ func (o *overlay) compose(dst *image.RGBA, index int) {
 }
 
 // drawFlashes adds the burst of light where the pack tears and the bigger
-// one as the card lands.
+// one as the card lands, in a single pass over the frame.
 func (o *overlay) drawFlashes(dst *image.RGBA, f trackFrame, t float64) {
-	if a := pulse(t, o.track.Tear+0.03, 0.04, 0.35) * o.look.flash * 0.8; a > 0.003 {
+	var glows []glow
+	wash := 0.0
+	if a := pulse(t, o.track.Tear+0.03, 0.04, 0.35) * o.look.flash * 0.8; a > flashCutoff {
 		x, y := o.track.TearAt[0], o.track.TearAt[1]
-		addRadial(dst, x, y, Width*0.75, o.look.glow, a)
-		addRadial(dst, x, y, Width*0.3, o.look.core, a)
+		glows = append(glows, newGlow(x, y, Width*0.75, o.look.glow, a), newGlow(x, y, Width*0.3, o.look.core, a))
 	}
-	if a := pulse(t, o.track.Land, 0.03, 0.45) * o.look.flash; a > 0.003 {
+	if a := pulse(t, o.track.Land, 0.03, 0.45) * o.look.flash; a > flashCutoff {
 		x, y := f.Card.centre()
-		addRadial(dst, x, y, Height*0.9, o.look.glow, a*0.8)
-		addRadial(dst, x, y, Width*0.55, o.look.core, a)
-		frames.Fill(dst, color.NRGBA{0xff, 0xff, 0xff, 0xff}, a*0.45)
+		glows = append(glows, newGlow(x, y, Height*0.9, o.look.glow, a*0.8), newGlow(x, y, Width*0.55, o.look.core, a))
+		wash = a * 0.45
+	}
+	if len(glows) > 0 {
+		screenLights(dst, glows, color.NRGBA{0xff, 0xff, 0xff, 0xff}, wash)
 	}
 }
 
@@ -241,7 +244,7 @@ func (o *overlay) drawGlints(dst *image.RGBA, f trackFrame, t float64) {
 // drawStarGlint adds a four-pointed glint: a hot core and two crossed,
 // tapering streaks.
 func drawStarGlint(dst *image.RGBA, cx, cy, size, angle float64, c color.NRGBA, strength float64) {
-	addRadial(dst, cx, cy, size*0.35, c, strength*0.9)
+	screenLights(dst, []glow{newGlow(cx, cy, size*0.35, c, strength*0.9)}, c, 0)
 	cos, sin := math.Cos(angle), math.Sin(angle)
 	box := image.Rect(int(cx-size), int(cy-size), int(cx+size)+1, int(cy+size)+1).Intersect(dst.Bounds())
 	width := math.Max(0.8, size*0.035)
@@ -265,25 +268,6 @@ func streak(along, across, length, width float64) float64 {
 		return 0
 	}
 	return taper * taper * math.Exp(-(across*across)/(2*width*width*(0.4+taper)))
-}
-
-// addRadial adds light in a soft disc whose brightness falls off smoothly
-// to nothing at radius.
-func addRadial(dst *image.RGBA, cx, cy, radius float64, c color.NRGBA, alpha float64) {
-	if alpha <= 0 || radius <= 0 {
-		return
-	}
-	box := image.Rect(int(cx-radius), int(cy-radius), int(cx+radius)+1, int(cy+radius)+1).Intersect(dst.Bounds())
-	for y := box.Min.Y; y < box.Max.Y; y++ {
-		for x := box.Min.X; x < box.Max.X; x++ {
-			d := math.Hypot(float64(x)+0.5-cx, float64(y)+0.5-cy) / radius
-			if d >= 1 {
-				continue
-			}
-			falloff := (1 - d) * (1 - d)
-			addLight(dst.Pix[dst.PixOffset(x, y):], c, alpha*falloff)
-		}
-	}
 }
 
 // addLight screens c over an opaque pixel at alpha: bright light brightens
