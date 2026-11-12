@@ -88,16 +88,21 @@ dependency.
 
 `POST /api/genshin` takes the same body as `/api/gacha` and returns the same
 response, rendering a 7-second landscape wish in the style of a gacha game: a
-meteor coloured by rarity (blue 3★, purple 4★, gold 5★) flies in from the left
-across a night sky and bursts in a white flash where the rank emblem appears,
-and the label is revealed beside a rank emblem (`B`, `A`, `S`) with its stars
-popping in. Each tier is louder than the one below: 4★ adds a bigger meteor, a
-lens flare, impact shake, and a double shockwave; 5★ adds a rainbow sunburst
-before landing, a gold sky flood, a starburst, counter rotating rays, falling
-sparkles, and a sheen across the emblem. The per-tier table lives in
-`src/remotion/genshin-timeline.js`. `width` is `640` (360 tall) or `854` (480
-tall), and `seed` lays out the twinkling stars and particles. All visuals are
-drawn procedurally; no game assets are used.
+meteor coloured by rarity (blue 3★, purple 4★, gold 5★) falls across a night
+sky over the sea and strikes a distant ridge in a white flash, then a 3D rank
+emblem (`B`, `A`, `S`) turns in among light rays while the label and its stars
+pop in beside it. Each tier is louder than the one below: a bigger, brighter
+meteor with more sparks, impact shake, more shockwave rings and motes; 5★ adds
+counter rotating rays, falling sparkles, and a light sweep across the emblem.
+
+The meteor, sky, and emblem are pre-rendered clips, `public/genshin/wish-{3,4,5}.mp4`,
+made in Blender from `blender/wish-scene.py`; the composition plays the clip
+for the rarity and draws the flash, shake, label, and stars on top. To change
+the look, edit the script and run `blender/encode-wishes.sh` (needs Blender 4.2
+or newer with Eevee, and ffmpeg), which overwrites the clips. Timings shared by
+the clip and the overlay live in `src/remotion/genshin-timeline.js`. `width` is
+`640` (360 tall) or `854` (480 tall); `seed` is accepted but every roll of a
+rarity plays the same clip. All visuals are original; no game assets are used.
 
 ## Local
 

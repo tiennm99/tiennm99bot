@@ -14,6 +14,8 @@ export const getRemotionServeUrl = () => {
     bundlePromise = bundle({
       entryPoint,
       outDir: path.join(process.cwd(), '.tmp', 'remotion-bundle'),
+      // The pre-rendered /genshin clips are served from here.
+      publicDir: fileURLToPath(new URL('../../public', import.meta.url)),
     });
   }
 

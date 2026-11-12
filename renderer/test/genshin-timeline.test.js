@@ -1,17 +1,15 @@
+import {existsSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {describe, expect, test} from 'vitest';
 import {
-  createStarfield,
   genshinTimeline,
   genshinTotalSeconds,
   getLabelFontSize,
-  emblemCenter,
-  getMeteorPoint,
-  getRankLetter,
   getRarityPalette,
   getShakeOffset,
   getStarRevealTimes,
   getTierEffects,
-  getTwinkle,
+  getWishClip,
 } from '../src/remotion/genshin-timeline.js';
 
 describe('genshin timeline', () => {
@@ -35,68 +33,26 @@ describe('genshin timeline', () => {
     expect([...times].sort((a, b) => a - b)).toEqual(times);
   });
 
-  test('each rarity has a distinct meteor colour', () => {
+  test('each rarity has a distinct colour', () => {
     const glows = [3, 4, 5].map((rarity) => getRarityPalette(/** @type {3 | 4 | 5} */ (rarity)).glow);
     expect(new Set(glows).size).toBe(3);
   });
 
-  test('meteor flies in from off-screen upper left and lands on the rank emblem', () => {
-    const start = getMeteorPoint(0, 640, 360);
-    const end = getMeteorPoint(1, 640, 360);
-    expect(start.x).toBeLessThan(0);
-    expect(start.y).toBeLessThan(0);
-    expect(end.x).toBeCloseTo(640 * emblemCenter.x);
-    expect(end.y).toBeCloseTo(360 * emblemCenter.y);
-    expect(getMeteorPoint(2, 640, 360)).toEqual(end);
-    expect(getMeteorPoint(-1, 640, 360)).toEqual(start);
-  });
-
-  test('starfield is deterministic per seed', () => {
-    expect(createStarfield(5, 7)).toEqual(createStarfield(5, 7));
-    expect(createStarfield(5, 7)).not.toEqual(createStarfield(5, 8));
-  });
-
-  test('stars twinkle with short bright flares', () => {
-    const [star] = createStarfield(1, 3);
-    if (!star) {
-      throw new Error('expected a star');
-    }
-    const samples = Array.from({length: 200}, (_, index) => getTwinkle(index / 50, star));
-    expect(Math.max(...samples)).toBeGreaterThan(0.95);
-    expect(Math.min(...samples)).toBeLessThan(0.05);
-    const bright = samples.filter((value) => value > 0.5).length / samples.length;
-    expect(bright).toBeLessThan(0.4);
+  test.each([3, 4, 5])('ships the pre-rendered clip for %i stars', (rarity) => {
+    const clip = getWishClip(/** @type {3 | 4 | 5} */ (rarity));
+    expect(existsSync(fileURLToPath(new URL(`../public/${clip}`, import.meta.url)))).toBe(true);
   });
 
   test('long labels get smaller text', () => {
     expect(getLabelFontSize('Pizza', 360)).toBeGreaterThan(getLabelFontSize('x'.repeat(40), 360));
   });
 
-  test('emblem shows B, A, S rank letters by rarity', () => {
-    expect([3, 4, 5].map((rarity) => getRankLetter(/** @type {3 | 4 | 5} */ (rarity)))).toEqual(['B', 'A', 'S']);
-  });
-
-  test('every numeric effect grows with rarity and 5★ unlocks the extras', () => {
+  test('shake and star flares grow with rarity', () => {
     const [three, four, five] = [3, 4, 5].map((rarity) => getTierEffects(/** @type {3 | 4 | 5} */ (rarity)));
-    for (const key of /** @type {const} */ ([
-      'headScale',
-      'trailSamples',
-      'sparks',
-      'shockwaves',
-      'raysOpacity',
-      'motes',
-      'starFlare',
-    ])) {
+    for (const key of /** @type {const} */ (['shake', 'starFlare'])) {
       expect(four?.[key], key).toBeGreaterThan(three?.[key] ?? Infinity);
       expect(five?.[key], key).toBeGreaterThan(four?.[key] ?? Infinity);
     }
-    expect(four?.shake).toBeGreaterThan(three?.shake ?? Infinity);
-    expect(five?.shake).toBeGreaterThan(four?.shake ?? Infinity);
-    expect(five?.skyFlood).toBeGreaterThan(four?.skyFlood ?? Infinity);
-    expect([three?.halo, four?.halo, five?.halo]).toEqual([false, false, true]);
-    expect(five).toMatchObject({starburst: true, counterRays: true, sheen: true});
-    expect(three?.sparkleRain).toBe(0);
-    expect(five?.sparkleRain).toBeGreaterThan(0);
   });
 
   test('impact shake decays to rest', () => {
