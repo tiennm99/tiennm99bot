@@ -2,19 +2,18 @@ package random
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"reflect"
 	"testing"
 
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/cardpack"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/caseopen"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/frames"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/genshin"
 	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
-var mp4Bytes = []byte("\x00\x00\x00\x18ftypisom-remote")
+var mp4Bytes = []byte("\x00\x00\x00\x18ftypisom-stub")
 
 func TestParseGachaOptions(t *testing.T) {
 	got := parseGachaOptions(" Pizza, 4* Pho , 3*Rice, 3 * Bun, 5* Cake, 5*, , 7* Tea, a*b, Pho 4* ")
@@ -46,45 +45,37 @@ func TestGacha_EmptyArgsRepliesUsage(t *testing.T) {
 	}
 }
 
-func TestGacha_NotConfiguredRepliesWithStars(t *testing.T) {
-	rb := installRandom(t, 999)
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/gacha Pizza"))
-
-	calls := rb.Sent()
-	if len(calls) != 1 || calls[0].Method != "sendMessage" || calls[0].Text() != "★★★★★ Pizza" {
-		t.Fatalf("calls = %+v, want a single ★★★★★ Pizza reply", calls)
+// stubCardPack replaces the in-process card-pack renderer for one test,
+// recording what it was asked to draw.
+func stubCardPack(t *testing.T, err error) *struct {
+	label  string
+	rarity int
+} {
+	t.Helper()
+	got := &struct {
+		label  string
+		rarity int
+	}{}
+	renderCardPack = func(_ context.Context, label string, rarity int, _ uint64) ([]byte, error) {
+		got.label, got.rarity = label, rarity
+		if err != nil {
+			return nil, err
+		}
+		return mp4Bytes, nil
 	}
+	t.Cleanup(func() { renderCardPack = cardpack.Render })
+	return got
 }
 
-func TestGacha_UsesRemoteAPIWhenConfigured(t *testing.T) {
-	var got gachaRenderRequest
-	var gotPath, gotAuthorization string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath = r.URL.Path
-		gotAuthorization = r.Header.Get("Authorization")
-		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
-			t.Errorf("Decode request body: %v", err)
-		}
-		w.Header().Set("Content-Type", "video/mp4")
-		_, _ = w.Write(mp4Bytes)
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+func TestGacha_SendsTheRenderedPack(t *testing.T) {
+	got := stubCardPack(t, nil)
 
 	rb := installRandom(t, 999)
 	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/gacha 4* Pho"))
 
-	if gotPath != "/api/gacha" {
-		t.Fatalf("path = %q, want /api/gacha", gotPath)
+	if got.label != "Pho" || got.rarity != 4 {
+		t.Fatalf("render(%q, %d), want (Pho, 4)", got.label, got.rarity)
 	}
-	if gotAuthorization != "" {
-		t.Fatalf("Authorization = %q, want none", gotAuthorization)
-	}
-	want := gachaRenderRequest{Label: "Pho", Rarity: 4, FPS: gachaRemoteFPS, Width: gachaRemoteWidth}
-	if got != want {
-		t.Fatalf("request = %+v, want %+v", got, want)
-	}
-
 	sent := rb.Sent()
 	if len(sent) != 3 {
 		t.Fatalf("calls = %+v, want placeholder, sendAnimation, deleteMessage", sent)
@@ -102,19 +93,15 @@ func TestGacha_UsesRemoteAPIWhenConfigured(t *testing.T) {
 	if want := `Result: <span class="tg-spoiler">★★★★ Pho</span>`; call.Form["caption"] != want {
 		t.Fatalf("caption = %q, want %q", call.Form["caption"], want)
 	}
-	for field, want := range map[string]string{"parse_mode": "HTML", "duration": "6", "width": "360", "height": "640"} {
+	for field, want := range map[string]string{"parse_mode": "HTML", "duration": "7", "width": "540", "height": "960"} {
 		if got := call.Form[field]; got != want {
 			t.Fatalf("%s = %q, want %q", field, got, want)
 		}
 	}
 }
 
-func TestGacha_RemoteFailureFallsBackToText(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "no", http.StatusInternalServerError)
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+func TestGacha_RenderFailureFallsBackToText(t *testing.T) {
+	stubCardPack(t, frames.ErrFFmpegMissing)
 
 	rb := installRandom(t, 999)
 	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/gacha 3* Rice"))
@@ -129,12 +116,7 @@ func TestGacha_RemoteFailureFallsBackToText(t *testing.T) {
 }
 
 func TestGacha_SendAnimationFailureFallsBackToText(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "video/mp4")
-		_, _ = w.Write(mp4Bytes)
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+	stubCardPack(t, nil)
 
 	rb := installRandom(t, 999)
 	rb.FailMethod("sendAnimation", http.StatusInternalServerError, "")
@@ -147,12 +129,7 @@ func TestGacha_SendAnimationFailureFallsBackToText(t *testing.T) {
 }
 
 func TestGacha_ForwardsMessageThreadID(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "video/mp4")
-		_, _ = w.Write(mp4Bytes)
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+	stubCardPack(t, nil)
 
 	rb := installRandom(t, 999)
 	update := testutil.NewSupergroupMessage(-100, 7, "/gacha 3* Rice")
@@ -184,8 +161,6 @@ func TestGenshin_RendersInProcessAndAnyoneCanRunIt(t *testing.T) {
 		return mp4Bytes, nil
 	}
 	t.Cleanup(func() { renderGenshin = genshin.Render })
-	// The renderer service is not involved: an unset URL must not matter.
-	t.Setenv(rendererURLEnv, "")
 
 	// 7 is neither the owner (999) nor an admin.
 	rb := installRandom(t, 999)

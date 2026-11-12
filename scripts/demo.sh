@@ -7,7 +7,7 @@
 #   scripts/demo.sh compare <ref> [flags]  also render <ref>, then put each pair
 #                                          side by side in .tmp/demo/compare
 #
-# Flags go to cmd/animdemo: -only wheel,genshin,csgo and -seed N. A compare
+# Flags go to cmd/animdemo: -only wheel,genshin,gacha,csgo and -seed N. A compare
 # needs cmd/animdemo at <ref> too.
 set -eu
 

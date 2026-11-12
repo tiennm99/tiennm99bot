@@ -1,9 +1,9 @@
 // Command animdemo renders sample clips of the animations the bot draws in
-// process (/wheelofnames, /genshin, /csgo), each with a contact sheet, so a
+// process (/wheelofnames, /genshin, /gacha, /csgo), each with a contact sheet, so a
 // change can be reviewed by eye. It is a development tool, not part of the
 // deployed bot; scripts/demo.sh wraps it and compares against a git ref.
 //
-//	go run ./cmd/animdemo [-out .tmp/demo/current] [-only wheel,genshin,csgo] [-seed 1]
+//	go run ./cmd/animdemo [-out .tmp/demo/current] [-only wheel,genshin,gacha,csgo] [-seed 1]
 package main
 
 import (
@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/cardpack"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/caseopen"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/genshin"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/wheel"
@@ -24,7 +25,7 @@ import (
 
 // demo is one sample clip.
 type demo struct {
-	kind   string // wheel, genshin, or csgo
+	kind   string // wheel, genshin, gacha, or csgo
 	name   string
 	render func(ctx context.Context, seed uint64) ([]byte, error)
 }
@@ -57,6 +58,9 @@ func demos() []demo {
 		out = append(out, demo{"genshin", fmt.Sprintf("genshin-%d", rarity), func(ctx context.Context, _ uint64) ([]byte, error) {
 			return genshin.Render(ctx, label, rarity)
 		}})
+		out = append(out, demo{"gacha", fmt.Sprintf("gacha-%d", rarity), func(ctx context.Context, seed uint64) ([]byte, error) {
+			return cardpack.Render(ctx, label, rarity, seed)
+		}})
 		winner := slices.IndexFunc(caseItems, func(item caseopen.Item) bool { return item.Rarity == rarity })
 		out = append(out, demo{"csgo", fmt.Sprintf("csgo-%d", rarity), func(ctx context.Context, seed uint64) ([]byte, error) {
 			return caseopen.Render(ctx, caseItems, winner, seed)
@@ -67,7 +71,7 @@ func demos() []demo {
 
 func main() {
 	outDir := flag.String("out", filepath.Join(".tmp", "demo", "current"), "folder for the clips and contact sheets")
-	only := flag.String("only", "", "comma-separated kinds to render: wheel, genshin, csgo (default all)")
+	only := flag.String("only", "", "comma-separated kinds to render: wheel, genshin, gacha, csgo (default all)")
 	seed := flag.Uint64("seed", 1, "seed for the random parts, so two runs are comparable")
 	flag.Parse()
 
@@ -103,7 +107,7 @@ func main() {
 		rendered++
 	}
 	if rendered == 0 {
-		fail(fmt.Errorf("-only %q matches no demo; use wheel, genshin, or csgo", *only))
+		fail(fmt.Errorf("-only %q matches no demo; use wheel, genshin, gacha, or csgo", *only))
 	}
 }
 

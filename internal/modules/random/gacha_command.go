@@ -3,7 +3,6 @@ package random
 import (
 	"bytes"
 	"context"
-	"errors"
 	"math/rand/v2"
 	"regexp"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/tiennm99/tiennm99bot/internal/log"
 	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/cardpack"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/caseopen"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/genshin"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
@@ -63,21 +63,21 @@ func gachaResultText(option gachaOption) string {
 	return strings.Repeat("★", option.Rarity) + " " + option.Label
 }
 
+// gachaCommand tears open a card pack whose card shows the winner, rendered
+// in process by the cardpack package.
 func gachaCommand() modules.Command {
 	return newGachaCommand("gacha", modules.VisibilityPublic,
 		"Wish for one comma-separated option as a gacha card pack; 5* by default, prefix 4* or 3*",
-		gachaUsage, gachaPlaceholder, true, func(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error) {
-			return renderGachaAnimation(ctx, gachaStyleCardPack, options[winner].Label, options[winner].Rarity)
-		})
+		gachaUsage, gachaPlaceholder, renderCardPackAnimation)
 }
 
 // genshinCommand wishes with the Genshin-style meteor animation, rendered in
-// process by the genshin package rather than by the renderer service. It is
-// unlisted: anyone can run it, but it stays out of the command menu and /help.
+// process by the genshin package. It is unlisted: anyone can run it, but it
+// stays out of the command menu and /help.
 func genshinCommand() modules.Command {
 	return newGachaCommand("genshin", modules.VisibilityUnlisted,
 		"Wish for one comma-separated option, Genshin style; 5* by default, prefix 4* or 3*",
-		genshinUsage, gachaPlaceholder, false, renderGenshinAnimation)
+		genshinUsage, gachaPlaceholder, renderGenshinAnimation)
 }
 
 // csgoCommand opens a case: the options fill a spinning reel of item cards
@@ -86,7 +86,32 @@ func genshinCommand() modules.Command {
 func csgoCommand() modules.Command {
 	return newGachaCommand("csgo", modules.VisibilityUnlisted,
 		"Open a case of comma-separated options, CS:GO style; 5* by default, prefix 4* or 3*",
-		csgoUsage, casePlaceholder, false, renderCaseAnimation)
+		csgoUsage, casePlaceholder, renderCaseAnimation)
+}
+
+// renderedAnimation is a rendered clip plus the metadata Telegram's
+// sendAnimation wants.
+type renderedAnimation struct {
+	Data     []byte
+	Duration int
+	Width    int
+	Height   int
+}
+
+// renderCardPack is the in-process card-pack renderer; tests swap it out.
+var renderCardPack = cardpack.Render
+
+func renderCardPackAnimation(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error) {
+	data, err := renderCardPack(ctx, options[winner].Label, options[winner].Rarity, rand.Uint64())
+	if err != nil {
+		return renderedAnimation{}, err
+	}
+	return renderedAnimation{
+		Data:     data,
+		Duration: cardpack.DurationSeconds,
+		Width:    cardpack.Width,
+		Height:   cardpack.Height,
+	}, nil
 }
 
 // renderCase is the in-process case renderer; tests swap it out.
@@ -130,8 +155,7 @@ type wishRenderer func(ctx context.Context, options []gachaOption, winner int) (
 
 // newGachaCommand builds a wish command that picks one option and renders it,
 // falling back to a text reply when rendering fails.
-// remote marks a renderer that needs the renderer service.
-func newGachaCommand(name string, visibility modules.Visibility, description, usage, placeholderText string, remote bool, render wishRenderer) modules.Command {
+func newGachaCommand(name string, visibility modules.Visibility, description, usage, placeholderText string, render wishRenderer) modules.Command {
 	return modules.Command{
 		Name:        name,
 		Visibility:  visibility,
@@ -153,17 +177,10 @@ func newGachaCommand(name string, visibility modules.Visibility, description, us
 				results[i] = gachaResultText(option)
 			}
 
-			placeholder := 0
-			if !remote || rendererConfigured() {
-				// Without the renderer the text reply is immediate, and a
-				// placeholder would only flash.
-				placeholder = sendPlaceholder(ctx, b, update.Message, placeholderText)
-			}
+			placeholder := sendPlaceholder(ctx, b, update.Message, placeholderText)
 			animation, err := render(ctx, options, winner)
 			if err != nil {
-				if !errors.Is(err, errRendererNotConfigured) {
-					log.Warn("gacha render failed", "command", name, "err", err)
-				}
+				log.Warn("gacha render failed", "command", name, "err", err)
 				return replaceWheelPlaceholder(ctx, b, update.Message, placeholder, results[winner])
 			}
 			_, err = b.SendAnimation(ctx, &bot.SendAnimationParams{

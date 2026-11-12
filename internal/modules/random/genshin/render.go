@@ -1,15 +1,11 @@
 package genshin
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"errors"
 	"fmt"
 	"image"
-	"io"
-	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 
@@ -48,31 +44,14 @@ func Render(ctx context.Context, label string, rarity int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	size := strconv.Itoa(Width) + "x" + strconv.Itoa(Height)
-	// #nosec G204 — argv holds only constants; the clip arrives on stdin.
-	decoder := exec.CommandContext(ctx, frames.FFmpeg,
-		"-hide_banner", "-loglevel", "error",
-		"-f", "mp4", "-i", "pipe:0",
-		"-vf", "scale="+size+":flags=bicubic,fps="+strconv.Itoa(FPS),
-		"-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1")
-	var decodeErr bytes.Buffer
-	decoder.Stdin = bytes.NewReader(clip)
-	decoder.Stderr = &decodeErr
-	clipFrames, err := decoder.StdoutPipe()
+	src, err := frames.OpenClip(ctx, clip, Width, Height, FPS)
 	if err != nil {
 		encoder.Abort()
-		return nil, fmt.Errorf("genshin: decoder pipe: %w", err)
+		return nil, err
 	}
-	if err := decoder.Start(); err != nil {
-		encoder.Abort()
-		return nil, fmt.Errorf("genshin: start decoder: %w", err)
-	}
-
-	pipeErr := pipeFrames(clipFrames, encoder, o)
-	// Drain whatever the decoder still has so it can exit.
-	_, _ = io.Copy(io.Discard, clipFrames)
-	if err := decoder.Wait(); err != nil && pipeErr == nil {
-		pipeErr = fmt.Errorf("genshin: decode: %w: %s", err, strings.TrimSpace(decodeErr.String()))
+	pipeErr := pipeFrames(src, encoder, o)
+	if err := src.Close(); err != nil && pipeErr == nil {
+		pipeErr = fmt.Errorf("genshin: %w", err)
 	}
 	if pipeErr != nil {
 		encoder.Abort()
@@ -81,20 +60,14 @@ func Render(ctx context.Context, label string, rarity int) ([]byte, error) {
 	return encoder.Finish()
 }
 
-// pipeFrames reads each decoded clip frame, draws the overlay on it, and
-// writes the result to the encoder. If the clip runs short, its last frame
-// holds so the wish always lasts DurationSeconds.
-func pipeFrames(clip io.Reader, encoder *frames.Encoder, o *overlay) error {
+// pipeFrames draws the overlay on each clip frame and writes the result to
+// the encoder.
+func pipeFrames(clip *frames.Clip, encoder *frames.Encoder, o *overlay) error {
 	bounds := image.Rect(0, 0, Width, Height)
 	src, dst := image.NewRGBA(bounds), image.NewRGBA(bounds)
-	decoded := 0
 	for index := range frameCount {
-		if decoded == index {
-			if _, err := io.ReadFull(clip, src.Pix); err == nil {
-				decoded++
-			} else if decoded == 0 {
-				return fmt.Errorf("genshin: clip has no frames: %w", err)
-			}
+		if err := clip.Next(src); err != nil {
+			return fmt.Errorf("genshin: %w", err)
 		}
 		o.compose(dst, src, index)
 		if err := encoder.WriteFrame(dst); err != nil {

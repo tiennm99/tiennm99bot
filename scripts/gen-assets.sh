@@ -4,8 +4,9 @@
 # ffmpeg; set BLENDER to use a Blender that is not on PATH.
 #
 #   scripts/gen-assets.sh genshin   the /genshin wish clips (several minutes)
+#   scripts/gen-assets.sh gacha     the /gacha card-pack clips and tracks (about half an hour)
 #   scripts/gen-assets.sh wheel     the /wheelofnames layers (seconds)
-#   scripts/gen-assets.sh all       both
+#   scripts/gen-assets.sh all       all three
 #
 # --out DIR writes to DIR instead, to review a change before replacing the
 # committed assets.
@@ -16,7 +17,7 @@ blender=${BLENDER:-blender}
 out=""
 
 usage() {
-  sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//' >&2
+  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' >&2
   exit 2
 }
 
@@ -49,6 +50,23 @@ genshin() {
   done
 }
 
+gacha() {
+  need ffmpeg
+  dest=${out:-$root/internal/modules/random/cardpack/assets}
+  mkdir -p "$dest" "$root/.tmp"
+  scratch=$(mktemp -d "$root/.tmp/gacha-frames.XXXXXX")
+  for rarity in 3 4 5; do
+    "$blender" -b --factory-startup -P "$root/scripts/blender/gacha-pack.py" -- \
+      --rarity "$rarity" --out "$scratch/$rarity"
+    ffmpeg -hide_banner -loglevel error -y -framerate 30 -start_number 1 \
+      -i "$scratch/$rarity/frame-%04d.png" \
+      -c:v libx264 -preset slow -crf 20 -pix_fmt yuv420p -movflags +faststart \
+      "$dest/pack-$rarity.mp4"
+    cp "$scratch/$rarity/track.json" "$dest/track-$rarity.json"
+    echo "gen-assets: wrote $dest/pack-$rarity.mp4 and track-$rarity.json"
+  done
+}
+
 wheel() {
   dest=${out:-$root/internal/modules/random/wheel/assets}
   mkdir -p "$dest"
@@ -72,9 +90,11 @@ need "$blender"
 
 case $1 in
   genshin) genshin ;;
+  gacha) gacha ;;
   wheel) wheel ;;
   all)
     genshin
+    gacha
     wheel
     ;;
   *) usage ;;

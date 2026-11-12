@@ -138,8 +138,6 @@ func stubWheel(t *testing.T, err error) *struct {
 
 func TestWheelOfNames_SendsTheRenderedSpin(t *testing.T) {
 	got := stubWheel(t, nil)
-	// The wheel no longer needs the renderer service.
-	t.Setenv(rendererURLEnv, "")
 
 	rb := installRandom(t, 999)
 	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/wheelofnames Alice, Bob, Carol"))
