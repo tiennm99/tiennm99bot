@@ -125,6 +125,11 @@ pre-rendered clips embedded in the binary and the image's ffmpeg. It posts
 `Wishing...` while it renders and falls back to the same text reply if ffmpeg
 fails.
 
+The unlisted `/csgo` also renders in the bot, with no renderer: every option
+becomes an item card (gold 5★, purple 4★, blue 3★) on a reel that spins and
+stops on the winner, as a 7-second `640x360` MP4. It posts `Opening...` while
+it renders and has the same text fallback.
+
 ## 1. MongoDB Atlas (M0)
 
 1. Create a free **M0** cluster (512 MB — ample for the tiny paper-trading KV).

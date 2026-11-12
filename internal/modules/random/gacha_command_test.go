@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/caseopen"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/frames"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/genshin"
 	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
@@ -210,7 +212,7 @@ func TestGenshin_RendersInProcessAndAnyoneCanRunIt(t *testing.T) {
 }
 
 func TestGenshin_RenderFailureRepliesWithStars(t *testing.T) {
-	renderGenshin = func(context.Context, string, int) ([]byte, error) { return nil, genshin.ErrFFmpegMissing }
+	renderGenshin = func(context.Context, string, int) ([]byte, error) { return nil, frames.ErrFFmpegMissing }
 	t.Cleanup(func() { renderGenshin = genshin.Render })
 
 	rb := installRandom(t, 999)
@@ -227,5 +229,65 @@ func TestGenshin_EmptyArgsRepliesGenshinUsage(t *testing.T) {
 
 	if got := rb.LastSent().Text(); got != genshinUsage {
 		t.Errorf("genshin reply = %q, want usage %q", got, genshinUsage)
+	}
+}
+
+func TestCSGO_RendersTheReelOfAllOptions(t *testing.T) {
+	var gotItems []caseopen.Item
+	gotWinner := -1
+	renderCase = func(_ context.Context, items []caseopen.Item, winner int, _ uint64) ([]byte, error) {
+		gotItems, gotWinner = items, winner
+		return mp4Bytes, nil
+	}
+	t.Cleanup(func() { renderCase = caseopen.Render })
+
+	// 7 is neither the owner (999) nor an admin.
+	rb := installRandom(t, 999)
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/csgo Pizza, 4* Pho, 3* Rice"))
+
+	want := []caseopen.Item{{Label: "Pizza", Rarity: 5}, {Label: "Pho", Rarity: 4}, {Label: "Rice", Rarity: 3}}
+	if !reflect.DeepEqual(gotItems, want) {
+		t.Fatalf("items = %+v, want %+v", gotItems, want)
+	}
+	if gotWinner < 0 || gotWinner >= len(want) {
+		t.Fatalf("winner = %d, want an index into the items", gotWinner)
+	}
+	var animation *testutil.SentCall
+	sent := rb.Sent()
+	for i := range sent {
+		if sent[i].Method == "sendAnimation" {
+			animation = &sent[i]
+		}
+	}
+	if animation == nil {
+		t.Fatalf("calls = %+v, want a sendAnimation", sent)
+	}
+	for field, want := range map[string]string{"duration": "7", "width": "640", "height": "360"} {
+		if got := animation.Form[field]; got != want {
+			t.Fatalf("%s = %q, want %s", field, got, want)
+		}
+	}
+}
+
+func TestCSGO_EmptyArgsRepliesUsage(t *testing.T) {
+	rb := installRandom(t, 999)
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/csgo"))
+
+	if got := rb.LastSent().Text(); got != csgoUsage {
+		t.Errorf("csgo reply = %q, want usage %q", got, csgoUsage)
+	}
+}
+
+func TestCSGO_RenderFailureRepliesWithStars(t *testing.T) {
+	renderCase = func(context.Context, []caseopen.Item, int, uint64) ([]byte, error) {
+		return nil, frames.ErrFFmpegMissing
+	}
+	t.Cleanup(func() { renderCase = caseopen.Render })
+
+	rb := installRandom(t, 999)
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/csgo 4* Pho"))
+
+	if got := rb.LastSent().Text(); got != "★★★★ Pho" {
+		t.Fatalf("reply = %q, want ★★★★ Pho", got)
 	}
 }

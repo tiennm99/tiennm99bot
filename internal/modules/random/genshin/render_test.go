@@ -8,8 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/opentype"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/frames"
 )
 
 func TestTimelineOrder(t *testing.T) {
@@ -72,31 +71,6 @@ func TestTiersGrowWithRarity(t *testing.T) {
 	}
 }
 
-func TestWrapLabelClampsToTwoLines(t *testing.T) {
-	parsed, err := opentype.Parse(labelFont)
-	if err != nil {
-		t.Fatal(err)
-	}
-	face, err := opentype.NewFace(parsed, &opentype.FaceOptions{Size: 40, DPI: 72})
-	if err != nil {
-		t.Fatal(err)
-	}
-	const width = 200
-	lines := wrapLabel(face, "Phở bò tái chín nạm gầu gân sách bò viên", width)
-	if len(lines) != 2 || !strings.HasSuffix(lines[1], ellipsis) {
-		t.Fatalf("lines = %q, want two lines ending in an ellipsis", lines)
-	}
-	long := wrapLabel(face, strings.Repeat("W", 30), width)
-	for _, line := range long {
-		if font.MeasureString(face, line).Ceil() > width {
-			t.Fatalf("line %q is wider than %d", line, width)
-		}
-	}
-	if got := wrapLabel(face, "Pizza", width); len(got) != 1 || got[0] != "Pizza" {
-		t.Fatalf("short label = %q", got)
-	}
-}
-
 func TestRenderRejectsBadInput(t *testing.T) {
 	if _, err := Render(context.Background(), " ", 5); err == nil {
 		t.Fatal("empty label should fail")
@@ -107,7 +81,7 @@ func TestRenderRejectsBadInput(t *testing.T) {
 }
 
 func TestRenderProducesTheWish(t *testing.T) {
-	if _, err := exec.LookPath(ffmpegBinary); err != nil {
+	if _, err := exec.LookPath(frames.FFmpeg); err != nil {
 		t.Skip("ffmpeg not on PATH")
 	}
 	for _, rarity := range []int{3, 4, 5} {

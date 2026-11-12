@@ -15,6 +15,7 @@ func TestNew_RegistersRandomGroup(t *testing.T) {
 		"wheelofnames": modules.VisibilityPublic,
 		"gacha":        modules.VisibilityPublic,
 		"genshin":      modules.VisibilityUnlisted,
+		"csgo":         modules.VisibilityUnlisted,
 	}
 	if len(mod.Commands) != len(want) {
 		t.Fatalf("commands count = %d, want %d", len(mod.Commands), len(want))

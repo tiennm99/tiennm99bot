@@ -8,16 +8,13 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-)
 
-// ffmpegBinary is looked up on PATH; the runtime image installs it.
-const ffmpegBinary = "ffmpeg"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/frames"
+)
 
 // renderTimeout bounds one wish. A render takes a second or two; the margin
 // only stops a stuck ffmpeg from holding the handler.
@@ -29,9 +26,6 @@ const renderTimeout = 30 * time.Second
 //go:embed assets/wish-3.mp4 assets/wish-4.mp4 assets/wish-5.mp4
 var clips embed.FS
 
-// ErrFFmpegMissing means the runtime has no ffmpeg on PATH.
-var ErrFFmpegMissing = errors.New("genshin: ffmpeg not found on PATH")
-
 // Render returns the wish revealing label at rarity stars (3 to 5) as a
 // silent H.264 MP4 of Width x Height, DurationSeconds long.
 func Render(ctx context.Context, label string, rarity int) ([]byte, error) {
@@ -42,9 +36,6 @@ func Render(ctx context.Context, label string, rarity int) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("genshin: rarity %d out of range", rarity)
 	}
-	if _, err := exec.LookPath(ffmpegBinary); err != nil {
-		return nil, ErrFFmpegMissing
-	}
 	o, err := newOverlay(label, rarity)
 	if err != nil {
 		return nil, err
@@ -53,90 +44,61 @@ func Render(ctx context.Context, label string, rarity int) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, renderTimeout)
 	defer cancel()
 
-	dir, err := os.MkdirTemp("", "genshin-*")
+	encoder, err := frames.NewEncoder(ctx, Width, Height, FPS)
 	if err != nil {
-		return nil, fmt.Errorf("genshin: temp dir: %w", err)
+		return nil, err
 	}
-	defer func() { _ = os.RemoveAll(dir) }()
-	out := filepath.Join(dir, "wish.mp4")
-
 	size := strconv.Itoa(Width) + "x" + strconv.Itoa(Height)
-	// #nosec G204 — argv holds only constants and a path under our own temp
-	// dir; the label never reaches ffmpeg, only the pixels drawn from it.
-	decoder := exec.CommandContext(ctx, ffmpegBinary,
+	// #nosec G204 — argv holds only constants; the clip arrives on stdin.
+	decoder := exec.CommandContext(ctx, frames.FFmpeg,
 		"-hide_banner", "-loglevel", "error",
 		"-f", "mp4", "-i", "pipe:0",
 		"-vf", "scale="+size+":flags=bicubic,fps="+strconv.Itoa(FPS),
 		"-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1")
-	// #nosec G204 — as above.
-	encoder := exec.CommandContext(ctx, ffmpegBinary,
-		"-hide_banner", "-loglevel", "error", "-y",
-		"-f", "rawvideo", "-pix_fmt", "rgba", "-s", size, "-r", strconv.Itoa(FPS), "-i", "pipe:0",
-		"-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p",
-		"-movflags", "+faststart", "-f", "mp4", out)
-
-	var decodeErr, encodeErr bytes.Buffer
+	var decodeErr bytes.Buffer
 	decoder.Stdin = bytes.NewReader(clip)
 	decoder.Stderr = &decodeErr
-	encoder.Stderr = &encodeErr
-	frames, err := decoder.StdoutPipe()
+	clipFrames, err := decoder.StdoutPipe()
 	if err != nil {
+		encoder.Abort()
 		return nil, fmt.Errorf("genshin: decoder pipe: %w", err)
 	}
-	sink, err := encoder.StdinPipe()
-	if err != nil {
-		return nil, fmt.Errorf("genshin: encoder pipe: %w", err)
-	}
 	if err := decoder.Start(); err != nil {
+		encoder.Abort()
 		return nil, fmt.Errorf("genshin: start decoder: %w", err)
 	}
-	if err := encoder.Start(); err != nil {
-		_ = decoder.Process.Kill()
-		_ = decoder.Wait()
-		return nil, fmt.Errorf("genshin: start encoder: %w", err)
-	}
 
-	pipeErr := pipeFrames(frames, sink, o)
-	_ = sink.Close()
+	pipeErr := pipeFrames(clipFrames, encoder, o)
 	// Drain whatever the decoder still has so it can exit.
-	_, _ = io.Copy(io.Discard, frames)
-	waitDecode, waitEncode := decoder.Wait(), encoder.Wait()
-	switch {
-	case ctx.Err() != nil:
-		return nil, fmt.Errorf("genshin: render: %w", ctx.Err())
-	case waitDecode != nil:
-		return nil, fmt.Errorf("genshin: decode: %w: %s", waitDecode, strings.TrimSpace(decodeErr.String()))
-	case waitEncode != nil:
-		return nil, fmt.Errorf("genshin: encode: %w: %s", waitEncode, strings.TrimSpace(encodeErr.String()))
-	case pipeErr != nil:
+	_, _ = io.Copy(io.Discard, clipFrames)
+	if err := decoder.Wait(); err != nil && pipeErr == nil {
+		pipeErr = fmt.Errorf("genshin: decode: %w: %s", err, strings.TrimSpace(decodeErr.String()))
+	}
+	if pipeErr != nil {
+		encoder.Abort()
 		return nil, pipeErr
 	}
-	// #nosec G304 — out is a fixed name in our own temp dir.
-	data, err := os.ReadFile(out)
-	if err != nil {
-		return nil, fmt.Errorf("genshin: read output: %w", err)
-	}
-	return data, nil
+	return encoder.Finish()
 }
 
 // pipeFrames reads each decoded clip frame, draws the overlay on it, and
 // writes the result to the encoder. If the clip runs short, its last frame
 // holds so the wish always lasts DurationSeconds.
-func pipeFrames(frames io.Reader, sink io.Writer, o *overlay) error {
+func pipeFrames(clip io.Reader, encoder *frames.Encoder, o *overlay) error {
 	bounds := image.Rect(0, 0, Width, Height)
 	src, dst := image.NewRGBA(bounds), image.NewRGBA(bounds)
 	decoded := 0
 	for index := range frameCount {
 		if decoded == index {
-			if _, err := io.ReadFull(frames, src.Pix); err == nil {
+			if _, err := io.ReadFull(clip, src.Pix); err == nil {
 				decoded++
 			} else if decoded == 0 {
 				return fmt.Errorf("genshin: clip has no frames: %w", err)
 			}
 		}
 		o.compose(dst, src, index)
-		if _, err := sink.Write(dst.Pix); err != nil {
-			return fmt.Errorf("genshin: write frame %d: %w", index, err)
+		if err := encoder.WriteFrame(dst); err != nil {
+			return err
 		}
 	}
 	return nil

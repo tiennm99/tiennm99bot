@@ -75,8 +75,6 @@ var tiers = map[int]tier{
 	5: {shake: 0.03, starFlare: 2},
 }
 
-func clamp01(v float64) float64 { return math.Max(0, math.Min(1, v)) }
-
 func easeInOutQuad(t float64) float64 {
 	if t < 0.5 {
 		return 2 * t * t

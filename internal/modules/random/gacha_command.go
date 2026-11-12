@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiennm99/tiennm99bot/internal/log"
 	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/caseopen"
 	"github.com/tiennm99/tiennm99bot/internal/modules/random/genshin"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
@@ -20,7 +21,9 @@ import (
 const (
 	gachaUsage       = "Usage: /gacha <option,...>\nOptions are 5* by default; prefix 4* or 3* to lower one, e.g. /gacha Pizza, 4* Pho, 3* Rice"
 	genshinUsage     = "Usage: /genshin <option,...>\nOptions are 5* by default; prefix 4* or 3* to lower one, e.g. /genshin Pizza, 4* Pho, 3* Rice"
+	csgoUsage        = "Usage: /csgo <option,...>\nOptions are 5* (gold) by default; prefix 4* (purple) or 3* (blue) to lower one, e.g. /csgo Pizza, 4* Pho, 3* Rice"
 	gachaPlaceholder = "Wishing..."
+	casePlaceholder  = "Opening..."
 	gachaFilename    = "gacha.mp4"
 
 	gachaMinRarity     = 3
@@ -63,8 +66,8 @@ func gachaResultText(option gachaOption) string {
 func gachaCommand() modules.Command {
 	return newGachaCommand("gacha", modules.VisibilityPublic,
 		"Wish for one comma-separated option as a gacha card pack; 5* by default, prefix 4* or 3*",
-		gachaUsage, func(ctx context.Context, label string, rarity int) (renderedAnimation, error) {
-			return renderGachaAnimation(ctx, gachaStyleCardPack, label, rarity)
+		gachaUsage, gachaPlaceholder, func(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error) {
+			return renderGachaAnimation(ctx, gachaStyleCardPack, options[winner].Label, options[winner].Rarity)
 		})
 }
 
@@ -74,14 +77,43 @@ func gachaCommand() modules.Command {
 func genshinCommand() modules.Command {
 	return newGachaCommand("genshin", modules.VisibilityUnlisted,
 		"Wish for one comma-separated option, Genshin style; 5* by default, prefix 4* or 3*",
-		genshinUsage, renderGenshinAnimation)
+		genshinUsage, gachaPlaceholder, renderGenshinAnimation)
+}
+
+// csgoCommand opens a case: the options fill a spinning reel of item cards
+// that stops on the winner. Rendered in process by the caseopen package and
+// unlisted, like /genshin.
+func csgoCommand() modules.Command {
+	return newGachaCommand("csgo", modules.VisibilityUnlisted,
+		"Open a case of comma-separated options, CS:GO style; 5* by default, prefix 4* or 3*",
+		csgoUsage, casePlaceholder, renderCaseAnimation)
+}
+
+// renderCase is the in-process case renderer; tests swap it out.
+var renderCase = caseopen.Render
+
+func renderCaseAnimation(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error) {
+	items := make([]caseopen.Item, len(options))
+	for i, option := range options {
+		items[i] = caseopen.Item{Label: option.Label, Rarity: option.Rarity}
+	}
+	data, err := renderCase(ctx, items, winner, rand.Uint64())
+	if err != nil {
+		return renderedAnimation{}, err
+	}
+	return renderedAnimation{
+		Data:     data,
+		Duration: caseopen.DurationSeconds,
+		Width:    caseopen.Width,
+		Height:   caseopen.Height,
+	}, nil
 }
 
 // renderGenshin is the in-process Genshin renderer; tests swap it out.
 var renderGenshin = genshin.Render
 
-func renderGenshinAnimation(ctx context.Context, label string, rarity int) (renderedAnimation, error) {
-	data, err := renderGenshin(ctx, label, rarity)
+func renderGenshinAnimation(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error) {
+	data, err := renderGenshin(ctx, options[winner].Label, options[winner].Rarity)
 	if err != nil {
 		return renderedAnimation{}, err
 	}
@@ -93,12 +125,12 @@ func renderGenshinAnimation(ctx context.Context, label string, rarity int) (rend
 	}, nil
 }
 
-// wishRenderer draws the wish animation revealing label at rarity stars.
-type wishRenderer func(ctx context.Context, label string, rarity int) (renderedAnimation, error)
+// wishRenderer draws the animation that lands on options[winner].
+type wishRenderer func(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error)
 
 // newGachaCommand builds a wish command that picks one option and renders it,
 // falling back to a text reply when rendering fails.
-func newGachaCommand(name string, visibility modules.Visibility, description, usage string, render wishRenderer) modules.Command {
+func newGachaCommand(name string, visibility modules.Visibility, description, usage, placeholderText string, render wishRenderer) modules.Command {
 	return modules.Command{
 		Name:        name,
 		Visibility:  visibility,
@@ -120,8 +152,8 @@ func newGachaCommand(name string, visibility modules.Visibility, description, us
 				results[i] = gachaResultText(option)
 			}
 
-			placeholder := sendRenderPlaceholder(ctx, b, update.Message, gachaPlaceholder)
-			animation, err := render(ctx, options[winner].Label, options[winner].Rarity)
+			placeholder := sendRenderPlaceholder(ctx, b, update.Message, placeholderText)
+			animation, err := render(ctx, options, winner)
 			if err != nil {
 				if !errors.Is(err, errRendererNotConfigured) {
 					log.Warn("gacha render failed", "command", name, "err", err)
