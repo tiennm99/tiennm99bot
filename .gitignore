@@ -46,3 +46,7 @@ samconfig.local.toml
 
 # wrangler local cache
 .wrangler/
+
+# Per-developer MCP servers for Claude Code. Copy .mcp.example.json to
+# .mcp.json and adjust it locally.
+.mcp.json
