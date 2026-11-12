@@ -7,10 +7,8 @@
 in-memory otherwise, which is what tests and local no-database runs use. Read
 `README.md` before implementation work.
 
-`renderer/` is a separate Node 24 service (JavaScript + JSDoc, Remotion) that
-draws the `random` module's animations. It has its own `package.json`, tests,
-and `renderer/AGENTS.md`; run its npm commands from that folder. `compose.yml`
-deploys it next to the bot.
+The `random` module's animations render in the bot with ffmpeg, from assets
+made in Blender; see `docs/animations.md`.
 
 ## Development Rules
 

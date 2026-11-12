@@ -1,8 +1,0 @@
-node_modules/
-.git/
-.tmp/
-coverage/
-fixtures/*.gif
-fixtures/*.mp4
-.env
-*.log

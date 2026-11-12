@@ -6,4 +6,3 @@ docs
 LICENSE
 Dockerfile
 .dockerignore
-renderer

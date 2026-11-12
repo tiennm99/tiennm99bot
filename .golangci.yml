@@ -50,9 +50,6 @@ linters:
         - name: unused-parameter
           disabled: true
   exclusions:
-    # renderer/ is the Node service; its node_modules can carry stray Go files.
-    paths:
-      - renderer
     rules:
       # Tests routinely pass dummy values, swallow errors from helpers, and
       # use higher cyclomatic complexity in table-driven cases. Suppress the

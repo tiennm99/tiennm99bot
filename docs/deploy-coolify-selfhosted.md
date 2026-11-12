@@ -49,7 +49,6 @@ Copy [`.env.example`](../.env.example) → `.env` (gitignored) and fill in.
 | `NOITU_GAME_SECRET` | optional | at least 32 bytes; signs game links — secret. Unset = derived from `TELEGRAM_BOT_TOKEN`, so rotating the token invalidates open game links |
 | `WORDLEDAILY_GAME_SECRET` | optional | at least 32 bytes; signs `wordledaily` game links and keys its daily answer order — secret. Unset = derived from `TELEGRAM_BOT_TOKEN`. Puzzles already started keep their stored answer when it changes. See [Wordle Daily](wordledaily.md) |
 | `LOLDLE_GAME_SECRET` | optional | at least 32 bytes; signs `loldle` game links and keys its daily champion order — secret. Unset = derived from `TELEGRAM_BOT_TOKEN`. See [LoLdle](loldle.md) |
-| `RENDERER_URL` | leave unset | base URL of the animation renderer; fixed by `compose.yml` to the bundled renderer (`http://renderer:3000`), so a Coolify value is ignored |
 | `LOG_LEVEL` | optional | `debug`, `info` (default), `warn`, or `error`; logs are JSON on stdout |
 | `GOLD_VNAPP_API_KEY` | optional | VNAppMob key — secret; empty = the gold module fetches one and caches it in MongoDB |
 | `KV_PROVIDER` | leave unset | `memory` or `mongodb`; unset = `mongodb` when `MONGO_URL` is set, otherwise `memory` |
@@ -79,29 +78,13 @@ has no webhook.
 > Cron runs in-process (`internal/cron`) — there is no `/cron` HTTP route and no
 > `CRON_SHARED_SECRET`. The scheduler is the sole trigger; nothing inbound.
 
-### Animation renderer
+### Animations
 
-`/gacha` is drawn by the Node renderer in
-[`renderer/`](../renderer/README.md) (pack-cards in headless Chrome).
-`compose.yml` deploys it as a second service, `renderer`, next to the bot. It
-is internal only: the bot reaches it at `http://renderer:3000` over the
-compose network, so it needs no domain, publishes no port, and takes no auth
-token. Its API is unauthenticated, so never publish a port or attach a domain
-to it.
+Every animation renders in the bot: Go draws or composites the frames and the
+image's ffmpeg encodes them, so there is no extra service. See
+[animations](animations.md).
 
-Renderer tuning (`RENDERER_MAX_CONCURRENT_RENDERS`,
-`RENDERER_RENDER_TIMEOUT_MS`, `RENDERER_MAX_OPTION_CHARS`) is optional; the
-renderer falls back to the defaults listed in
-[`renderer/docs/deployment.md`](../renderer/docs/deployment.md). Set them in
-the Coolify dashboard to override. Give the host 1-2 GB of headroom for the
-renderer's Chrome.
-
-Outside compose, set `RENDERER_URL` to the base URL of any service that
-implements the same `/api/gacha` route, e.g. `http://localhost:3000`. The bot
-appends the route itself. The bot sends outbound HTTP only; no public bot
-ingress is required.
-
-`/wheelofnames` renders in the bot with no renderer: a realistic wheel (static
+`/wheelofnames` spins a realistic wheel (static
 layers rendered in Blender, embedded in the binary; see
 [animations](animations.md)) spins with simulated physics (a hand push, friction, pegs striking a
 flapper, sometimes a rock back off the last peg) and stops on the winner, as a
@@ -111,24 +94,21 @@ with the animation, whose caption hides the result behind Telegram spoiler
 formatting; if rendering or the upload fails it edits that message into the
 plain text winner, as `/random` replies.
 
-`/gacha` uses the same service at `/api/gacha`. It renders a 6-second
-`360x640` portrait silent MP4 wish animation (a card pack torn open), posts
-`Wishing...` while it renders, and falls back to a text reply such as
-`★★★★★ Pizza` when the renderer is unset, unavailable, or fails. With no
-renderer configured there is no holding message; the text reply is immediate. Every
-option is equally likely, as with `/random`; the rarity only sets what the
-animation and reply show. Options are 5★ by default; prefix `4*` or `3*` to
-lower one, e.g. `/gacha Pizza, 4* Pho, 3* Rice`.
+`/gacha` tears open a card pack whose card shows the winner, as a 7-second
+`540x960` portrait silent MP4: a pre-rendered Blender clip per rarity with
+the label drawn onto the moving card. It posts `Wishing...` while it renders
+and falls back to a text reply such as `★★★★★ Pizza` if rendering or the
+upload fails. Every option is equally likely, as with `/random`; the rarity
+only sets what the animation and reply show. Options are 5★ by default;
+prefix `4*` or `3*` to lower one, e.g. `/gacha Pizza, 4* Pho, 3* Rice`.
 
-The unlisted `/genshin` takes the same input but needs no renderer: the bot
-draws the Genshin-style meteor wish itself, as a 7-second `640x360` MP4, from
-pre-rendered clips embedded in the binary and the image's ffmpeg. It posts
-`Wishing...` while it renders and falls back to the same text reply if ffmpeg
-fails.
+The unlisted `/genshin` takes the same input and draws the Genshin-style
+meteor wish as a 7-second `640x360` MP4 from pre-rendered clips embedded in
+the binary. It posts `Wishing...` while it renders and has the same text
+fallback.
 
-The unlisted `/csgo` also renders in the bot, with no renderer: every option
-becomes an item card (gold 5★, purple 4★, blue 3★) on a reel that spins and
-stops on the winner, as a 7-second `640x360` MP4. It posts `Opening...` while
+The unlisted `/csgo` turns every option into an item card (gold 5★, purple
+4★, blue 3★) on a reel that spins and stops on the winner, as a 7-second `640x360` MP4. It posts `Opening...` while
 it renders and has the same text fallback.
 
 ## 1. MongoDB Atlas (M0)
@@ -177,8 +157,7 @@ it renders and has the same text fallback.
 ## 2. Coolify
 
 1. New resource → from this Git repo (Docker Compose), or a prebuilt image.
-   The committed [`compose.yml`](../compose.yml) defines the `bot` service
-   and the internal `renderer` service.
+   The committed [`compose.yml`](../compose.yml) defines the `bot` service.
 2. Set the env vars above in Coolify.
 3. **No public domain / port** is needed for the bot itself — polling is
    outbound-only. Never publish a host port. `expose: 8080` keeps the health
@@ -187,7 +166,6 @@ it renders and has the same text fallback.
    `https://noitu.example.com:8080`), and set `GAME_BASE_URL` to that domain
    without the port. Coolify's proxy terminates TLS and forwards to the
    container's 8080; only `/games/noitu/`, `/games/wordledaily/`, `/games/loldle/` and the health text are served there.
-   Never attach a domain to the `renderer` service.
 4. **Exactly one replica.** Telegram permits only one `getUpdates` consumer per
    bot token; a second poller gets HTTP 409, and a second in-process scheduler
    double-fires crons. Prefer **stop-first redeploys** so two containers never
@@ -203,8 +181,7 @@ it renders and has the same text fallback.
 6. **Health check:** Coolify's UI health-check settings do not apply to
    Docker Compose apps; Coolify reads each service's `healthcheck:` in
    `compose.yml` instead. The `bot` service checks `GET /` (returns
-   `text/plain` `tiennm99bot ok`) with the image's busybox `wget`, and the
-   `renderer` service checks `/api/healthz`. Note: `/` reports healthy even if
+   `text/plain` `tiennm99bot ok`) with the image's busybox `wget`. Note: `/` reports healthy even if
    Mongo is unreachable (the driver auto-reconnects on the next op); a DB
    outage will not mark the container unhealthy — accepted trade-off.
 
