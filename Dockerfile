@@ -25,8 +25,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 #
 # ffmpeg comes from Alpine's own package rather than a third-party static-ffmpeg
 # image, keeping the supply chain to bases already trusted by this build.
+# TLS roots need no package: the base image's ca-certificates-bundle (an
+# apk-tools dependency) already provides /etc/ssl/certs/ca-certificates.crt.
 FROM alpine:3.22
-RUN apk add --no-cache ffmpeg ca-certificates \
+RUN apk add --no-cache ffmpeg \
     && addgroup -g 65532 -S nonroot \
     && adduser -u 65532 -S -G nonroot nonroot
 COPY --from=builder /out/server /server
