@@ -14,7 +14,7 @@ const (
 	gachaRemoteHeight = 360
 )
 
-// gachaStyle is one wish animation the renderer serves: its route name under
+// gachaStyle is a wish animation the renderer serves: its route name under
 // /api, the clip length in seconds, and the frame size it renders for a
 // gachaRemoteWidth request.
 type gachaStyle struct {
@@ -24,11 +24,8 @@ type gachaStyle struct {
 	Height   int
 }
 
-var (
-	// The card-pack wish is portrait: the requested width is its long edge.
-	gachaStyleCardPack = gachaStyle{Path: "gacha", Duration: 6, Width: gachaRemoteHeight, Height: gachaRemoteWidth}
-	gachaStyleGenshin  = gachaStyle{Path: "genshin", Duration: 7, Width: gachaRemoteWidth, Height: gachaRemoteHeight}
-)
+// The card-pack wish is portrait: the requested width is its long edge.
+var gachaStyleCardPack = gachaStyle{Path: "gacha", Duration: 6, Width: gachaRemoteHeight, Height: gachaRemoteWidth}
 
 type gachaRenderRequest struct {
 	Label  string `json:"label"`

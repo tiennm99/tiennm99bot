@@ -81,7 +81,7 @@ has no webhook.
 
 ### Animation renderer
 
-`/wheelofnames`, `/gacha`, and `/genshin` are drawn by the Node renderer in
+`/wheelofnames` and `/gacha` are drawn by the Node renderer in
 [`renderer/`](../renderer/README.md) (Remotion and headless Chrome).
 `compose.yml` deploys it as a second service, `renderer`, next to the bot. It
 is internal only: the bot reaches it at `http://renderer:3000` over the
@@ -97,7 +97,7 @@ Set them in the Coolify dashboard to override. Give the host
 1-2 GB of headroom for the renderer's Chrome.
 
 Outside compose, set `RENDERER_URL` to the base URL of any service that
-implements the same `/api/gif`, `/api/gacha`, and `/api/genshin` routes, e.g.
+implements the same `/api/gif` and `/api/gacha` routes, e.g.
 `http://localhost:3000`. The bot appends each route itself.
 
 The bot sends outbound HTTP only; no public bot ingress is required. Remote
@@ -119,9 +119,11 @@ option is equally likely, as with `/random`; the rarity only sets what the
 animation and reply show. Options are 5★ by default; prefix `4*` or `3*` to
 lower one, e.g. `/gacha Pizza, 4* Pho, 3* Rice`.
 
-The unlisted `/genshin` takes the same input and renders the Genshin-style
-meteor wish from `.../api/genshin` on the same service as a 7-second `640x360`
-MP4, with the same text fallback.
+The unlisted `/genshin` takes the same input but needs no renderer: the bot
+draws the Genshin-style meteor wish itself, as a 7-second `640x360` MP4, from
+pre-rendered clips embedded in the binary and the image's ffmpeg. It posts
+`Wishing...` while it renders and falls back to the same text reply if ffmpeg
+fails.
 
 ## 1. MongoDB Atlas (M0)
 

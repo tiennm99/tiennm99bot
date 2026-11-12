@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiennm99/tiennm99bot/internal/log"
 	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/genshin"
 	"github.com/tiennm99/tiennm99bot/internal/modules/util/chathelper"
 )
 
@@ -62,20 +63,42 @@ func gachaResultText(option gachaOption) string {
 func gachaCommand() modules.Command {
 	return newGachaCommand("gacha", modules.VisibilityPublic,
 		"Wish for one comma-separated option as a gacha card pack; 5* by default, prefix 4* or 3*",
-		gachaUsage, gachaStyleCardPack)
+		gachaUsage, func(ctx context.Context, label string, rarity int) (renderedAnimation, error) {
+			return renderGachaAnimation(ctx, gachaStyleCardPack, label, rarity)
+		})
 }
 
-// genshinCommand wishes with the Genshin-style meteor animation. It is
+// genshinCommand wishes with the Genshin-style meteor animation, rendered in
+// process by the genshin package rather than by the renderer service. It is
 // unlisted: anyone can run it, but it stays out of the command menu and /help.
 func genshinCommand() modules.Command {
 	return newGachaCommand("genshin", modules.VisibilityUnlisted,
 		"Wish for one comma-separated option, Genshin style; 5* by default, prefix 4* or 3*",
-		genshinUsage, gachaStyleGenshin)
+		genshinUsage, renderGenshinAnimation)
 }
 
-// newGachaCommand builds a wish command that picks one option and renders it
-// in style, falling back to a text reply when rendering fails.
-func newGachaCommand(name string, visibility modules.Visibility, description, usage string, style gachaStyle) modules.Command {
+// renderGenshin is the in-process Genshin renderer; tests swap it out.
+var renderGenshin = genshin.Render
+
+func renderGenshinAnimation(ctx context.Context, label string, rarity int) (renderedAnimation, error) {
+	data, err := renderGenshin(ctx, label, rarity)
+	if err != nil {
+		return renderedAnimation{}, err
+	}
+	return renderedAnimation{
+		Data:     data,
+		Duration: genshin.DurationSeconds,
+		Width:    genshin.Width,
+		Height:   genshin.Height,
+	}, nil
+}
+
+// wishRenderer draws the wish animation revealing label at rarity stars.
+type wishRenderer func(ctx context.Context, label string, rarity int) (renderedAnimation, error)
+
+// newGachaCommand builds a wish command that picks one option and renders it,
+// falling back to a text reply when rendering fails.
+func newGachaCommand(name string, visibility modules.Visibility, description, usage string, render wishRenderer) modules.Command {
 	return modules.Command{
 		Name:        name,
 		Visibility:  visibility,
@@ -98,10 +121,10 @@ func newGachaCommand(name string, visibility modules.Visibility, description, us
 			}
 
 			placeholder := sendRenderPlaceholder(ctx, b, update.Message, gachaPlaceholder)
-			animation, err := renderGachaAnimation(ctx, style, options[winner].Label, options[winner].Rarity)
+			animation, err := render(ctx, options[winner].Label, options[winner].Rarity)
 			if err != nil {
 				if !errors.Is(err, errRendererNotConfigured) {
-					log.Warn("gacha remote render failed", "command", name, "err", err)
+					log.Warn("gacha render failed", "command", name, "err", err)
 				}
 				return replaceWheelPlaceholder(ctx, b, update.Message, placeholder, results[winner])
 			}

@@ -32,10 +32,10 @@ services:
       # LOG_LEVEL: ${LOG_LEVEL:-info}                  # debug|info|warn|error
 
       # --- Fixed by this stack (not Coolify settings) ---
-      # The bundled renderer service below draws /wheelofnames, /gacha and
-      # /genshin. Its base URL is fixed to the in-network address so a stale
-      # platform-level value cannot point the bot elsewhere; the bot appends
-      # each /api/<name> route itself.
+      # The bundled renderer service below draws /wheelofnames and /gacha
+      # (/genshin renders in the bot). Its base URL is fixed to the in-network
+      # address so a stale platform-level value cannot point the bot
+      # elsewhere; the bot appends each /api/<name> route itself.
       RENDERER_URL: http://renderer:3000
 
       # --- Deliberately not declared ---

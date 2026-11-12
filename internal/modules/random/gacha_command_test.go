@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/genshin"
 	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
 
@@ -173,29 +174,23 @@ func TestGacha_ForwardsMessageThreadID(t *testing.T) {
 	}
 }
 
-func TestGenshin_UsesGenshinRendererAndAnyoneCanRunIt(t *testing.T) {
-	var gotPath string
-	var got gachaRenderRequest
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath = r.URL.Path
-		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
-			t.Errorf("Decode request body: %v", err)
-		}
-		w.Header().Set("Content-Type", "video/mp4")
-		_, _ = w.Write(mp4Bytes)
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+func TestGenshin_RendersInProcessAndAnyoneCanRunIt(t *testing.T) {
+	var gotLabel string
+	var gotRarity int
+	renderGenshin = func(_ context.Context, label string, rarity int) ([]byte, error) {
+		gotLabel, gotRarity = label, rarity
+		return mp4Bytes, nil
+	}
+	t.Cleanup(func() { renderGenshin = genshin.Render })
+	// The renderer service is not involved: an unset URL must not matter.
+	t.Setenv(rendererURLEnv, "")
 
 	// 7 is neither the owner (999) nor an admin.
 	rb := installRandom(t, 999)
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/genshin Bún bò"))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/genshin 4* Bún bò"))
 
-	if gotPath != "/api/genshin" {
-		t.Fatalf("path = %q, want /api/genshin", gotPath)
-	}
-	if want := (gachaRenderRequest{Label: "Bún bò", Rarity: 5, FPS: gachaRemoteFPS, Width: gachaRemoteWidth}); got != want {
-		t.Fatalf("request = %+v, want %+v", got, want)
+	if gotLabel != "Bún bò" || gotRarity != 4 {
+		t.Fatalf("render(%q, %d), want (Bún bò, 4)", gotLabel, gotRarity)
 	}
 	var animation *testutil.SentCall
 	sent := rb.Sent()
@@ -211,6 +206,18 @@ func TestGenshin_UsesGenshinRendererAndAnyoneCanRunIt(t *testing.T) {
 		if got := animation.Form[field]; got != want {
 			t.Fatalf("%s = %q, want %s", field, got, want)
 		}
+	}
+}
+
+func TestGenshin_RenderFailureRepliesWithStars(t *testing.T) {
+	renderGenshin = func(context.Context, string, int) ([]byte, error) { return nil, genshin.ErrFFmpegMissing }
+	t.Cleanup(func() { renderGenshin = genshin.Render })
+
+	rb := installRandom(t, 999)
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/genshin 3* Pizza"))
+
+	if got := rb.LastSent().Text(); got != "★★★ Pizza" {
+		t.Fatalf("reply = %q, want ★★★ Pizza", got)
 	}
 }
 

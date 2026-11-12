@@ -58,17 +58,6 @@ try {
 
   console.log(`api-smoke gacha: ${gacha.rawPayload.byteLength} bytes`);
 
-  const genshin = await app.inject({
-    method: 'POST',
-    url: '/api/genshin',
-    payload: {label: 'Bún bò', rarity: 5},
-  });
-
-  if (genshin.statusCode !== 200 || genshin.rawPayload.subarray(4, 8).toString() !== 'ftyp') {
-    throw new Error(`Expected genshin MP4, got ${genshin.statusCode}: ${genshin.body.slice(0, 200)}`);
-  }
-
-  console.log(`api-smoke genshin: ${genshin.rawPayload.byteLength} bytes`);
 } finally {
   await app.close();
 }

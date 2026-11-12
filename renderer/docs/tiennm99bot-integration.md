@@ -47,5 +47,5 @@ The bot appends the route to `RENDERER_URL`, picks the result and rarity
 itself, and sends the MP4 with `sendAnimation`. On any failure it falls back to
 a text reply.
 
-The unlisted `/genshin` command works the same way against `POST /api/genshin`
-and sends the 7-second 640x360 meteor wish.
+The unlisted `/genshin` command does not use this service: the bot renders its
+7-second 640x360 meteor wish itself with ffmpeg.

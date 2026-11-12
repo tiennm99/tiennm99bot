@@ -1,10 +1,11 @@
 #!/usr/bin/env sh
-# Renders the three /genshin wish backdrops with Blender and encodes them into
-# renderer/public/genshin/wish-<rarity>.mp4. Needs blender and ffmpeg on PATH.
+# Renders the three /genshin wish clips with Blender and encodes them into
+# internal/modules/random/genshin/assets/wish-<rarity>.mp4, which the bot
+# embeds. Needs blender and ffmpeg on PATH.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
-out="$here/../public/genshin"
+out="$here/../../internal/modules/random/genshin/assets"
 frames=$(mktemp -d)
 trap 'rm -rf "$frames"' EXIT
 mkdir -p "$out"

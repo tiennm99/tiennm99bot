@@ -1,17 +1,17 @@
-"""Builds and renders the pre-rendered backdrop of the /genshin meteor wish.
+"""Builds and renders the pre-rendered clips of the /genshin meteor wish.
 
 One clip per rarity: a meteor coloured by the rarity falls over a night sea and
-strikes a distant ridge, then (hidden under the composition's white flash) the
-scene cuts to the 3D rank emblem reveal. The Remotion composition plays the
-clip and draws the flash, the label, and the stars on top.
+strikes a distant ridge, then (hidden under the bot's white flash) the scene
+cuts to the 3D rank emblem reveal. The bot's genshin package plays the clip
+and draws the flash, the label, and the stars on top.
 
 Usage (Blender 4.2 or newer, Eevee):
 
-    blender -b --factory-startup -P renderer/blender/wish-scene.py -- \
+    blender -b --factory-startup -P tools/genshin-wish/wish-scene.py -- \
         --rarity 5 --out <frames-dir>
 
 Frames land in <frames-dir>/frame-0001.png and up; `encode-wishes.sh` turns
-them into renderer/public/genshin/wish-<rarity>.mp4.
+them into internal/modules/random/genshin/assets/wish-<rarity>.mp4.
 """
 
 import argparse
@@ -26,11 +26,11 @@ FPS = 30
 WIDTH, HEIGHT = 854, 480
 TOTAL_SECONDS = 7.0
 METEOR_START, METEOR_END = 0.3, 2.5
-# The scene cuts to the reveal here, while the composition's flash is opaque.
+# The scene cuts to the reveal here, while the bot's flash is opaque.
 REVEAL_START = 2.95
 EMBLEM_SETTLED = 3.7
 # Rank emblem centre on screen, as fractions from the top-left corner. Must
-# match `emblemCenter` in src/remotion/genshin-timeline.js.
+# match emblemX and emblemY in internal/modules/random/genshin/timeline.go.
 EMBLEM_SCREEN = (0.66, 0.47)
 
 PALETTES = {

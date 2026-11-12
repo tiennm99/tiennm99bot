@@ -1,10 +1,10 @@
 # renderer
 
-Part of tiennm99bot: the service behind `/wheelofnames`, `/gacha`, and
-`/genshin`, deployed by the root `compose.yml` as the `renderer` service.
-Self-hosted API that renders wheel-of-names GIF animations and Genshin-style
-meteor wish MP4 animations with Remotion, and card-pack gacha wish MP4
-animations with pack-cards.
+Part of tiennm99bot: the service behind `/wheelofnames` and `/gacha`,
+deployed by the root `compose.yml` as the `renderer` service. Self-hosted API
+that renders wheel-of-names GIF animations with Remotion and card-pack gacha
+wish MP4 animations with pack-cards. (`/genshin` is rendered by the bot
+itself; see `internal/modules/random/genshin`.)
 
 ## API
 
@@ -84,26 +84,6 @@ to a commit. A moving branch URL would change the tarball's checksum and break
 `npm ci` against the lockfile, and the Docker image has no `git` for a git
 dependency.
 
-### Genshin wish
-
-`POST /api/genshin` takes the same body as `/api/gacha` and returns the same
-response, rendering a 7-second landscape wish in the style of a gacha game: a
-meteor coloured by rarity (blue 3★, purple 4★, gold 5★) falls across a night
-sky over the sea and strikes a distant ridge in a white flash, then a 3D rank
-emblem (`B`, `A`, `S`) turns in among light rays while the label and its stars
-pop in beside it. Each tier is louder than the one below: a bigger, brighter
-meteor with more sparks, impact shake, more shockwave rings and motes; 5★ adds
-counter rotating rays, falling sparkles, and a light sweep across the emblem.
-
-The meteor, sky, and emblem are pre-rendered clips, `public/genshin/wish-{3,4,5}.mp4`,
-made in Blender from `blender/wish-scene.py`; the composition plays the clip
-for the rarity and draws the flash, shake, label, and stars on top. To change
-the look, edit the script and run `blender/encode-wishes.sh` (needs Blender 4.2
-or newer with Eevee, and ffmpeg), which overwrites the clips. Timings shared by
-the clip and the overlay live in `src/remotion/genshin-timeline.js`. `width` is
-`640` (360 tall) or `854` (480 tall); `seed` is accepted but every roll of a
-rarity plays the same clip. All visuals are original; no game assets are used.
-
 ## Local
 
 Install dependencies and Chromium once:
@@ -122,7 +102,7 @@ npm run dev
 ### Generate GIF files locally
 
 Generate the quick smoke fixtures at the git-ignored paths
-`fixtures/smoke.gif`, `fixtures/genshin-5-star.mp4`, and `fixtures/gacha-5-star.mp4`:
+`fixtures/smoke.gif` and `fixtures/gacha-5-star.mp4`:
 
 ```sh
 npm run render:smoke
@@ -130,7 +110,7 @@ npm run render:smoke
 
 Generate the complete fixture set at `fixtures/smoke.gif`,
 `fixtures/vietnamese.gif`, `fixtures/sixteen-options.gif`, and
-`fixtures/genshin-{3,4,5}-star.mp4`, and `fixtures/gacha-{3,4,5}-star.mp4`:
+`fixtures/gacha-{3,4,5}-star.mp4`:
 
 ```sh
 npm run render:fixtures

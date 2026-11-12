@@ -1,7 +1,6 @@
 import {mkdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {closeGachaBrowser, renderGachaVideo} from '../src/render/render-gacha.js';
-import {renderGenshinVideo} from '../src/render/render-genshin.js';
 import {renderWheelGif} from '../src/render/render-gif.js';
 
 const smoke = process.argv.includes('--smoke');
@@ -68,11 +67,6 @@ const save = async (name, result) => {
 
 for (const fixture of smoke ? fixtures.slice(0, 1) : fixtures) {
   await save(`${fixture.name}.gif`, await renderWheelGif(fixture.request, {timeoutInMilliseconds: 30000}));
-}
-
-for (const fixture of smoke ? gachaFixtures.slice(0, 1) : gachaFixtures) {
-  const name = fixture.name.replace('gacha', 'genshin');
-  await save(`${name}.mp4`, await renderGenshinVideo(fixture.request, {timeoutInMilliseconds: 30000}));
 }
 
 try {

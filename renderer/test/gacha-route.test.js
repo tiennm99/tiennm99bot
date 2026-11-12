@@ -139,33 +139,4 @@ describe('POST /api/gacha', () => {
     await app.close();
   });
 
-  test('serves the Genshin-style wish on /api/genshin with the same contract', async () => {
-    /** @type {string[]} */
-    const calls = [];
-    const app = await build(
-      {},
-      {
-        renderGacha: async () => {
-          calls.push('gacha');
-          return {buffer: mp4, byteLength: mp4.byteLength, durationMs: 9};
-        },
-        renderGenshin: async (request) => {
-          calls.push(`genshin:${request.label}:${request.rarity}`);
-          return {buffer: mp4, byteLength: mp4.byteLength, durationMs: 9};
-        },
-      },
-    );
-
-    const response = await app.inject({method: 'POST', url: '/api/genshin', payload: {label: 'Bún bò', rarity: 5}});
-    const invalid = await app.inject({method: 'POST', url: '/api/genshin', payload: {label: 'Bún bò', rarity: 9}});
-
-    expect(response.statusCode).toBe(200);
-    expect(response.headers['content-type']).toBe('video/mp4');
-    expect(response.headers['content-disposition']).toBe('inline; filename="genshin.mp4"');
-    expect(response.headers['x-gacha-rarity']).toBe('5');
-    expect(invalid.statusCode).toBe(400);
-    expect(calls).toEqual(['genshin:Bún bò:5']);
-
-    await app.close();
-  });
 });
