@@ -163,6 +163,7 @@ prevents a position opened after Record date from applying an older event.
 
 ```
 cmd/server/                  entrypoint (long polling + in-process cron + HTTP server)
+cmd/animdemo/                dev tool: renders demo clips of the in-process animations
 internal/server/             HTTP routes (/ health, plus module routes such as /games/noitu/, /games/wordledaily/ and /games/loldle/; cron has no HTTP route)
 internal/telegram/           Telegram long-polling bot wrapper
 internal/cron/               in-process cron scheduler (UTC)
@@ -172,8 +173,7 @@ internal/storage/            typed DocStore[T] (Provider + Typed); mongodb runti
 internal/systemstate/        shared `system` collection helper for startup migration records
 internal/log/, metrics/      JSON logging (LOG_LEVEL) and periodic metrics flush
 renderer/                    Node animation renderer for /gacha
-tools/genshin-wish/          Blender source of the /genshin wish clips
-tools/wheel-of-names/        Blender source of the /wheelofnames wheel layers
+scripts/                     gen-assets.sh (Blender assets), demo.sh (demo clips), blender/ scenes
 compose.yml                  Coolify self-host stack (bot + renderer services)
 ```
 
@@ -181,6 +181,7 @@ compose.yml                  Coolify self-host stack (bot + renderer services)
 
 - [Self-host deploy and operations](docs/deploy-coolify-selfhosted.md), including the full environment variable list
 - [Command parameter conventions](docs/command-parameter-conventions.md)
+- [Animations](docs/animations.md): how the animated replies are made, regenerated and reviewed
 - [Aliases](docs/aliases.md)
 - [Blacklist](docs/blacklist.md)
 - [Sticker pack](docs/sticker-packs.md)

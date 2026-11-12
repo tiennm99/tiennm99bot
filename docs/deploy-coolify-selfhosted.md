@@ -102,8 +102,8 @@ appends the route itself. The bot sends outbound HTTP only; no public bot
 ingress is required.
 
 `/wheelofnames` renders in the bot with no renderer: a realistic wheel (static
-layers rendered in Blender from `tools/wheel-of-names/`, embedded in the
-binary) spins with simulated physics (a hand push, friction, pegs striking a
+layers rendered in Blender, embedded in the binary; see
+[animations](animations.md)) spins with simulated physics (a hand push, friction, pegs striking a
 flapper, sometimes a rock back off the last peg) and stops on the winner, as a
 7-second `512x512` MP4. It holds 1 to 32 options; with more it replies with
 the winner as text. It posts `Spinning...` while it renders, then replaces it

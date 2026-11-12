@@ -1,6 +1,6 @@
 // Package wheel renders the /wheelofnames spin in process. Blender supplies
 // the static layers (stage, rim, hub, pointer, peg, and the disc's light and
-// clear-coat maps; see tools/wheel-of-names); Go draws the segments and
+// clear-coat maps; see scripts/blender/wheel-layers.py); Go draws the segments and
 // labels, spins them with rotational motion blur, lights them with those
 // maps, and animates the bulbs, the pointer flicking off the pegs, and the
 // winner's celebration. ffmpeg encodes the MP4.
@@ -29,7 +29,7 @@ const (
 	MaxOptions = 32
 )
 
-// Geometry in output pixels. It must match tools/wheel-of-names/wheel-scene.py
+// Geometry in output pixels. It must match scripts/blender/wheel-layers.py
 // (one Blender unit is 100 pixels, centred in the frame).
 const (
 	centre        = Size / 2

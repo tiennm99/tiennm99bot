@@ -5,13 +5,14 @@ strikes a distant ridge, then (hidden under the bot's white flash) the scene
 cuts to the 3D rank emblem reveal. The bot's genshin package plays the clip
 and draws the flash, the label, and the stars on top.
 
-Usage (Blender 4.2 or newer, Eevee):
+Run it through `scripts/gen-assets.sh genshin`, which renders each rarity and
+encodes the frames into internal/modules/random/genshin/assets/wish-<rarity>.mp4.
+On its own (Blender 4.2 or newer, Eevee):
 
-    blender -b --factory-startup -P tools/genshin-wish/wish-scene.py -- \
+    blender -b --factory-startup -P scripts/blender/genshin-wish.py -- \\
         --rarity 5 --out <frames-dir>
 
-Frames land in <frames-dir>/frame-0001.png and up; `encode-wishes.sh` turns
-them into internal/modules/random/genshin/assets/wish-<rarity>.mp4.
+Frames land in <frames-dir>/frame-0001.png and up.
 """
 
 import argparse

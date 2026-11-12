@@ -1,6 +1,6 @@
 // Package genshin renders the /genshin meteor wish in-process: a pre-rendered
 // clip per rarity (a meteor falling over a night sea, then a 3D rank emblem;
-// built in Blender by tools/genshin-wish) with the white impact flash, the
+// built in Blender by scripts/blender/genshin-wish.py) with the white impact flash, the
 // impact shake, the label, and its stars drawn over it in Go. ffmpeg decodes
 // the clip and encodes the result.
 package genshin

@@ -50,3 +50,6 @@ samconfig.local.toml
 # Per-developer MCP servers for Claude Code. Copy .mcp.example.json to
 # .mcp.json and adjust it locally.
 .mcp.json
+
+# Scratch output of scripts/ (demo clips, frames)
+.tmp/

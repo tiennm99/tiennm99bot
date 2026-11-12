@@ -12,9 +12,10 @@ from above with an orthographic camera so the layers line up pixel for pixel:
 - pointer.png   the pointer alone (alpha); it pivots at POINTER_PIVOT
 - peg.png       one peg seen from above (alpha), PEG_SPRITE pixels square
 
-Usage (Blender 4.2 or newer, Eevee):
+Run it through `scripts/gen-assets.sh wheel`. On its own (Blender 4.2 or
+newer, Eevee):
 
-    blender -b --factory-startup -P tools/wheel-of-names/wheel-scene.py -- \\
+    blender -b --factory-startup -P scripts/blender/wheel-layers.py -- \\
         --out internal/modules/random/wheel/assets
 
 Geometry is in Blender units of 100 pixels and must match the constants in
