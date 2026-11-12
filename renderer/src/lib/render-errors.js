@@ -4,7 +4,7 @@ export class RenderTimeoutError extends Error {
    * @param {ErrorOptions} [options]
    */
   constructor(timeoutMs, options) {
-    super(`GIF render exceeded ${timeoutMs}ms`, options);
+    super(`Render exceeded ${timeoutMs}ms`, options);
     this.name = 'RenderTimeoutError';
     this.timeoutMs = timeoutMs;
   }

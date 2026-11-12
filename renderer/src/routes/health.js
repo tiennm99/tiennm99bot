@@ -4,6 +4,6 @@
 export const registerHealthRoute = async (app) => {
   app.get('/api/healthz', async () => ({
     ok: true,
-    service: 'wheelofnames',
+    service: 'renderer',
   }));
 };

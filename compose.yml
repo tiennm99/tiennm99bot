@@ -32,10 +32,10 @@ services:
       # LOG_LEVEL: ${LOG_LEVEL:-info}                  # debug|info|warn|error
 
       # --- Fixed by this stack (not Coolify settings) ---
-      # The bundled renderer service below draws /wheelofnames and /gacha
-      # (/genshin renders in the bot). Its base URL is fixed to the in-network
-      # address so a stale platform-level value cannot point the bot
-      # elsewhere; the bot appends each /api/<name> route itself.
+      # The bundled renderer service below draws /gacha (the other animations
+      # render in the bot). Its base URL is fixed to the in-network address so
+      # a stale platform-level value cannot point the bot elsewhere; the bot
+      # appends the /api/<name> route itself.
       RENDERER_URL: http://renderer:3000
 
       # --- Deliberately not declared ---
@@ -67,7 +67,7 @@ services:
       retries: 3
       start_period: 20s
 
-  # Animation renderer (Node + Remotion + headless Chrome) from renderer/.
+  # /gacha renderer (Node + pack-cards in headless Chrome) from renderer/.
   # Internal only: the bot reaches it over the compose network, so it has no
   # published port, no public domain, and no auth token. Never publish a port
   # or attach a domain to it — its API is unauthenticated.
@@ -84,8 +84,7 @@ services:
       # through Coolify's injected .env. Outside Coolify, uncomment a line.
       # RENDERER_MAX_CONCURRENT_RENDERS: ${RENDERER_MAX_CONCURRENT_RENDERS:-1}
       # RENDERER_RENDER_TIMEOUT_MS: ${RENDERER_RENDER_TIMEOUT_MS:-30000}  # floor 7000
-      # RENDERER_MAX_OPTIONS: ${RENDERER_MAX_OPTIONS:-32}                 # wheel options
-      # RENDERER_MAX_OPTION_CHARS: ${RENDERER_MAX_OPTION_CHARS:-40}       # chars per option/label
+      # RENDERER_MAX_OPTION_CHARS: ${RENDERER_MAX_OPTION_CHARS:-40}       # chars per label
 
       # --- Fixed by this stack (not Coolify settings) ---
       NODE_ENV: production

@@ -7,7 +7,6 @@ const config = {
   host: '127.0.0.1',
   maxConcurrentRenders: 1,
   maxOptionChars: 40,
-  maxOptions: 32,
   port: 0,
   renderTimeoutMs: 15000,
 };
@@ -114,7 +113,7 @@ describe('POST /api/gacha', () => {
     await app.close();
   });
 
-  test('shares the render slot with the wheel route', async () => {
+  test('refuses a second render while the slot is busy', async () => {
     /** @type {() => void} */
     let finishGacha = () => {};
     const app = await build(
@@ -124,13 +123,12 @@ describe('POST /api/gacha', () => {
           new Promise((resolve) => {
             finishGacha = () => resolve({buffer: mp4, byteLength: mp4.byteLength, durationMs: 9});
           }),
-        renderGif: async () => ({buffer: Buffer.from('GIF89a'), byteLength: 6, durationMs: 1}),
       },
     );
 
     const pending = app.inject({method: 'POST', url: '/api/gacha', payload: {label: 'Pizza', rarity: 3}});
     await new Promise((resolve) => setTimeout(resolve, 20));
-    const busy = await app.inject({method: 'POST', url: '/api/gif', payload: {options: ['a', 'b']}});
+    const busy = await app.inject({method: 'POST', url: '/api/gacha', payload: {label: 'Pho', rarity: 4}});
     finishGacha();
 
     expect(busy.statusCode).toBe(429);

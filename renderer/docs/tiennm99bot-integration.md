@@ -1,51 +1,16 @@
 # tiennm99bot Integration
 
-tiennm99bot's `/wheelofnames` renders its wheel with this service, configured
-by `RENDERER_URL`, the service's base URL. The service is internal to
-the compose network, so requests carry no credentials. Winner handling stays
-explicit:
+tiennm99bot's `/gacha` renders its wish with this service, configured by
+`RENDERER_URL`, the service's base URL. The service is internal to the compose
+network, so requests carry no credentials. Result handling stays explicit:
 
-1. The bot parses the comma-separated options.
-2. It chooses `winnerIndex` itself.
-3. It calls `POST /api/gif`.
-4. It sends the response bytes with Telegram `sendAnimation`.
-5. Its caption uses its own winner as the source of truth.
-6. If the service is not configured or fails, it replies with the winner as
+1. The bot parses the comma-separated options and their rarity prefixes.
+2. It picks the winner and its rarity itself.
+3. It calls `POST /api/gacha` with the winner's label and rarity.
+4. It sends the MP4 with Telegram `sendAnimation`, its caption carrying the
+   bot's own result.
+5. If the service is not configured or fails, it replies with the result as
    text.
 
-## Request
-
-Send the JSON body:
-
-```json
-{
-  "options": ["alice", "bob", "carol"],
-  "winnerIndex": 1,
-  "durationMs": 6500,
-  "holdMs": 1200,
-  "fps": 15,
-  "size": 512,
-  "theme": "classic"
-}
-```
-
-## Response
-
-- Body: `image/gif`
-- Headers:
-  - `X-Wheel-Winner-Index`
-  - `X-Wheel-Winner`
-  - `X-Render-Duration-Ms`
-
-`X-Wheel-Winner` is URL-encoded. Decode it before displaying if service-side
-winner selection is used.
-
-## Gacha
-
-`/gacha` in tiennm99bot calls `POST /api/gacha` on the same service.
-The bot appends the route to `RENDERER_URL`, picks the result and rarity
-itself, and sends the MP4 with `sendAnimation`. On any failure it falls back to
-a text reply.
-
-The unlisted `/genshin` command does not use this service: the bot renders its
-7-second 640x360 meteor wish itself with ffmpeg.
+`/wheelofnames`, `/genshin`, and `/csgo` do not use this service: the bot
+renders them itself with ffmpeg.

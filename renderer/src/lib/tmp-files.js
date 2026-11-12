@@ -5,7 +5,7 @@ import path from 'node:path';
 /**
  * @returns {Promise<string>}
  */
-export const createRenderTempDir = () => mkdtemp(path.join(os.tmpdir(), 'wheelofnames-'));
+export const createRenderTempDir = () => mkdtemp(path.join(os.tmpdir(), 'renderer-'));
 
 /**
  * @param {string} dir

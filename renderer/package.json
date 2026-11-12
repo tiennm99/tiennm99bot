@@ -14,26 +14,18 @@
     "test": "vitest run",
     "browser:ensure": "node scripts/ensure-browser.js",
     "api:smoke": "node scripts/api-smoke.js",
-    "render:local": "node scripts/render-local.js",
     "render:smoke": "node scripts/render-fixtures.js --smoke",
     "render:fixtures": "node scripts/render-fixtures.js"
   },
   "dependencies": {
-    "@remotion/bundler": "4.0.485",
     "@remotion/renderer": "4.0.485",
-    "@remotion/shapes": "4.0.485",
     "fastify": "5.10.0",
     "pack-cards": "https://codeload.github.com/paubineau/pack-cards/tar.gz/83e8fbb8237537194e40cb306bd310d8cc6a316b",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "remotion": "4.0.485",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "26.1.0",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
     "eslint": "10.6.0",
     "globals": "17.7.0",
     "prettier": "3.9.4",

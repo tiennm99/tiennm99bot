@@ -81,8 +81,8 @@ has no webhook.
 
 ### Animation renderer
 
-`/wheelofnames` and `/gacha` are drawn by the Node renderer in
-[`renderer/`](../renderer/README.md) (Remotion and headless Chrome).
+`/gacha` is drawn by the Node renderer in
+[`renderer/`](../renderer/README.md) (pack-cards in headless Chrome).
 `compose.yml` deploys it as a second service, `renderer`, next to the bot. It
 is internal only: the bot reaches it at `http://renderer:3000` over the
 compose network, so it needs no domain, publishes no port, and takes no auth
@@ -90,31 +90,32 @@ token. Its API is unauthenticated, so never publish a port or attach a domain
 to it.
 
 Renderer tuning (`RENDERER_MAX_CONCURRENT_RENDERS`,
-`RENDERER_RENDER_TIMEOUT_MS`, `RENDERER_MAX_OPTIONS`,
-`RENDERER_MAX_OPTION_CHARS`) is optional; the renderer falls back to the
-defaults listed in [`renderer/docs/deployment.md`](../renderer/docs/deployment.md).
-Set them in the Coolify dashboard to override. Give the host
-1-2 GB of headroom for the renderer's Chrome.
+`RENDERER_RENDER_TIMEOUT_MS`, `RENDERER_MAX_OPTION_CHARS`) is optional; the
+renderer falls back to the defaults listed in
+[`renderer/docs/deployment.md`](../renderer/docs/deployment.md). Set them in
+the Coolify dashboard to override. Give the host 1-2 GB of headroom for the
+renderer's Chrome.
 
 Outside compose, set `RENDERER_URL` to the base URL of any service that
-implements the same `/api/gif` and `/api/gacha` routes, e.g.
-`http://localhost:3000`. The bot appends each route itself.
+implements the same `/api/gacha` route, e.g. `http://localhost:3000`. The bot
+appends the route itself. The bot sends outbound HTTP only; no public bot
+ingress is required.
 
-The bot sends outbound HTTP only; no public bot ingress is required. Remote
-renders use `512px`, `20fps`, and `7` seconds total by default. If the renderer
-is unset, unavailable, or returns a non-GIF response,
-`/wheelofnames` falls back to the same plain text winner reply as `/random`.
-Successful GIF replies include the result behind Telegram spoiler formatting.
-
-When a renderer is configured, the bot posts a `Spinning...` holding message
-first, because the render takes several seconds. The GIF then replaces it; a
-render or upload failure edits that same message into the plain text winner
-instead. With no renderer configured there is no holding message — the winner
-reply is immediate.
+`/wheelofnames` renders in the bot with no renderer: a realistic wheel (static
+layers rendered in Blender from `tools/wheel-of-names/`, embedded in the
+binary) spins with simulated physics (a hand push, friction, pegs striking a
+flapper, sometimes a rock back off the last peg) and stops on the winner, as a
+7-second `512x512` MP4. It holds 1 to 32 options; with more it replies with
+the winner as text. It posts `Spinning...` while it renders, then replaces it
+with the animation, whose caption hides the result behind Telegram spoiler
+formatting; if rendering or the upload fails it edits that message into the
+plain text winner, as `/random` replies.
 
 `/gacha` uses the same service at `/api/gacha`. It renders a 6-second
-`360x640` portrait silent MP4 wish animation (a card pack torn open), posts `Wishing...` while it renders, and
-falls back to a text reply such as `★★★★★ Pizza` on the same failures. Every
+`360x640` portrait silent MP4 wish animation (a card pack torn open), posts
+`Wishing...` while it renders, and falls back to a text reply such as
+`★★★★★ Pizza` when the renderer is unset, unavailable, or fails. With no
+renderer configured there is no holding message; the text reply is immediate. Every
 option is equally likely, as with `/random`; the rarity only sets what the
 animation and reply show. Options are 5★ by default; prefix `4*` or `3*` to
 lower one, e.g. `/gacha Pizza, 4* Pho, 3* Rice`.

@@ -2,14 +2,14 @@ package random
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/tiennm99/tiennm99bot/internal/modules"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/frames"
+	"github.com/tiennm99/tiennm99bot/internal/modules/random/wheel"
 	"github.com/tiennm99/tiennm99bot/internal/storage"
 	"github.com/tiennm99/tiennm99bot/internal/testutil"
 )
@@ -114,42 +114,42 @@ func TestWheelOfNames_ResultCaptionPadsShortWinnerToLongestOption(t *testing.T) 
 	}
 }
 
-func TestWheelOfNames_UsesRemoteAPIWhenConfigured(t *testing.T) {
-	var got wheelRenderRequest
-	var gotAuthorization string
-	var calls int
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls++
-		if r.URL.Path != "/api/gif" {
-			t.Errorf("path = %q, want /api/gif", r.URL.Path)
+// stubWheel replaces the in-process renderer for one test, recording what it
+// was asked to draw.
+func stubWheel(t *testing.T, err error) *struct {
+	options []string
+	winner  int
+} {
+	t.Helper()
+	got := &struct {
+		options []string
+		winner  int
+	}{winner: -1}
+	renderWheel = func(_ context.Context, options []string, winner int, _ uint64) ([]byte, error) {
+		got.options, got.winner = options, winner
+		if err != nil {
+			return nil, err
 		}
-		gotAuthorization = r.Header.Get("Authorization")
-		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
-			t.Errorf("Decode request body: %v", err)
-		}
-		w.Header().Set("Content-Type", "image/gif")
-		_, _ = w.Write([]byte("GIF89a-remote"))
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+		return mp4Bytes, nil
+	}
+	t.Cleanup(func() { renderWheel = wheel.Render })
+	return got
+}
+
+func TestWheelOfNames_SendsTheRenderedSpin(t *testing.T) {
+	got := stubWheel(t, nil)
+	// The wheel no longer needs the renderer service.
+	t.Setenv(rendererURLEnv, "")
 
 	rb := installRandom(t, 999)
 	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/wheelofnames Alice, Bob, Carol"))
 
-	if calls != 1 {
-		t.Fatalf("remote calls = %d, want 1", calls)
+	if !slices.Equal(got.options, []string{"Alice", "Bob", "Carol"}) {
+		t.Fatalf("options = %#v, want parsed options", got.options)
 	}
-	if gotAuthorization != "" {
-		t.Fatalf("Authorization = %q, want none", gotAuthorization)
+	if got.winner < 0 || got.winner >= len(got.options) {
+		t.Fatalf("winner = %d, want in range", got.winner)
 	}
-	if !slices.Equal(got.Options, []string{"Alice", "Bob", "Carol"}) {
-		t.Fatalf("options = %#v, want parsed options", got.Options)
-	}
-	if got.WinnerIndex < 0 || got.WinnerIndex >= len(got.Options) {
-		t.Fatalf("winnerIndex = %d, want in range", got.WinnerIndex)
-	}
-	assertWheelRemoteDefaults(t, got)
-
 	sent := rb.Sent()
 	if len(sent) != 3 {
 		t.Fatalf("calls = %+v, want placeholder, sendAnimation, deleteMessage", sent)
@@ -166,39 +166,22 @@ func TestWheelOfNames_UsesRemoteAPIWhenConfigured(t *testing.T) {
 	if call.Method != "sendAnimation" {
 		t.Fatalf("method = %q, want sendAnimation", call.Method)
 	}
-	wantCaption := wheelResultCaption(got.Options, got.WinnerIndex)
-	if got := call.Form["caption"]; got != wantCaption {
-		t.Fatalf("caption = %q, want %q", got, wantCaption)
+	if want := wheelResultCaption(got.options, got.winner); call.Form["caption"] != want {
+		t.Fatalf("caption = %q, want %q", call.Form["caption"], want)
 	}
-	if got := call.Form["parse_mode"]; got != "HTML" {
-		t.Fatalf("parse_mode = %q, want HTML", got)
-	}
-	if got := call.Form["duration"]; got != "7" {
-		t.Fatalf("duration = %q, want 7", got)
-	}
-	if got := call.Form["width"]; got != "512" {
-		t.Fatalf("width = %q, want 512", got)
-	}
-	if got := call.Form["height"]; got != "512" {
-		t.Fatalf("height = %q, want 512", got)
+	for field, want := range map[string]string{"parse_mode": "HTML", "duration": "7", "width": "512", "height": "512"} {
+		if call.Form[field] != want {
+			t.Fatalf("%s = %q, want %s", field, call.Form[field], want)
+		}
 	}
 }
 
-func TestWheelOfNames_RemoteFailureFallsBackToRandomReply(t *testing.T) {
-	var calls int
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls++
-		http.Error(w, "no", http.StatusInternalServerError)
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+func TestWheelOfNames_RenderFailureFallsBackToRandomReply(t *testing.T) {
+	stubWheel(t, frames.ErrFFmpegMissing)
 
 	rb := installRandom(t, 999)
 	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/wheelofnames Alice"))
 
-	if calls != 1 {
-		t.Fatalf("remote calls = %d, want 1", calls)
-	}
 	sent := rb.Sent()
 	if len(sent) != 2 {
 		t.Fatalf("calls = %+v, want placeholder then in-place edit", sent)
@@ -217,11 +200,7 @@ func TestWheelOfNames_RemoteFailureFallsBackToRandomReply(t *testing.T) {
 // A failed edit still has to deliver the winner, so the handler falls back to a
 // fresh reply rather than leaving "Spinning..." on screen forever.
 func TestWheelOfNames_PlaceholderEditFailureFallsBackToReply(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "no", http.StatusInternalServerError)
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+	stubWheel(t, frames.ErrFFmpegMissing)
 
 	rb := installRandom(t, 999)
 	rb.FailMethod("editMessageText", http.StatusInternalServerError, "")
@@ -233,28 +212,29 @@ func TestWheelOfNames_PlaceholderEditFailureFallsBackToReply(t *testing.T) {
 	}
 }
 
-// Without a renderer there is nothing to wait for, so the winner must land
+// Past the wheel's segment limit there is nothing to draw, so the winner lands
 // straight away with no placeholder flashing before it.
-func TestWheelOfNames_NotConfiguredFallsBackToRandomReply(t *testing.T) {
+func TestWheelOfNames_TooManyOptionsRepliesWithWinner(t *testing.T) {
+	got := stubWheel(t, nil)
+	options := make([]string, wheel.MaxOptions+1)
+	for i := range options {
+		options[i] = "o" + strings.Repeat("x", i)
+	}
+
 	rb := installRandom(t, 999)
-	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/wheelofnames Alice"))
+	rb.Bot.ProcessUpdate(context.Background(), testutil.NewPrivateMessage(7, "/wheelofnames "+strings.Join(options, ",")))
 
 	calls := rb.Sent()
-	if len(calls) != 1 {
+	if len(calls) != 1 || calls[0].Method != "sendMessage" || !slices.Contains(options, calls[0].Text()) {
 		t.Fatalf("calls = %+v, want a single winner reply", calls)
 	}
-	if calls[0].Method != "sendMessage" || calls[0].Text() != "Alice" {
-		t.Fatalf("fallback call = %+v, want sendMessage Alice", calls[0])
+	if got.winner != -1 {
+		t.Fatal("the wheel was rendered past its segment limit")
 	}
 }
 
 func TestWheelOfNames_SendAnimationFailureFallsBackToRandomReply(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "image/gif")
-		_, _ = w.Write([]byte("GIF89a-remote"))
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+	stubWheel(t, nil)
 
 	rb := installRandom(t, 999)
 	rb.FailMethod("sendAnimation", http.StatusInternalServerError, "")
@@ -263,9 +243,6 @@ func TestWheelOfNames_SendAnimationFailureFallsBackToRandomReply(t *testing.T) {
 	calls := rb.Sent()
 	if len(calls) != 3 {
 		t.Fatalf("calls = %+v, want placeholder, sendAnimation, in-place edit", calls)
-	}
-	if calls[0].Method != "sendMessage" || calls[0].Text() != wheelPlaceholder {
-		t.Fatalf("first call = %+v, want placeholder %q", calls[0], wheelPlaceholder)
 	}
 	if calls[1].Method != "sendAnimation" {
 		t.Fatalf("second method = %q, want sendAnimation", calls[1].Method)
@@ -278,12 +255,7 @@ func TestWheelOfNames_SendAnimationFailureFallsBackToRandomReply(t *testing.T) {
 }
 
 func TestWheelOfNames_ForwardsMessageThreadID(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "image/gif")
-		_, _ = w.Write([]byte("GIF89a-remote"))
-	}))
-	defer server.Close()
-	t.Setenv(rendererURLEnv, server.URL)
+	stubWheel(t, nil)
 
 	rb := installRandom(t, 999)
 	update := testutil.NewSupergroupMessage(-100, 7, "/wheelofnames Alice")

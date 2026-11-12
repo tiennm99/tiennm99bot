@@ -1,40 +1,13 @@
 # renderer
 
-Part of tiennm99bot: the service behind `/wheelofnames` and `/gacha`,
-deployed by the root `compose.yml` as the `renderer` service. Self-hosted API
-that renders wheel-of-names GIF animations with Remotion and card-pack gacha
-wish MP4 animations with pack-cards. (`/genshin` is rendered by the bot
-itself; see `internal/modules/random/genshin`.)
+Part of tiennm99bot: the service behind `/gacha`, deployed by the root
+`compose.yml` as the `renderer` service. Self-hosted API that renders card-pack
+gacha wish MP4 animations with pack-cards in headless Chrome. (`/wheelofnames`,
+`/genshin`, and `/csgo` are rendered by the bot itself; see
+`internal/modules/random/`.)
 
 ## API
 
-```http
-POST /api/gif
-Content-Type: application/json
-Accept: image/gif
-```
-
-```json
-{
-  "options": ["alice", "bob", "carol"],
-  "winnerIndex": 1,
-  "durationMs": 6500,
-  "holdMs": 1200,
-  "fps": 15,
-  "size": 512,
-  "theme": "classic"
-}
-```
-
-Response is `image/gif` with winner metadata headers:
-
-- `X-Wheel-Winner-Index`
-- `X-Wheel-Winner`
-- `X-Render-Duration-Ms`
-
-`X-Wheel-Winner` is URL-encoded so non-ASCII labels are safe in HTTP headers.
-
-### Gacha wish
 
 ```http
 POST /api/gacha
@@ -66,11 +39,11 @@ picks a random one, so every roll looks different. The caller chooses the
 result and its rarity — the service only draws it.
 
 Response is a silent H.264 `video/mp4` (Telegram plays it as an animation)
-with `X-Gacha-Rarity` and `X-Render-Duration-Ms` headers. All routes share the
+with `X-Gacha-Rarity` and `X-Render-Duration-Ms` headers. Renders share the
 `RENDERER_MAX_CONCURRENT_RENDERS` slots. No game assets are used.
 
-pack-cards animates on the browser clock, so the wish does not use Remotion
-compositions. `src/render/render-gacha.js` keeps one headless Chrome per
+pack-cards animates on the browser clock. `src/render/render-gacha.js` keeps
+one headless Chrome per
 server process in `--deterministic-mode`, steps virtual time one frame at a
 time, tears the pack with a scripted drag, captures each frame, and encodes
 them with Remotion's bundled ffmpeg. The page (`src/gacha/page/`) and the
@@ -99,50 +72,19 @@ Start the local API:
 npm run dev
 ```
 
-### Generate GIF files locally
+### Generate fixtures locally
 
-Generate the quick smoke fixtures at the git-ignored paths
-`fixtures/smoke.gif` and `fixtures/gacha-5-star.mp4`:
+Render the 5★ smoke fixture at the git-ignored path `fixtures/gacha-5-star.mp4`:
 
 ```sh
 npm run render:smoke
 ```
 
-Generate the complete fixture set at `fixtures/smoke.gif`,
-`fixtures/vietnamese.gif`, `fixtures/sixteen-options.gif`, and
-`fixtures/gacha-{3,4,5}-star.mp4`:
+Render all three rarities, `fixtures/gacha-{3,4,5}-star.mp4`:
 
 ```sh
 npm run render:fixtures
 ```
-
-Render a custom GIF directly without starting the API server:
-
-```powershell
-npm run render:local -- `
-  --output wheel.gif `
-  --option "Chiều nay uống CraneTea" `
-  --option "Chiều nay uống CraneTea" `
-  --option "Cà phê" `
-  --winner 1
-```
-
-macOS, Linux, or Git Bash:
-
-```sh
-npm run render:local -- \
-  --output wheel.gif \
-  --option "Chiều nay uống CraneTea" \
-  --option "Chiều nay uống CraneTea" \
-  --option "Cà phê" \
-  --winner 1
-```
-
-`--winner` is a zero-based index and is random when omitted. Run
-`npm run render:local -- --help` for duration, hold, FPS, size, theme, and timeout
-options. The documented root `wheel.gif` and `fixtures/*.gif`/`*.mp4` outputs are
-git-ignored and safe to delete; custom output paths may need their own ignore
-rule.
 
 ### Verify
 
@@ -157,9 +99,8 @@ npm test
 
 ## Deploy
 
-Use a container runtime first. Static-only platforms cannot satisfy
-`POST /api/gif` because Remotion server rendering needs Node, Chromium/runtime
-dependencies, and FFmpeg/compositor support.
+Use a container runtime. Static-only platforms cannot serve `POST /api/gacha`,
+which needs Node, headless Chrome with its runtime libraries, and ffmpeg.
 
 ```sh
 docker build -t tiennm99bot-renderer .
@@ -168,5 +109,5 @@ docker run --rm -p 3000:3000 tiennm99bot-renderer
 
 Recommended starting resources: 1-2 vCPU and 1-2 GB RAM, with
 `RENDERER_MAX_CONCURRENT_RENDERS=1`. `RENDERER_RENDER_TIMEOUT_MS` defaults to
-`30000` and is raised to Remotion's `7000ms` browser timeout floor when configured lower.
+`30000` and is raised to the `7000ms` browser timeout floor when configured lower.
 The API has no authentication; publish its port only on a trusted network.

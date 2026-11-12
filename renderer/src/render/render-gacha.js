@@ -17,8 +17,14 @@ import {cleanupTempDir, createRenderTempDir} from '../lib/tmp-files.js';
 import {createCdpConnection} from './cdp-pipe.js';
 
 /**
+ * @typedef {object} RenderResult
+ * @property {Buffer} buffer
+ * @property {number} durationMs
+ * @property {number} byteLength
+ */
+
+/**
  * @typedef {import('../schemas/gacha-request.js').GachaRenderRequest} GachaRenderRequest
- * @typedef {import('./render-composition.js').RenderResult} RenderResult
  * @typedef {import('./cdp-pipe.js').CdpConnection} CdpConnection
  * @typedef {{chrome: import('node:child_process').ChildProcess, cdp: CdpConnection}} WishBrowser
  */
@@ -98,7 +104,7 @@ const launchBrowser = async () => {
   if (!('path' in installed) || !installed.path) {
     throw new Error(`No Chrome available for the gacha wish (${installed.type})`);
   }
-  const profileDir = await mkdtemp(path.join(os.tmpdir(), 'wheelofnames-chrome-'));
+  const profileDir = await mkdtemp(path.join(os.tmpdir(), 'renderer-chrome-'));
   const chrome = spawn(installed.path, chromeArgs(profileDir), {stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe']});
   const cdp = createCdpConnection(
     /** @type {NodeJS.WritableStream} */ (chrome.stdio[3]),

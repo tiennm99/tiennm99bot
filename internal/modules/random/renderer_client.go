@@ -3,7 +3,6 @@ package random
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,13 +28,6 @@ const (
 	// ends in the renderer's 504 rather than the bot abandoning a render
 	// that was about to finish.
 	rendererTimeout = 45 * time.Second
-
-	wheelRemoteDurationMs = 6000
-	wheelRemoteHoldMs     = 1000
-	wheelRemoteFPS        = 20
-	wheelRemoteSize       = 512
-	wheelRemoteTheme      = "classic"
-	wheelRemoteDuration   = (wheelRemoteDurationMs + wheelRemoteHoldMs) / 1000
 )
 
 var errRendererNotConfigured = errors.New("renderer not configured")
@@ -45,16 +37,6 @@ var errRendererNotConfigured = errors.New("renderer not configured")
 type rendererClient struct {
 	HTTP    *http.Client
 	BaseURL string
-}
-
-type wheelRenderRequest struct {
-	Options     []string `json:"options"`
-	WinnerIndex int      `json:"winnerIndex"`
-	DurationMs  int      `json:"durationMs"`
-	HoldMs      int      `json:"holdMs"`
-	FPS         int      `json:"fps"`
-	Size        int      `json:"size"`
-	Theme       string   `json:"theme"`
 }
 
 // renderedAnimation is a rendered clip plus the metadata Telegram's
@@ -70,35 +52,6 @@ func newRendererClientFromEnv() rendererClient {
 	return rendererClient{
 		BaseURL: strings.TrimSpace(os.Getenv(rendererURLEnv)),
 	}
-}
-
-// RenderWheel returns the wheel-of-names GIF landing on options[winner].
-func (c rendererClient) RenderWheel(ctx context.Context, options []string, winner int) ([]byte, error) {
-	endpoint, err := c.endpoint("gif")
-	if err != nil {
-		return nil, err
-	}
-	if len(options) == 0 {
-		return nil, fmt.Errorf("renderer wheel options empty")
-	}
-	if winner < 0 || winner >= len(options) {
-		return nil, fmt.Errorf("renderer wheel winner index %d out of range %d", winner, len(options))
-	}
-
-	body, err := json.Marshal(wheelRenderRequest{
-		Options:     options,
-		WinnerIndex: winner,
-		DurationMs:  wheelRemoteDurationMs,
-		HoldMs:      wheelRemoteHoldMs,
-		FPS:         wheelRemoteFPS,
-		Size:        wheelRemoteSize,
-		Theme:       wheelRemoteTheme,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("renderer wheel request encode failed: %w", err)
-	}
-
-	return c.post(ctx, endpoint, body, "image/gif", isWheelGIF)
 }
 
 // post sends one JSON render request to endpoint and returns the response
@@ -182,19 +135,8 @@ func requireContentType(contentType, want string) error {
 	return nil
 }
 
-func isWheelGIF(data []byte) bool {
-	return bytes.HasPrefix(data, []byte("GIF87a")) || bytes.HasPrefix(data, []byte("GIF89a"))
-}
-
-func renderWheelOfNamesAnimation(ctx context.Context, options []string, winner int) (renderedAnimation, error) {
-	data, err := newRendererClientFromEnv().RenderWheel(ctx, options, winner)
-	if err != nil {
-		return renderedAnimation{}, err
-	}
-	return renderedAnimation{
-		Data:     data,
-		Duration: wheelRemoteDuration,
-		Width:    wheelRemoteSize,
-		Height:   wheelRemoteSize,
-	}, nil
+// rendererConfigured reports whether RENDERER_URL names a usable renderer.
+func rendererConfigured() bool {
+	_, err := rendererBaseURL(newRendererClientFromEnv().BaseURL)
+	return err == nil
 }

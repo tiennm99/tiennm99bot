@@ -9,8 +9,8 @@ domain to it. The rest of this page covers running the service on its own.
 
 ## Recommendation
 
-Use a self-hosted/container runtime for v1. Static-only hosts are not enough
-because `/api/gif` must render GIF bytes on the server with Remotion.
+Use a self-hosted/container runtime. Static-only hosts are not enough because
+`/api/gacha` renders MP4 bytes on the server with headless Chrome and ffmpeg.
 
 Good first targets:
 
@@ -35,7 +35,6 @@ RENDERER_PORT=3000
 RENDERER_HOST=0.0.0.0
 RENDERER_MAX_CONCURRENT_RENDERS=1
 RENDERER_RENDER_TIMEOUT_MS=30000
-RENDERER_MAX_OPTIONS=32
 RENDERER_MAX_OPTION_CHARS=40
 ```
 
@@ -54,7 +53,7 @@ The Docker image runs `npm run browser:ensure` during build so production reques
 do not need to download Chrome Headless Shell on first render.
 
 `RENDERER_RENDER_TIMEOUT_MS` is a total render timeout. Values below `7000` are raised to
-`7000` because Remotion's browser timeout has that minimum.
+`7000` because the headless browser's timeout has that minimum.
 
 ## Health
 
@@ -65,8 +64,8 @@ curl http://localhost:3000/api/healthz
 ## Render Test
 
 ```sh
-curl -X POST http://localhost:3000/api/gif \
+curl -X POST http://localhost:3000/api/gacha \
   -H 'content-type: application/json' \
-  --output wheel.gif \
-  --data '{"options":["alice","bob","carol"],"winnerIndex":1}'
+  --output gacha.mp4 \
+  --data '{"label":"Pizza","rarity":5}'
 ```

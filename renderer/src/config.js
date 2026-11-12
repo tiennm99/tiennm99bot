@@ -6,7 +6,6 @@ export const minRenderTimeoutMs = 7000;
  * @property {number} port
  * @property {number} maxConcurrentRenders
  * @property {number} renderTimeoutMs
- * @property {number} maxOptions
  * @property {number} maxOptionChars
  */
 
@@ -37,7 +36,6 @@ export const loadConfig = (env = process.env) => {
       minRenderTimeoutMs,
       parsePositiveInt(env.RENDERER_RENDER_TIMEOUT_MS, 30000),
     ),
-    maxOptions: parsePositiveInt(env.RENDERER_MAX_OPTIONS, 32),
     maxOptionChars: parsePositiveInt(env.RENDERER_MAX_OPTION_CHARS, 40),
   };
 };

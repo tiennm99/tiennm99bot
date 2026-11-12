@@ -66,7 +66,7 @@ func gachaResultText(option gachaOption) string {
 func gachaCommand() modules.Command {
 	return newGachaCommand("gacha", modules.VisibilityPublic,
 		"Wish for one comma-separated option as a gacha card pack; 5* by default, prefix 4* or 3*",
-		gachaUsage, gachaPlaceholder, func(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error) {
+		gachaUsage, gachaPlaceholder, true, func(ctx context.Context, options []gachaOption, winner int) (renderedAnimation, error) {
 			return renderGachaAnimation(ctx, gachaStyleCardPack, options[winner].Label, options[winner].Rarity)
 		})
 }
@@ -77,7 +77,7 @@ func gachaCommand() modules.Command {
 func genshinCommand() modules.Command {
 	return newGachaCommand("genshin", modules.VisibilityUnlisted,
 		"Wish for one comma-separated option, Genshin style; 5* by default, prefix 4* or 3*",
-		genshinUsage, gachaPlaceholder, renderGenshinAnimation)
+		genshinUsage, gachaPlaceholder, false, renderGenshinAnimation)
 }
 
 // csgoCommand opens a case: the options fill a spinning reel of item cards
@@ -86,7 +86,7 @@ func genshinCommand() modules.Command {
 func csgoCommand() modules.Command {
 	return newGachaCommand("csgo", modules.VisibilityUnlisted,
 		"Open a case of comma-separated options, CS:GO style; 5* by default, prefix 4* or 3*",
-		csgoUsage, casePlaceholder, renderCaseAnimation)
+		csgoUsage, casePlaceholder, false, renderCaseAnimation)
 }
 
 // renderCase is the in-process case renderer; tests swap it out.
@@ -130,7 +130,8 @@ type wishRenderer func(ctx context.Context, options []gachaOption, winner int) (
 
 // newGachaCommand builds a wish command that picks one option and renders it,
 // falling back to a text reply when rendering fails.
-func newGachaCommand(name string, visibility modules.Visibility, description, usage, placeholderText string, render wishRenderer) modules.Command {
+// remote marks a renderer that needs the renderer service.
+func newGachaCommand(name string, visibility modules.Visibility, description, usage, placeholderText string, remote bool, render wishRenderer) modules.Command {
 	return modules.Command{
 		Name:        name,
 		Visibility:  visibility,
@@ -152,7 +153,12 @@ func newGachaCommand(name string, visibility modules.Visibility, description, us
 				results[i] = gachaResultText(option)
 			}
 
-			placeholder := sendRenderPlaceholder(ctx, b, update.Message, placeholderText)
+			placeholder := 0
+			if !remote || rendererConfigured() {
+				// Without the renderer the text reply is immediate, and a
+				// placeholder would only flash.
+				placeholder = sendPlaceholder(ctx, b, update.Message, placeholderText)
+			}
 			animation, err := render(ctx, options, winner)
 			if err != nil {
 				if !errors.Is(err, errRendererNotConfigured) {

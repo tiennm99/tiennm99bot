@@ -7,7 +7,6 @@
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "allowSyntheticDefaultImports": true,
@@ -15,6 +14,6 @@
     "skipLibCheck": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.js", "src/**/*.jsx", "scripts/**/*.js", "test/**/*.js", "eslint.config.js", "vitest.config.js"],
+  "include": ["src/**/*.js", "scripts/**/*.js", "test/**/*.js", "eslint.config.js", "vitest.config.js"],
   "exclude": ["node_modules", "dist", "coverage", ".tmp"]
 }
