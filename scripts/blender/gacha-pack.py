@@ -988,7 +988,16 @@ def shaft_material(palette):
     coords = nodes.new("ShaderNodeTexCoord")
     sep = nodes.new("ShaderNodeSeparateXYZ")
     links.new(coords.outputs["UV"], sep.inputs[0])
-    across = math_node(nodes, links, "ABSOLUTE", math_node(nodes, links, "MULTIPLY", math_node(nodes, links, "SUBTRACT", sep.outputs["X"], 0.5), 2.0))
+    # The shaft spans only the torn part of the slit: U runs down the pack, and
+    # OpenCentre and OpenHalf, keyed per frame, are that part's middle and
+    # half length in U.
+    centre = nodes.new("ShaderNodeValue")
+    centre.name = "OpenCentre"
+    half = nodes.new("ShaderNodeValue")
+    half.name = "OpenHalf"
+    across = math_node(nodes, links, "DIVIDE",
+                       math_node(nodes, links, "ABSOLUTE", math_node(nodes, links, "SUBTRACT", sep.outputs["X"], centre.outputs[0])),
+                       half.outputs[0])
     # The shaft widens as it travels.
     width = math_node(nodes, links, "ADD", 0.7, math_node(nodes, links, "MULTIPLY", sep.outputs["Y"], 0.3))
     sides = map_range(nodes, links, math_node(nodes, links, "DIVIDE", across, width), 1.0, 0.15)
@@ -1152,9 +1161,21 @@ def build_pack(scene, palette, tier):
     beam_obj.parent = body
     beam_obj.location = (TEAR_X - 0.7, 0, 0)
     beam_obj.rotation_euler = (0, -math.pi / 2, 0)  # spots shine down -Z; this points it +X
+    # The shaft quad's U runs from its top (U 0) to its bottom down the pack.
+    shaft_half = PACK_H * 0.95 / 2
+    open_centre = shaft_mat.node_tree.nodes["OpenCentre"].outputs[0]
+    open_half = shaft_mat.node_tree.nodes["OpenHalf"].outputs[0]
     for frame in ALL_FRAMES:
         s = seconds_at(frame)
-        opened = smooth(torn_fraction(s))
+        # Light comes out only where the foil has torn, from the top seal down
+        # to the tear front, and grows with the slit.
+        top, front = PACK_H / 2, max(-PACK_H / 2, min(PACK_H / 2, front_z(s)))
+        front_u = clamp01((1 - front / shaft_half) / 2)
+        key_value(open_centre, frame, front_u / 2)
+        key_value(open_half, frame, max(0.01, front_u / 2))
+        beam_obj.location.z = (top + front) / 2
+        beam_obj.keyframe_insert("location", index=2, frame=frame)
+        opened = smooth(clamp01(torn_fraction(s) / 0.4))
         # Out before the slit sweeps across the card, or it would wash it white.
         fade = 1 - smooth(progress(s, SLIDE_START + 0.05, SLIDE_START + 0.35))
         flicker = 0.85 + 0.15 * math.sin(s * 23)
