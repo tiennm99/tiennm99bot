@@ -189,7 +189,7 @@ compose.yml                  Coolify self-host stack
 - [Wordle Daily](docs/wordledaily.md)
 - [LoLdle](docs/loldle.md)
 - [Lunar calendar algorithm and known issues](docs/amlich-known-issues.md)
-- [Agent and contributor rules](AGENTS.md)
+- [Agent and contributor rules](CLAUDE.md)
 
 ## Run locally
 

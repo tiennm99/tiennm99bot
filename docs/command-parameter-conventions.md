@@ -59,7 +59,7 @@ When adding or changing a command:
 3. Update handler usage and error text to use the same syntax.
 4. Update registration, handler, `/help`, and native-menu tests.
 5. Update README or feature documentation when behavior is user-visible.
-6. Follow the stats migration rules in `AGENTS.md` when a command name changes
+6. Follow the stats migration rules in `CLAUDE.md` when a command name changes
    or a command is deleted.
 
 ## References
